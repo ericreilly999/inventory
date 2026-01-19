@@ -1,0 +1,218 @@
+version: '3.8'
+
+services:
+  # Test Database Services
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: inventory_management_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d inventory_management_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - test-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - test_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - test-network
+
+  # Test runner service
+  test-runner:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.base
+    environment:
+      - DATABASE_URL=postgresql://test_user:test_password@postgres:5432/inventory_management_test
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=test-secret-key-for-ci
+      - LOG_LEVEL=INFO
+      - ENVIRONMENT=test
+      - PYTHONPATH=/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - test-network
+    volumes:
+      - .:/app
+      - test_coverage:/app/htmlcov
+    working_dir: /app
+    command: |
+      sh -c "
+        echo 'Running database migrations...' &&
+        poetry run alembic upgrade head &&
+        echo 'Running tests...' &&
+        poetry run pytest tests/ -v --cov=services --cov=shared --cov-report=html --cov-report=xml
+      "
+
+  # Integration test services
+  api-gateway-test:
+    build:
+      context: .
+      dockerfile: services/api_gateway/Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://test_user:test_password@postgres:5432/inventory_management_test
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=test-secret-key-for-ci
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=test
+      - SERVICE_NAME=api-gateway-test
+      - SERVICE_PORT=8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  inventory-service-test:
+    build:
+      context: .
+      dockerfile: services/inventory/Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://test_user:test_password@postgres:5432/inventory_management_test
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=test
+      - SERVICE_NAME=inventory-service-test
+      - SERVICE_PORT=8001
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  location-service-test:
+    build:
+      context: .
+      dockerfile: services/location/Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://test_user:test_password@postgres:5432/inventory_management_test
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=test
+      - SERVICE_NAME=location-service-test
+      - SERVICE_PORT=8002
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  user-service-test:
+    build:
+      context: .
+      dockerfile: services/user/Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://test_user:test_password@postgres:5432/inventory_management_test
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=test-secret-key-for-ci
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=test
+      - SERVICE_NAME=user-service-test
+      - SERVICE_PORT=8003
+    ports:
+      - "8003:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  reporting-service-test:
+    build:
+      context: .
+      dockerfile: services/reporting/Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://test_user:test_password@postgres:5432/inventory_management_test
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=test
+      - SERVICE_NAME=reporting-service-test
+      - SERVICE_PORT=8004
+    ports:
+      - "8004:8004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  test_postgres_data:
+  test_redis_data:
+  test_coverage:
+
+networks:
+  test-network:
+    driver: bridge
+    labels:
+      - "project=inventory-management"
+      - "environment=test"

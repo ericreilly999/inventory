@@ -1,0 +1,51 @@
+# Development Environment Configuration
+# Copy this file to terraform.tfvars and update values
+
+# Environment configuration
+environment = "dev"
+aws_region  = "us-east-1"
+
+# Project configuration
+project_name = "inventory-management"
+owner        = "development-team"
+
+# Network configuration
+vpc_cidr = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# Database configuration
+db_instance_class = "db.t3.micro"
+db_allocated_storage = 20
+db_max_allocated_storage = 100
+db_backup_retention_period = 7
+db_multi_az = false
+
+# Redis configuration
+redis_node_type = "cache.t3.micro"
+redis_num_cache_nodes = 1
+
+# ECS configuration
+ecs_cpu = 256
+ecs_memory = 512
+ecs_desired_count = 1
+ecs_max_capacity = 3
+ecs_min_capacity = 1
+
+# Container image configuration
+image_tag = "latest"
+ecr_repository_prefix = "inventory-management"
+
+# Load balancer configuration
+certificate_arn = ""  # SSL certificate ARN (optional for dev)
+
+# Monitoring and logging
+enable_cloudwatch_logs = true
+log_retention_days = 7
+
+# Tags
+tags = {
+  Environment = "dev"
+  Project     = "inventory-management"
+  ManagedBy   = "terraform"
+  Owner       = "development-team"
+}

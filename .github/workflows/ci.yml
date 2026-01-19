@@ -1,0 +1,227 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  # Test Python services
+  test-python-services:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: inventory_management_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+
+    - name: Install project
+      run: poetry install --no-interaction
+
+    - name: Set up environment variables
+      run: |
+        echo "DATABASE_URL=postgresql://test_user:test_password@localhost:5432/inventory_management_test" >> $GITHUB_ENV
+        echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
+        echo "JWT_SECRET_KEY=test-secret-key" >> $GITHUB_ENV
+        echo "LOG_LEVEL=INFO" >> $GITHUB_ENV
+        echo "ENVIRONMENT=test" >> $GITHUB_ENV
+
+    - name: Run database migrations
+      run: |
+        poetry run alembic upgrade head
+
+    - name: Run linting
+      run: |
+        poetry run flake8 services/ shared/ tests/
+        poetry run black --check services/ shared/ tests/
+        poetry run isort --check-only services/ shared/ tests/
+
+    - name: Run type checking
+      run: |
+        poetry run mypy services/ shared/
+
+    - name: Run unit tests
+      run: |
+        poetry run pytest tests/unit/ -v --cov=services --cov=shared --cov-report=xml --cov-report=html
+
+    - name: Run property-based tests
+      run: |
+        poetry run pytest tests/property/ -v --tb=short
+
+    - name: Run integration tests
+      run: |
+        poetry run pytest tests/integration/ -v
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # Test UI service
+  test-ui-service:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: services/ui/package-lock.json
+
+    - name: Install UI dependencies
+      working-directory: services/ui
+      run: npm ci
+
+    - name: Run UI linting
+      working-directory: services/ui
+      run: npm run lint
+
+    - name: Run UI type checking
+      working-directory: services/ui
+      run: npm run type-check
+
+    - name: Run UI tests
+      working-directory: services/ui
+      run: npm run test -- --coverage --watchAll=false
+
+    - name: Build UI
+      working-directory: services/ui
+      run: npm run build
+
+  # Security scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # Docker build test
+  docker-build-test:
+    runs-on: ubuntu-latest
+    needs: [test-python-services, test-ui-service]
+    
+    strategy:
+      matrix:
+        service: [api_gateway, inventory, location, user, reporting, ui]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: services/${{ matrix.service }}/Dockerfile
+        push: false
+        tags: inventory-management/${{ matrix.service }}:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Infrastructure validation
+  terraform-validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+
+    - name: Terraform Format Check
+      working-directory: terraform
+      run: terraform fmt -check -recursive
+
+    - name: Terraform Init (Dev)
+      working-directory: terraform/environments/dev
+      run: terraform init -backend=false
+
+    - name: Terraform Validate (Dev)
+      working-directory: terraform/environments/dev
+      run: terraform validate
+
+    - name: Terraform Plan (Dev)
+      working-directory: terraform/environments/dev
+      run: terraform plan -var-file=terraform.tfvars.example
+      env:
+        TF_VAR_environment: dev
+        TF_VAR_aws_region: us-east-1

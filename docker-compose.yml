@@ -1,0 +1,251 @@
+version: '3.8'
+
+services:
+  # Database Services
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: inventory_management
+      POSTGRES_USER: inventory_user
+      POSTGRES_PASSWORD: inventory_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventory_user -d inventory_management"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - inventory-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}/{{.ID}}"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - inventory-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}/{{.ID}}"
+
+  # Microservices
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api_gateway/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://inventory_user:inventory_password@postgres:5432/inventory_management
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=your-secret-key-change-in-production
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=api-gateway
+      - SERVICE_PORT=8000
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - inventory-network
+    restart: unless-stopped
+    volumes:
+      - ./logs/api-gateway:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "api-gateway/{{.ID}}"
+        labels: "service=api-gateway,environment=development"
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: services/inventory/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://inventory_user:inventory_password@postgres:5432/inventory_management
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=inventory-service
+      - SERVICE_PORT=8001
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - inventory-network
+    restart: unless-stopped
+    volumes:
+      - ./logs/inventory-service:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "inventory-service/{{.ID}}"
+        labels: "service=inventory-service,environment=development"
+
+  location-service:
+    build:
+      context: .
+      dockerfile: services/location/Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://inventory_user:inventory_password@postgres:5432/inventory_management
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=location-service
+      - SERVICE_PORT=8002
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - inventory-network
+    restart: unless-stopped
+    volumes:
+      - ./logs/location-service:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "location-service/{{.ID}}"
+        labels: "service=location-service,environment=development"
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user/Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=postgresql://inventory_user:inventory_password@postgres:5432/inventory_management
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=your-secret-key-change-in-production
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=user-service
+      - SERVICE_PORT=8003
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - inventory-network
+    restart: unless-stopped
+    volumes:
+      - ./logs/user-service:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "user-service/{{.ID}}"
+        labels: "service=user-service,environment=development"
+
+  reporting-service:
+    build:
+      context: .
+      dockerfile: services/reporting/Dockerfile
+    ports:
+      - "8004:8004"
+    environment:
+      - DATABASE_URL=postgresql://inventory_user:inventory_password@postgres:5432/inventory_management
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=reporting-service
+      - SERVICE_PORT=8004
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - inventory-network
+    restart: unless-stopped
+    volumes:
+      - ./logs/reporting-service:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "reporting-service/{{.ID}}"
+        labels: "service=reporting-service,environment=development"
+
+  ui-service:
+    build:
+      context: .
+      dockerfile: services/ui/Dockerfile
+    ports:
+      - "8005:80"
+    environment:
+      - API_GATEWAY_URL=http://api-gateway:8000
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=ui-service
+      - SERVICE_PORT=80
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    depends_on:
+      - api-gateway
+    networks:
+      - inventory-network
+    restart: unless-stopped
+    volumes:
+      - ./logs/ui-service:/var/log/nginx
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "ui-service/{{.ID}}"
+        labels: "service=ui-service,environment=development"
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  inventory-network:
+    driver: bridge
+    labels:
+      - "project=inventory-management"
+      - "environment=development"

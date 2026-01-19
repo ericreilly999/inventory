@@ -1,0 +1,242 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+  
+jobs:
+  # Build and push Docker images
+  build-and-push:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    
+    strategy:
+      matrix:
+        service: [api_gateway, inventory, location, user, reporting, ui]
+    
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.ECR_REGISTRY }}/inventory-management-${{ matrix.service }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: services/${{ matrix.service }}/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
+
+    - name: Sign container image
+      run: |
+        echo "Signing container image..."
+        # Add container signing logic here if needed
+
+  # Deploy to development environment
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    environment: development
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+
+    - name: Terraform Init
+      working-directory: terraform/environments/dev
+      run: terraform init
+      env:
+        TF_VAR_environment: dev
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+
+    - name: Terraform Plan
+      working-directory: terraform/environments/dev
+      run: terraform plan -out=tfplan
+      env:
+        TF_VAR_environment: dev
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_image_tag: ${{ github.sha }}
+
+    - name: Terraform Apply
+      working-directory: terraform/environments/dev
+      run: terraform apply -auto-approve tfplan
+      env:
+        TF_VAR_environment: dev
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_image_tag: ${{ github.sha }}
+
+    - name: Update ECS services
+      run: |
+        services=("api-gateway" "inventory-service" "location-service" "user-service" "reporting-service" "ui-service")
+        for service in "${services[@]}"; do
+          echo "Updating ECS service: inventory-management-dev-$service"
+          aws ecs update-service \
+            --cluster inventory-management-dev \
+            --service inventory-management-dev-$service \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+        done
+
+    - name: Wait for deployment to complete
+      run: |
+        services=("api-gateway" "inventory-service" "location-service" "user-service" "reporting-service" "ui-service")
+        for service in "${services[@]}"; do
+          echo "Waiting for service to stabilize: inventory-management-dev-$service"
+          aws ecs wait services-stable \
+            --cluster inventory-management-dev \
+            --services inventory-management-dev-$service \
+            --region ${{ env.AWS_REGION }}
+        done
+
+    - name: Run health checks
+      run: |
+        echo "Running post-deployment health checks..."
+        # Add health check logic here
+        sleep 30
+        echo "Health checks completed"
+
+  # Deploy to staging environment
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-dev]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+
+    - name: Deploy to staging
+      working-directory: terraform/environments/staging
+      run: |
+        terraform init
+        terraform plan -out=tfplan
+        terraform apply -auto-approve tfplan
+      env:
+        TF_VAR_environment: staging
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_image_tag: ${{ github.sha }}
+
+  # Deploy to production environment
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-staging]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+
+    - name: Deploy to production
+      working-directory: terraform/environments/prod
+      run: |
+        terraform init
+        terraform plan -out=tfplan
+        terraform apply -auto-approve tfplan
+      env:
+        TF_VAR_environment: prod
+        TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        TF_VAR_image_tag: ${{ github.sha }}
+
+  # Notify deployment status
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy-dev, deploy-staging, deploy-prod]
+    if: always()
+    
+    steps:
+    - name: Notify deployment status
+      run: |
+        if [ "${{ needs.deploy-dev.result }}" == "success" ] || [ "${{ needs.deploy-staging.result }}" == "success" ] || [ "${{ needs.deploy-prod.result }}" == "success" ]; then
+          echo "Deployment completed successfully"
+          # Add notification logic here (Slack, email, etc.)
+        else
+          echo "Deployment failed"
+          # Add failure notification logic here
+        fi

@@ -1,0 +1,245 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  # Dependency vulnerability scanning
+  dependency-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+
+    - name: Install dependencies
+      run: poetry install --no-interaction
+
+    - name: Run Safety check
+      run: |
+        poetry run safety check --json --output safety-report.json || true
+
+    - name: Run Bandit security linter
+      run: |
+        poetry run bandit -r services/ shared/ -f json -o bandit-report.json || true
+
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          bandit-report.json
+
+  # Container image vulnerability scanning
+  container-scan:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        service: [api_gateway, inventory, location, user, reporting, ui]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: services/${{ matrix.service }}/Dockerfile
+        load: true
+        tags: inventory-management/${{ matrix.service }}:scan
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'inventory-management/${{ matrix.service }}:scan'
+        format: 'sarif'
+        output: 'trivy-${{ matrix.service }}.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-${{ matrix.service }}.sarif'
+        category: 'trivy-${{ matrix.service }}'
+
+    - name: Run Grype vulnerability scanner
+      uses: anchore/scan-action@v3
+      id: grype-scan
+      with:
+        image: 'inventory-management/${{ matrix.service }}:scan'
+        fail-build: false
+        severity-cutoff: high
+
+    - name: Upload Grype scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: ${{ steps.grype-scan.outputs.sarif }}
+        category: 'grype-${{ matrix.service }}'
+
+  # Infrastructure security scanning
+  infrastructure-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Checkov
+      id: checkov
+      uses: bridgecrewio/checkov-action@master
+      with:
+        directory: terraform/
+        framework: terraform
+        output_format: sarif
+        output_file_path: checkov-report.sarif
+
+    - name: Upload Checkov scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: checkov-report.sarif
+        category: 'checkov'
+
+    - name: Run TFSec
+      uses: aquasecurity/tfsec-action@v1.0.3
+      with:
+        working_directory: terraform/
+        format: sarif
+        soft_fail: true
+
+    - name: Upload TFSec scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: tfsec.sarif
+        category: 'tfsec'
+
+  # Secrets scanning
+  secrets-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Run TruffleHog OSS
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+
+  # License compliance check
+  license-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+
+    - name: Install dependencies
+      run: poetry install --no-interaction
+
+    - name: Check Python licenses
+      run: |
+        poetry run pip-licenses --format=json --output-file=python-licenses.json
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: services/ui/package-lock.json
+
+    - name: Install UI dependencies
+      working-directory: services/ui
+      run: npm ci
+
+    - name: Check Node.js licenses
+      working-directory: services/ui
+      run: |
+        npx license-checker --json --out ../nodejs-licenses.json
+
+    - name: Upload license reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: license-reports
+        path: |
+          python-licenses.json
+          nodejs-licenses.json
+
+  # Security summary report
+  security-summary:
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, container-scan, infrastructure-scan, secrets-scan, license-check]
+    if: always()
+    
+    steps:
+    - name: Download security artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: security-reports
+        path: security-reports/
+
+    - name: Download license artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: license-reports
+        path: license-reports/
+
+    - name: Generate security summary
+      run: |
+        echo "# Security Scan Summary" > security-summary.md
+        echo "" >> security-summary.md
+        echo "## Scan Results" >> security-summary.md
+        echo "- Dependency Scan: ${{ needs.dependency-scan.result }}" >> security-summary.md
+        echo "- Container Scan: ${{ needs.container-scan.result }}" >> security-summary.md
+        echo "- Infrastructure Scan: ${{ needs.infrastructure-scan.result }}" >> security-summary.md
+        echo "- Secrets Scan: ${{ needs.secrets-scan.result }}" >> security-summary.md
+        echo "- License Check: ${{ needs.license-check.result }}" >> security-summary.md
+        echo "" >> security-summary.md
+        echo "## Recommendations" >> security-summary.md
+        echo "- Review all high and critical vulnerabilities" >> security-summary.md
+        echo "- Update dependencies with known vulnerabilities" >> security-summary.md
+        echo "- Ensure all secrets are properly managed" >> security-summary.md
+        echo "- Verify license compliance for all dependencies" >> security-summary.md
+
+    - name: Upload security summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-summary
+        path: security-summary.md
