@@ -84,7 +84,7 @@ async def move_item(
         )
 
 
-@router.get("/history", response_model=List[MoveHistoryResponse])
+@router.get("/history", response_model=List[MoveHistoryResponse], dependencies=[Depends(require_location_read)])
 async def get_move_history(
     skip: int = 0,
     limit: int = 100,
@@ -92,8 +92,7 @@ async def get_move_history(
     location_id: Optional[UUID] = Query(None, description="Filter by location ID (from or to)"),
     from_date: Optional[datetime] = Query(None, description="Filter moves from this date"),
     to_date: Optional[datetime] = Query(None, description="Filter moves to this date"),
-    db: Session = Depends(get_db),
-    token_data = Depends(require_location_read)
+    db: Session = Depends(get_db)
 ):
     """Get move history with optional filtering."""
     query = db.query(MoveHistory).order_by(MoveHistory.moved_at.desc())
@@ -118,13 +117,12 @@ async def get_move_history(
     return moves
 
 
-@router.get("/history/{item_id}", response_model=List[MoveHistoryResponse])
+@router.get("/history/{item_id}", response_model=List[MoveHistoryResponse], dependencies=[Depends(require_location_read)])
 async def get_item_move_history(
     item_id: UUID,
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db),
-    token_data = Depends(require_location_read)
+    db: Session = Depends(get_db)
 ):
     """Get move history for a specific parent item."""
     # Verify the item exists
@@ -137,11 +135,10 @@ async def get_item_move_history(
     return moves
 
 
-@router.get("/recent", response_model=List[MoveHistoryResponse])
+@router.get("/recent", response_model=List[MoveHistoryResponse], dependencies=[Depends(require_location_read)])
 async def get_recent_moves(
     limit: int = Query(50, le=100, description="Number of recent moves to return"),
-    db: Session = Depends(get_db),
-    token_data = Depends(require_location_read)
+    db: Session = Depends(get_db)
 ):
     """Get recent item movements."""
     moves = db.query(MoveHistory).order_by(

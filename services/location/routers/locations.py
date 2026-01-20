@@ -32,13 +32,12 @@ from ..schemas import (
 router = APIRouter()
 
 
-@router.get("/", response_model=List[LocationResponse])
+@router.get("/", response_model=List[LocationResponse], dependencies=[Depends(require_location_read)])
 async def list_locations(
     skip: int = 0,
     limit: int = 100,
     location_type_id: Optional[UUID] = Query(None, description="Filter by location type"),
-    db: Session = Depends(get_db),
-    token_data = Depends(require_location_read)
+    db: Session = Depends(get_db)
 ):
     """List all locations with optional filtering."""
     query = db.query(Location).options(joinedload(Location.location_type))
@@ -50,13 +49,12 @@ async def list_locations(
     return locations
 
 
-@router.get("/with-items", response_model=List[LocationWithItemsResponse])
+@router.get("/with-items", response_model=List[LocationWithItemsResponse], dependencies=[Depends(require_location_read)])
 async def list_locations_with_item_counts(
     skip: int = 0,
     limit: int = 100,
     location_type_id: Optional[UUID] = Query(None, description="Filter by location type"),
-    db: Session = Depends(get_db),
-    token_data = Depends(require_location_read)
+    db: Session = Depends(get_db)
 ):
     """List all locations with item counts."""
     query = db.query(Location).options(joinedload(Location.location_type))
@@ -80,10 +78,9 @@ async def list_locations_with_item_counts(
     return result
 
 
-@router.get("/{location_id}", response_model=LocationResponse)
+@router.get("/{location_id}", response_model=LocationResponse, dependencies=[Depends(require_location_read)])
 async def get_location(
-    location: Location = Depends(get_location_by_id),
-    token_data = Depends(require_location_read)
+    location: Location = Depends(get_location_by_id)
 ):
     """Get a specific location by ID."""
     return location
@@ -189,11 +186,10 @@ async def delete_location(
         )
 
 
-@router.get("/{location_id}/items", response_model=List[dict])
+@router.get("/{location_id}/items", response_model=List[dict], dependencies=[Depends(require_location_read)])
 async def get_location_items(
     location: Location = Depends(get_location_by_id),
-    db: Session = Depends(get_db),
-    token_data = Depends(require_location_read)
+    db: Session = Depends(get_db)
 ):
     """Get all items currently at this location."""
     items = db.query(ParentItem).filter(

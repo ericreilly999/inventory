@@ -29,22 +29,20 @@ from ..schemas import (
 router = APIRouter()
 
 
-@router.get("/", response_model=List[LocationTypeResponse])
+@router.get("/", response_model=List[LocationTypeResponse], dependencies=[Depends(require_location_read)])
 async def list_location_types(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db),
-    token_data = Depends(require_location_read)
+    db: Session = Depends(get_db)
 ):
     """List all location types."""
     location_types = db.query(LocationType).offset(skip).limit(limit).all()
     return location_types
 
 
-@router.get("/{location_type_id}", response_model=LocationTypeResponse)
+@router.get("/{location_type_id}", response_model=LocationTypeResponse, dependencies=[Depends(require_location_read)])
 async def get_location_type(
-    location_type: LocationType = Depends(get_location_type_by_id),
-    token_data = Depends(require_location_read)
+    location_type: LocationType = Depends(get_location_type_by_id)
 ):
     """Get a specific location type by ID."""
     return location_type
