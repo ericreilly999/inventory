@@ -31,8 +31,7 @@ jobs:
         service: [api_gateway, inventory, location, user, reporting]
     
     outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build.outputs.digest }}
+      image-tag: ${{ steps.meta.outputs.version }}
     
     steps:
     - name: Checkout code
@@ -52,14 +51,22 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
+    - name: Determine service name
+      id: service-name
+      run: |
+        if [ "${{ matrix.service }}" == "api_gateway" ]; then
+          echo "name=api-gateway" >> $GITHUB_OUTPUT
+        else
+          echo "name=${{ matrix.service }}-service" >> $GITHUB_OUTPUT
+        fi
+
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.ECR_REGISTRY }}/inventory-management/${{ matrix.service == 'api_gateway' && 'api-gateway' || format('{0}-service', matrix.service) }}
+        images: ${{ env.ECR_REGISTRY }}/inventory-management/${{ steps.service-name.outputs.name }}
         tags: |
-          type=sha,prefix={{branch}}-
-          type=raw,value={{sha}},enable=true
+          type=sha,prefix=,format=short
           type=raw,value=latest,enable={{is_default_branch}}
 
     - name: Build and push Docker image
@@ -75,10 +82,10 @@ jobs:
         cache-to: type=gha,mode=max
         platforms: linux/amd64
 
-    - name: Sign container image
+    - name: Output image details
       run: |
-        echo "Signing container image..."
-        # Add container signing logic here if needed
+        echo "Image tags: ${{ steps.meta.outputs.tags }}"
+        echo "Image digest: ${{ steps.build.outputs.digest }}"
 
   # Deploy to development environment
   deploy-dev:
@@ -98,37 +105,52 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Update ECS services
+    - name: Get short SHA
+      id: sha
+      run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: Update ECS task definitions and deploy
       run: |
         services=("api-gateway" "inventory-service" "location-service" "user-service" "reporting-service")
+        
         for service in "${services[@]}"; do
-          echo "Updating ECS service: dev-$service"
+          echo "========================================="
+          echo "Deploying: dev-$service"
+          echo "========================================="
           
-          # Stop old task to force pull new image
-          task_arn=$(aws ecs list-tasks \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --service-name dev-$service \
+          # Get current task definition
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition dev-$service \
             --region ${{ env.AWS_REGION }} \
-            --query "taskArns[0]" \
-            --output text)
+            --query 'taskDefinition' \
+            --output json)
           
-          if [ "$task_arn" != "None" ] && [ -n "$task_arn" ]; then
-            echo "Stopping old task: $task_arn"
-            aws ecs stop-task \
-              --cluster ${{ env.ECS_CLUSTER }} \
-              --task $task_arn \
-              --region ${{ env.AWS_REGION }} || true
-            
-            # Wait for task to stop
-            sleep 10
-          fi
+          # Update image tag to use commit SHA
+          NEW_IMAGE="${{ env.ECR_REGISTRY }}/inventory-management/$service:${{ steps.sha.outputs.short }}"
+          echo "New image: $NEW_IMAGE"
           
-          # Force new deployment
+          # Create new task definition with updated image
+          NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "$NEW_IMAGE" \
+            '.containerDefinitions[0].image = $IMAGE | 
+             del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+          
+          # Register new task definition
+          NEW_TASK_INFO=$(aws ecs register-task-definition \
+            --cli-input-json "$NEW_TASK_DEF" \
+            --region ${{ env.AWS_REGION }})
+          
+          NEW_REVISION=$(echo $NEW_TASK_INFO | jq -r '.taskDefinition.revision')
+          echo "New task definition revision: $NEW_REVISION"
+          
+          # Update service with new task definition
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
             --service dev-$service \
+            --task-definition dev-$service:$NEW_REVISION \
             --force-new-deployment \
             --region ${{ env.AWS_REGION }} || echo "Service dev-$service not found or update failed"
+          
+          echo ""
         done
 
     - name: Wait for deployment to complete
@@ -144,12 +166,24 @@ jobs:
             --delay 10 || echo "Service dev-$service did not stabilize in time"
         done
 
-    - name: Run health checks
+    - name: Verify deployment
       run: |
-        echo "Running post-deployment health checks..."
-        # Add health check logic here
-        sleep 30
-        echo "Health checks completed"
+        echo "========================================="
+        echo "Deployment Verification"
+        echo "========================================="
+        services=("api-gateway" "inventory-service" "location-service" "user-service" "reporting-service")
+        for service in "${services[@]}"; do
+          SERVICE_INFO=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services dev-$service \
+            --region ${{ env.AWS_REGION }} \
+            --query 'services[0].{TaskDef:taskDefinition,Running:runningCount,Desired:desiredCount}' \
+            --output json)
+          
+          echo "Service: dev-$service"
+          echo "$SERVICE_INFO" | jq .
+          echo ""
+        done
 
   # Deploy to staging environment
   deploy-staging:
