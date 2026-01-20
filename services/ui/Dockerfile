@@ -3,14 +3,16 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Copy package files
-COPY services/ui/package.json services/ui/package-lock.json* ./
+# Copy package files first for better caching
+COPY services/ui/package*.json ./
 
-# Install dependencies
-RUN npm install --omit=dev
+# Install all dependencies (needed for build)
+RUN npm install
 
-# Copy source code
-COPY services/ui/ .
+# Copy all source files
+COPY services/ui/public ./public
+COPY services/ui/src ./src
+COPY services/ui/tsconfig.json ./
 
 # Build the application
 ENV REACT_APP_API_URL=""
