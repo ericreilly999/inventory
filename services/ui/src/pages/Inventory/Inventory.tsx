@@ -193,7 +193,13 @@ const Inventory: React.FC = () => {
       width: 150,
       valueGetter: (params) => params.row.current_location?.name || '',
     },
-    { field: 'created_at', headerName: 'Created', width: 150, type: 'dateTime' },
+    { 
+      field: 'created_at', 
+      headerName: 'Created', 
+      width: 150, 
+      type: 'dateTime',
+      valueGetter: (params) => params.row.created_at ? new Date(params.row.created_at) : null,
+    },
     {
       field: 'actions',
       type: 'actions',
@@ -234,7 +240,13 @@ const Inventory: React.FC = () => {
       width: 150,
       valueGetter: (params) => params.row.parent_item?.name || 'Unassigned',
     },
-    { field: 'created_at', headerName: 'Created', width: 150, type: 'dateTime' },
+    { 
+      field: 'created_at', 
+      headerName: 'Created', 
+      width: 150, 
+      type: 'dateTime',
+      valueGetter: (params) => params.row.created_at ? new Date(params.row.created_at) : null,
+    },
     {
       field: 'actions',
       type: 'actions',

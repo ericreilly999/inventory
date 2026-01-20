@@ -145,7 +145,13 @@ const Users: React.FC = () => {
       width: 100,
       type: 'boolean',
     },
-    { field: 'created_at', headerName: 'Created', width: 150, type: 'dateTime' },
+    { 
+      field: 'created_at', 
+      headerName: 'Created', 
+      width: 150, 
+      type: 'dateTime',
+      valueGetter: (params) => params.row.created_at ? new Date(params.row.created_at) : null,
+    },
     {
       field: 'actions',
       type: 'actions',

@@ -125,7 +125,13 @@ const Locations: React.FC = () => {
       width: 150,
       valueGetter: (params) => params.row.location_type?.name || '',
     },
-    { field: 'created_at', headerName: 'Created', width: 150, type: 'dateTime' },
+    { 
+      field: 'created_at', 
+      headerName: 'Created', 
+      width: 150, 
+      type: 'dateTime',
+      valueGetter: (params) => params.row.created_at ? new Date(params.row.created_at) : null,
+    },
     {
       field: 'actions',
       type: 'actions',

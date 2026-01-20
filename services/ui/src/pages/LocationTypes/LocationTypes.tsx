@@ -99,7 +99,13 @@ const LocationTypes: React.FC = () => {
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Name', width: 200 },
     { field: 'description', headerName: 'Description', width: 400 },
-    { field: 'created_at', headerName: 'Created', width: 150, type: 'dateTime' },
+    { 
+      field: 'created_at', 
+      headerName: 'Created', 
+      width: 150, 
+      type: 'dateTime',
+      valueGetter: (params) => params.row.created_at ? new Date(params.row.created_at) : null,
+    },
     {
       field: 'actions',
       type: 'actions',

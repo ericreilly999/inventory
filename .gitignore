@@ -265,7 +265,8 @@ dist
 
 # Gatsby files
 .cache/
-public
+# Note: Gatsby's public directory is typically at root, not in services
+# /public
 
 # Storybook build outputs
 .out
