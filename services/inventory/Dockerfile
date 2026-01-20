@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONPATH=/app \
     SERVICE_NAME=inventory-service \
-    SERVICE_PORT=8001
+    SERVICE_PORT=8003
 
 # Install system dependencies including CloudWatch agent dependencies
 RUN apt-get update && apt-get install -y \
@@ -49,11 +49,11 @@ RUN mkdir -p /app/logs && chown -R appuser:appuser /app/logs
 USER appuser
 
 # Expose port
-EXPOSE 8001
+EXPOSE 8003
 
 # Health check with service-specific endpoint
 HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8001/health || exit 1
+    CMD curl -f http://localhost:8003/health || exit 1
 
 # Run the application directly with uvicorn
-CMD ["uvicorn", "services.inventory.main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "services.inventory.main:app", "--host", "0.0.0.0", "--port", "8003"]

@@ -44,11 +44,22 @@ async def login(
         )
     
     # Create access token
+    # Convert permissions array to dictionary format
+    permissions_dict = {}
+    if user.role and user.role.permissions:
+        if isinstance(user.role.permissions, list):
+            # Convert array format ["*", "user:read"] to dict format {"*": True, "user:read": True}
+            for perm in user.role.permissions:
+                permissions_dict[perm] = True
+        elif isinstance(user.role.permissions, dict):
+            # Already in dict format
+            permissions_dict = user.role.permissions
+    
     token_data = {
         "sub": str(user.id),
         "username": user.username,
         "role_id": str(user.role_id),
-        "permissions": user.role.permissions if user.role else []
+        "permissions": permissions_dict
     }
     
     access_token = create_access_token(token_data)
@@ -109,11 +120,22 @@ async def refresh_token(
     """Refresh access token for current user."""
     
     # Create new access token
+    # Convert permissions array to dictionary format
+    permissions_dict = {}
+    if current_user.role and current_user.role.permissions:
+        if isinstance(current_user.role.permissions, list):
+            # Convert array format ["*", "user:read"] to dict format {"*": True, "user:read": True}
+            for perm in current_user.role.permissions:
+                permissions_dict[perm] = True
+        elif isinstance(current_user.role.permissions, dict):
+            # Already in dict format
+            permissions_dict = current_user.role.permissions
+    
     token_data = {
         "sub": str(current_user.id),
         "username": current_user.username,
         "role_id": str(current_user.role_id),
-        "permissions": current_user.role.permissions if current_user.role else []
+        "permissions": permissions_dict
     }
     
     access_token = create_access_token(token_data)

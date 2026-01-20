@@ -75,6 +75,11 @@ def require_permission(permission: str):
         """Check if user has required permission."""
         permissions = token_data.permissions or {}
         
+        # Check for wildcard permission (admin access)
+        if permissions.get("*", False):
+            return token_data
+        
+        # Check for specific permission
         if not permissions.get(permission, False):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

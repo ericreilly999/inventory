@@ -16,8 +16,8 @@ router = APIRouter()
 
 # Service endpoints mapping
 SERVICE_ENDPOINTS = {
-    "inventory": "http://inventory-service.dev.inventory.local:8002",
-    "location": "http://location-service.dev.inventory.local:8003", 
+    "inventory": "http://inventory-service.dev.inventory.local:8003",
+    "location": "http://location-service.dev.inventory.local:8002", 
     "user": "http://user-service.dev.inventory.local:8001",
     "reporting": "http://reporting-service.dev.inventory.local:8004"
 }
@@ -56,10 +56,10 @@ async def route_request(
         headers["content-type"] = request.headers["content-type"]
     
     # Add user context headers if available
-    if hasattr(request.state, "user_id"):
-        headers["X-User-ID"] = request.state.user_id
-    if hasattr(request.state, "user_role"):
-        headers["X-User-Role"] = request.state.user_role
+    if hasattr(request.state, "user_id") and request.state.user_id is not None:
+        headers["X-User-ID"] = str(request.state.user_id)
+    if hasattr(request.state, "user_role") and request.state.user_role is not None:
+        headers["X-User-Role"] = str(request.state.user_role)
     
     try:
         # Get request body if present
@@ -82,7 +82,8 @@ async def route_request(
             headers=headers,
             content=body,
             params=dict(request.query_params),
-            timeout=30.0
+            timeout=30.0,
+            follow_redirects=True
         )
         
         # Log response
@@ -163,6 +164,12 @@ async def route_request(
 async def login(request: Request, client: httpx.AsyncClient = Depends(get_service_client)):
     """Route login request to user service."""
     return await route_request(request, "user", "/auth/login", client)
+
+
+@router.get("/auth/me")
+async def get_current_user_info(request: Request, client: httpx.AsyncClient = Depends(get_service_client)):
+    """Route get current user request to user service."""
+    return await route_request(request, "user", "/auth/me", client)
 
 
 @router.post("/auth/register")

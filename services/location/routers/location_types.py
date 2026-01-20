@@ -34,7 +34,7 @@ async def list_location_types(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    _: User = Depends(require_location_read)
+    token_data = Depends(require_location_read)
 ):
     """List all location types."""
     location_types = db.query(LocationType).offset(skip).limit(limit).all()
@@ -44,7 +44,7 @@ async def list_location_types(
 @router.get("/{location_type_id}", response_model=LocationTypeResponse)
 async def get_location_type(
     location_type: LocationType = Depends(get_location_type_by_id),
-    _: User = Depends(require_location_read)
+    token_data = Depends(require_location_read)
 ):
     """Get a specific location type by ID."""
     return location_type

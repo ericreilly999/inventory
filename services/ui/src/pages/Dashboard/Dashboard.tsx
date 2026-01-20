@@ -57,11 +57,11 @@ const Dashboard: React.FC = () => {
         });
 
         // Fetch location-based inventory data for chart
-        const reportResponse = await apiService.get('/api/v1/reports/inventory');
-        const chartData = reportResponse.data.map((item: any) => ({
-          name: item.location_name,
-          itemCount: item.item_count,
-        }));
+        const reportResponse = await apiService.get('/api/v1/reports/inventory/status');
+        const chartData = reportResponse.data.locations?.map((loc: any) => ({
+          name: loc.location.name,
+          itemCount: loc.parent_items_count + loc.child_items_count,
+        })) || [];
         setLocationData(chartData);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);

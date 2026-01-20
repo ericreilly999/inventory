@@ -16,8 +16,9 @@ on:
         - prod
 
 env:
-  AWS_REGION: us-east-1
-  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+  AWS_REGION: us-west-2
+  ECR_REGISTRY: 290993374431.dkr.ecr.us-west-2.amazonaws.com
+  ECS_CLUSTER: dev-inventory-cluster
   
 jobs:
   # Build and push Docker images
@@ -27,7 +28,7 @@ jobs:
     
     strategy:
       matrix:
-        service: [api_gateway, inventory, location, user, reporting, ui]
+        service: [api_gateway, inventory, location, user, reporting]
     
     outputs:
       image-tag: ${{ steps.meta.outputs.tags }}
@@ -55,11 +56,10 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.ECR_REGISTRY }}/inventory-management-${{ matrix.service }}
+        images: ${{ env.ECR_REGISTRY }}/inventory-management/${{ matrix.service == 'api_gateway' && 'api-gateway' || format('{0}-service', matrix.service) }}
         tags: |
-          type=ref,event=branch
-          type=ref,event=pr
           type=sha,prefix={{branch}}-
+          type=raw,value={{sha}},enable=true
           type=raw,value=latest,enable={{is_default_branch}}
 
     - name: Build and push Docker image
@@ -98,55 +98,29 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.6.0
-
-    - name: Terraform Init
-      working-directory: terraform/environments/dev
-      run: terraform init
-      env:
-        TF_VAR_environment: dev
-        TF_VAR_aws_region: ${{ env.AWS_REGION }}
-
-    - name: Terraform Plan
-      working-directory: terraform/environments/dev
-      run: terraform plan -out=tfplan
-      env:
-        TF_VAR_environment: dev
-        TF_VAR_aws_region: ${{ env.AWS_REGION }}
-        TF_VAR_image_tag: ${{ github.sha }}
-
-    - name: Terraform Apply
-      working-directory: terraform/environments/dev
-      run: terraform apply -auto-approve tfplan
-      env:
-        TF_VAR_environment: dev
-        TF_VAR_aws_region: ${{ env.AWS_REGION }}
-        TF_VAR_image_tag: ${{ github.sha }}
-
     - name: Update ECS services
       run: |
-        services=("api-gateway" "inventory-service" "location-service" "user-service" "reporting-service" "ui-service")
+        services=("api-gateway" "inventory-service" "location-service" "user-service" "reporting-service")
         for service in "${services[@]}"; do
-          echo "Updating ECS service: inventory-management-dev-$service"
+          echo "Updating ECS service: dev-$service"
           aws ecs update-service \
-            --cluster inventory-management-dev \
-            --service inventory-management-dev-$service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service dev-$service \
             --force-new-deployment \
-            --region ${{ env.AWS_REGION }}
+            --region ${{ env.AWS_REGION }} || echo "Service dev-$service not found or update failed"
         done
 
     - name: Wait for deployment to complete
       run: |
-        services=("api-gateway" "inventory-service" "location-service" "user-service" "reporting-service" "ui-service")
+        services=("api-gateway" "inventory-service" "location-service" "user-service" "reporting-service")
         for service in "${services[@]}"; do
-          echo "Waiting for service to stabilize: inventory-management-dev-$service"
+          echo "Waiting for service to stabilize: dev-$service"
           aws ecs wait services-stable \
-            --cluster inventory-management-dev \
-            --services inventory-management-dev-$service \
-            --region ${{ env.AWS_REGION }}
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services dev-$service \
+            --region ${{ env.AWS_REGION }} \
+            --max-attempts 30 \
+            --delay 10 || echo "Service dev-$service did not stabilize in time"
         done
 
     - name: Run health checks

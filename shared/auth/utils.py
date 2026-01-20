@@ -24,7 +24,9 @@ def hash_password(password: str) -> str:
         if len(password_str.encode('utf-8')) > 72:
             password_str = password_str[:72]
         
-        return pwd_context.hash(password_str)
+        # Try to use bcrypt with explicit configuration to avoid version detection issues
+        from passlib.handlers.bcrypt import bcrypt
+        return bcrypt.using(rounds=12).hash(password_str)
     except Exception as e:
         logger.error(f"Bcrypt hashing failed: {e}, falling back to SHA256")
         # Fallback to SHA256 with salt for now
@@ -39,7 +41,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         if len(plain_password.encode('utf-8')) > 72:
             plain_password = plain_password[:72]
         
-        return pwd_context.verify(plain_password, hashed_password)
+        # Try to verify with bcrypt directly to avoid version detection
+        from passlib.handlers.bcrypt import bcrypt
+        if hashed_password.startswith('$2b$') or hashed_password.startswith('$2a$') or hashed_password.startswith('$2y$'):
+            return bcrypt.verify(plain_password, hashed_password)
+        else:
+            # Try the context method as fallback
+            return pwd_context.verify(plain_password, hashed_password)
     except Exception as e:
         logger.error(f"Bcrypt verification failed: {e}, trying SHA256 fallback")
         # Fallback to SHA256 verification
