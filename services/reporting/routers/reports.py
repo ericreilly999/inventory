@@ -29,13 +29,13 @@ router = APIRouter()
     "/inventory/status",
     response_model=InventoryStatusReport,
     summary="Get inventory status report",
-    description="Generate a report showing current inventory status by location"
+    description="Generate a report showing current inventory status by location",
+    dependencies=[Depends(require_reports_read)]
 )
 async def get_inventory_status_report(
     location_ids: Optional[List[UUID]] = Query(None, description="Filter by specific locations"),
     include_item_details: bool = Query(False, description="Include detailed item information"),
-    db: Session = Depends(get_db),
-    _: dict = Depends(require_reports_read)
+    db: Session = Depends(get_db)
 ):
     """
     Generate inventory status report by location.
@@ -137,7 +137,8 @@ async def get_inventory_status_report(
     "/movements/history",
     response_model=MovementHistoryReport,
     summary="Get movement history report",
-    description="Generate a report showing item movement history with optional date filtering"
+    description="Generate a report showing item movement history with optional date filtering",
+    dependencies=[Depends(require_reports_read)]
 )
 async def get_movement_history_report(
     start_date: Optional[datetime] = Query(None, description="Start date for filtering"),
@@ -145,8 +146,7 @@ async def get_movement_history_report(
     location_ids: Optional[List[UUID]] = Query(None, description="Filter by specific locations"),
     item_type_ids: Optional[List[UUID]] = Query(None, description="Filter by specific item types"),
     user_ids: Optional[List[UUID]] = Query(None, description="Filter by specific users"),
-    db: Session = Depends(get_db),
-    _: dict = Depends(require_reports_read)
+    db: Session = Depends(get_db)
 ):
     """
     Generate movement history report with date filtering.
@@ -245,13 +245,13 @@ async def get_movement_history_report(
     "/inventory/counts",
     response_model=InventoryCountReport,
     summary="Get inventory count report",
-    description="Generate a report showing inventory counts by item type and location type"
+    description="Generate a report showing inventory counts by item type and location type",
+    dependencies=[Depends(require_reports_read)]
 )
 async def get_inventory_count_report(
     location_type_ids: Optional[List[UUID]] = Query(None, description="Filter by location types"),
     item_type_ids: Optional[List[UUID]] = Query(None, description="Filter by item types"),
-    db: Session = Depends(get_db),
-    _: dict = Depends(require_reports_read)
+    db: Session = Depends(get_db)
 ):
     """
     Generate inventory count report by item type and location type.
@@ -347,13 +347,13 @@ async def get_inventory_count_report(
 @router.get(
     "/export/inventory",
     summary="Export inventory data",
-    description="Export inventory data in structured format for analysis"
+    description="Export inventory data in structured format for analysis",
+    dependencies=[Depends(require_reports_read)]
 )
 async def export_inventory_data(
     format: str = Query("json", description="Export format (json, csv)"),
     location_ids: Optional[List[UUID]] = Query(None, description="Filter by specific locations"),
-    db: Session = Depends(get_db),
-    _: dict = Depends(require_reports_read)
+    db: Session = Depends(get_db)
 ):
     """
     Export inventory data in structured format.
