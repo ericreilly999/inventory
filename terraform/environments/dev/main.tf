@@ -29,10 +29,10 @@ data "aws_availability_zones" "available" {
 module "networking" {
   source = "../../modules/networking"
 
-  environment         = var.environment
+  environment        = var.environment
   vpc_cidr           = var.vpc_cidr
   availability_zones = data.aws_availability_zones.available.names
-  
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -45,7 +45,7 @@ module "security" {
 
   environment = var.environment
   vpc_id      = module.networking.vpc_id
-  
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -56,18 +56,18 @@ module "security" {
 module "rds" {
   source = "../../modules/rds"
 
-  environment            = var.environment
-  vpc_id                = module.networking.vpc_id
-  database_subnet_ids   = module.networking.database_subnet_ids
-  db_subnet_group_name  = module.networking.database_subnet_group_name
-  security_group_ids    = [module.security.rds_security_group_id]
-  
-  db_instance_class     = var.db_instance_class
-  db_allocated_storage  = var.db_allocated_storage
+  environment          = var.environment
+  vpc_id               = module.networking.vpc_id
+  database_subnet_ids  = module.networking.database_subnet_ids
+  db_subnet_group_name = module.networking.database_subnet_group_name
+  security_group_ids   = [module.security.rds_security_group_id]
+
+  db_instance_class    = var.db_instance_class
+  db_allocated_storage = var.db_allocated_storage
   db_name              = var.db_name
   db_username          = var.db_username
   db_password          = var.db_password
-  
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -78,15 +78,15 @@ module "rds" {
 module "elasticache" {
   source = "../../modules/elasticache"
 
-  environment            = var.environment
-  vpc_id                = module.networking.vpc_id
-  cache_subnet_ids      = module.networking.private_subnet_ids
+  environment             = var.environment
+  vpc_id                  = module.networking.vpc_id
+  cache_subnet_ids        = module.networking.private_subnet_ids
   cache_subnet_group_name = module.networking.cache_subnet_group_name
-  security_group_ids    = [module.security.elasticache_security_group_id]
-  
-  node_type             = var.cache_node_type
-  num_cache_nodes       = var.cache_num_nodes
-  
+  security_group_ids      = [module.security.elasticache_security_group_id]
+
+  node_type       = var.cache_node_type
+  num_cache_nodes = var.cache_num_nodes
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -97,11 +97,11 @@ module "elasticache" {
 module "alb" {
   source = "../../modules/alb"
 
-  environment        = var.environment
+  environment       = var.environment
   vpc_id            = module.networking.vpc_id
   public_subnet_ids = module.networking.public_subnet_ids
   security_group_id = module.security.alb_security_group_id
-  
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -114,7 +114,7 @@ module "ecs_cluster" {
 
   environment = var.environment
   vpc_id      = module.networking.vpc_id
-  
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -125,24 +125,24 @@ module "ecs_cluster" {
 module "api_gateway_service" {
   source = "../../modules/ecs-service"
 
-  environment                      = var.environment
-  service_name                    = "api-gateway"
-  cluster_id                      = module.ecs_cluster.cluster_id
-  cluster_name                    = module.ecs_cluster.cluster_name
-  task_execution_role_arn         = module.ecs_cluster.task_execution_role_arn
-  task_role_arn                   = module.ecs_cluster.task_role_arn
-  log_group_name                  = module.ecs_cluster.log_group_name
-  service_discovery_namespace_id  = module.ecs_cluster.service_discovery_namespace_id
+  environment                    = var.environment
+  service_name                   = "api-gateway"
+  cluster_id                     = module.ecs_cluster.cluster_id
+  cluster_name                   = module.ecs_cluster.cluster_name
+  task_execution_role_arn        = module.ecs_cluster.task_execution_role_arn
+  task_role_arn                  = module.ecs_cluster.task_role_arn
+  log_group_name                 = module.ecs_cluster.log_group_name
+  service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
   container_image = var.api_gateway_image
   container_port  = 8000
-  cpu            = 256
-  memory         = 512
-  desired_count  = 1
+  cpu             = 256
+  memory          = 512
+  desired_count   = 1
 
   security_group_ids = [module.security.ecs_security_group_id]
-  subnet_ids        = module.networking.private_subnet_ids
-  target_group_arn  = module.alb.api_gateway_target_group_arn
+  subnet_ids         = module.networking.private_subnet_ids
+  target_group_arn   = module.alb.api_gateway_target_group_arn
 
   environment_variables = [
     {
@@ -189,23 +189,23 @@ module "api_gateway_service" {
 module "user_service" {
   source = "../../modules/ecs-service"
 
-  environment                      = var.environment
-  service_name                    = "user-service"
-  cluster_id                      = module.ecs_cluster.cluster_id
-  cluster_name                    = module.ecs_cluster.cluster_name
-  task_execution_role_arn         = module.ecs_cluster.task_execution_role_arn
-  task_role_arn                   = module.ecs_cluster.task_role_arn
-  log_group_name                  = module.ecs_cluster.log_group_name
-  service_discovery_namespace_id  = module.ecs_cluster.service_discovery_namespace_id
+  environment                    = var.environment
+  service_name                   = "user-service"
+  cluster_id                     = module.ecs_cluster.cluster_id
+  cluster_name                   = module.ecs_cluster.cluster_name
+  task_execution_role_arn        = module.ecs_cluster.task_execution_role_arn
+  task_role_arn                  = module.ecs_cluster.task_role_arn
+  log_group_name                 = module.ecs_cluster.log_group_name
+  service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
   container_image = var.user_service_image
   container_port  = 8001
-  cpu            = 256
-  memory         = 512
-  desired_count  = 1
+  cpu             = 256
+  memory          = 512
+  desired_count   = 1
 
   security_group_ids = [module.security.ecs_security_group_id]
-  subnet_ids        = module.networking.private_subnet_ids
+  subnet_ids         = module.networking.private_subnet_ids
 
   environment_variables = [
     {
@@ -244,23 +244,23 @@ module "user_service" {
 module "inventory_service" {
   source = "../../modules/ecs-service"
 
-  environment                      = var.environment
-  service_name                    = "inventory-service"
-  cluster_id                      = module.ecs_cluster.cluster_id
-  cluster_name                    = module.ecs_cluster.cluster_name
-  task_execution_role_arn         = module.ecs_cluster.task_execution_role_arn
-  task_role_arn                   = module.ecs_cluster.task_role_arn
-  log_group_name                  = module.ecs_cluster.log_group_name
-  service_discovery_namespace_id  = module.ecs_cluster.service_discovery_namespace_id
+  environment                    = var.environment
+  service_name                   = "inventory-service"
+  cluster_id                     = module.ecs_cluster.cluster_id
+  cluster_name                   = module.ecs_cluster.cluster_name
+  task_execution_role_arn        = module.ecs_cluster.task_execution_role_arn
+  task_role_arn                  = module.ecs_cluster.task_role_arn
+  log_group_name                 = module.ecs_cluster.log_group_name
+  service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
   container_image = var.inventory_service_image
   container_port  = 8002
-  cpu            = 256
-  memory         = 512
-  desired_count  = 1
+  cpu             = 256
+  memory          = 512
+  desired_count   = 1
 
   security_group_ids = [module.security.ecs_security_group_id]
-  subnet_ids        = module.networking.private_subnet_ids
+  subnet_ids         = module.networking.private_subnet_ids
 
   environment_variables = [
     {
@@ -299,23 +299,23 @@ module "inventory_service" {
 module "location_service" {
   source = "../../modules/ecs-service"
 
-  environment                      = var.environment
-  service_name                    = "location-service"
-  cluster_id                      = module.ecs_cluster.cluster_id
-  cluster_name                    = module.ecs_cluster.cluster_name
-  task_execution_role_arn         = module.ecs_cluster.task_execution_role_arn
-  task_role_arn                   = module.ecs_cluster.task_role_arn
-  log_group_name                  = module.ecs_cluster.log_group_name
-  service_discovery_namespace_id  = module.ecs_cluster.service_discovery_namespace_id
+  environment                    = var.environment
+  service_name                   = "location-service"
+  cluster_id                     = module.ecs_cluster.cluster_id
+  cluster_name                   = module.ecs_cluster.cluster_name
+  task_execution_role_arn        = module.ecs_cluster.task_execution_role_arn
+  task_role_arn                  = module.ecs_cluster.task_role_arn
+  log_group_name                 = module.ecs_cluster.log_group_name
+  service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
   container_image = var.location_service_image
   container_port  = 8003
-  cpu            = 256
-  memory         = 512
-  desired_count  = 1
+  cpu             = 256
+  memory          = 512
+  desired_count   = 1
 
   security_group_ids = [module.security.ecs_security_group_id]
-  subnet_ids        = module.networking.private_subnet_ids
+  subnet_ids         = module.networking.private_subnet_ids
 
   environment_variables = [
     {
@@ -354,23 +354,23 @@ module "location_service" {
 module "reporting_service" {
   source = "../../modules/ecs-service"
 
-  environment                      = var.environment
-  service_name                    = "reporting-service"
-  cluster_id                      = module.ecs_cluster.cluster_id
-  cluster_name                    = module.ecs_cluster.cluster_name
-  task_execution_role_arn         = module.ecs_cluster.task_execution_role_arn
-  task_role_arn                   = module.ecs_cluster.task_role_arn
-  log_group_name                  = module.ecs_cluster.log_group_name
-  service_discovery_namespace_id  = module.ecs_cluster.service_discovery_namespace_id
+  environment                    = var.environment
+  service_name                   = "reporting-service"
+  cluster_id                     = module.ecs_cluster.cluster_id
+  cluster_name                   = module.ecs_cluster.cluster_name
+  task_execution_role_arn        = module.ecs_cluster.task_execution_role_arn
+  task_role_arn                  = module.ecs_cluster.task_role_arn
+  log_group_name                 = module.ecs_cluster.log_group_name
+  service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
   container_image = var.reporting_service_image
   container_port  = 8004
-  cpu            = 256
-  memory         = 512
-  desired_count  = 1
+  cpu             = 256
+  memory          = 512
+  desired_count   = 1
 
   security_group_ids = [module.security.ecs_security_group_id]
-  subnet_ids        = module.networking.private_subnet_ids
+  subnet_ids         = module.networking.private_subnet_ids
 
   environment_variables = [
     {
@@ -409,24 +409,24 @@ module "reporting_service" {
 module "ui_service" {
   source = "../../modules/ecs-service"
 
-  environment                      = var.environment
-  service_name                    = "ui-service"
-  cluster_id                      = module.ecs_cluster.cluster_id
-  cluster_name                    = module.ecs_cluster.cluster_name
-  task_execution_role_arn         = module.ecs_cluster.task_execution_role_arn
-  task_role_arn                   = module.ecs_cluster.task_role_arn
-  log_group_name                  = module.ecs_cluster.log_group_name
-  service_discovery_namespace_id  = module.ecs_cluster.service_discovery_namespace_id
+  environment                    = var.environment
+  service_name                   = "ui-service"
+  cluster_id                     = module.ecs_cluster.cluster_id
+  cluster_name                   = module.ecs_cluster.cluster_name
+  task_execution_role_arn        = module.ecs_cluster.task_execution_role_arn
+  task_role_arn                  = module.ecs_cluster.task_role_arn
+  log_group_name                 = module.ecs_cluster.log_group_name
+  service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
   container_image = var.ui_service_image
   container_port  = 80
-  cpu            = 256
-  memory         = 512
-  desired_count  = 1
+  cpu             = 256
+  memory          = 512
+  desired_count   = 1
 
   security_group_ids = [module.security.ecs_security_group_id]
-  subnet_ids        = module.networking.private_subnet_ids
-  target_group_arn  = module.alb.ui_target_group_arn
+  subnet_ids         = module.networking.private_subnet_ids
+  target_group_arn   = module.alb.ui_target_group_arn
 
   environment_variables = [
     {

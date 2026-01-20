@@ -15,8 +15,8 @@ resource "aws_elasticache_parameter_group" "main" {
 
 # ElastiCache replication group
 resource "aws_elasticache_replication_group" "main" {
-  replication_group_id       = "${var.environment}-inventory-redis"
-  description                = "Redis cluster for inventory management system"
+  replication_group_id = "${var.environment}-inventory-redis"
+  description          = "Redis cluster for inventory management system"
 
   # Node configuration
   node_type            = var.node_type
@@ -37,8 +37,8 @@ resource "aws_elasticache_replication_group" "main" {
 
   # Backup configuration
   snapshot_retention_limit = var.snapshot_retention_limit
-  snapshot_window         = "03:00-05:00"
-  maintenance_window      = "sun:05:00-sun:07:00"
+  snapshot_window          = "03:00-05:00"
+  maintenance_window       = "sun:05:00-sun:07:00"
 
   # Automatic failover
   automatic_failover_enabled = var.num_cache_nodes > 1

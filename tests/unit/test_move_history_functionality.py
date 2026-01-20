@@ -253,7 +253,7 @@ class TestMoveHistoryQuerying:
             current_location=location1,
             creator=user
         )
-        
+
         parent_item2 = ParentItem(
             id=uuid4(),
             name="Test Item 2",
@@ -265,10 +265,10 @@ class TestMoveHistoryQuerying:
             current_location=location1,
             creator=user
         )
-        
+
         # Add all entities to database
         test_db_session.add_all([
-            role, user, location_type, location1, location2, 
+            role, user, location_type, location1, location2,
             item_type, parent_item1, parent_item2
         ])
         test_db_session.commit()

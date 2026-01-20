@@ -78,7 +78,7 @@ jobs:
         output: 'trivy-${{ matrix.service }}.sarif'
 
     - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: 'trivy-${{ matrix.service }}.sarif'
@@ -93,7 +93,7 @@ jobs:
         severity-cutoff: high
 
     - name: Upload Grype scan results
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: ${{ steps.grype-scan.outputs.sarif }}
@@ -117,7 +117,7 @@ jobs:
         output_file_path: checkov-report.sarif
 
     - name: Upload Checkov scan results
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: checkov-report.sarif
@@ -131,7 +131,7 @@ jobs:
         soft_fail: true
 
     - name: Upload TFSec scan results
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: tfsec.sarif
@@ -182,8 +182,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: services/ui/package-lock.json
 
     - name: Install UI dependencies
       working-directory: services/ui

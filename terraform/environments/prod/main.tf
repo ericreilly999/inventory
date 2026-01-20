@@ -29,10 +29,10 @@ data "aws_availability_zones" "available" {
 module "networking" {
   source = "../../modules/networking"
 
-  environment         = var.environment
+  environment        = var.environment
   vpc_cidr           = var.vpc_cidr
   availability_zones = data.aws_availability_zones.available.names
-  
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -45,7 +45,7 @@ module "security" {
 
   environment = var.environment
   vpc_id      = module.networking.vpc_id
-  
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -56,20 +56,20 @@ module "security" {
 module "rds" {
   source = "../../modules/rds"
 
-  environment            = var.environment
-  vpc_id                = module.networking.vpc_id
-  database_subnet_ids   = module.networking.database_subnet_ids
-  db_subnet_group_name  = module.networking.database_subnet_group_name
-  security_group_ids    = [module.security.rds_security_group_id]
-  
-  db_instance_class     = var.db_instance_class
-  db_allocated_storage  = var.db_allocated_storage
+  environment          = var.environment
+  vpc_id               = module.networking.vpc_id
+  database_subnet_ids  = module.networking.database_subnet_ids
+  db_subnet_group_name = module.networking.database_subnet_group_name
+  security_group_ids   = [module.security.rds_security_group_id]
+
+  db_instance_class    = var.db_instance_class
+  db_allocated_storage = var.db_allocated_storage
   db_name              = var.db_name
   db_username          = var.db_username
   db_password          = var.db_password
   multi_az             = var.db_multi_az
   deletion_protection  = var.db_deletion_protection
-  
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -80,15 +80,15 @@ module "rds" {
 module "elasticache" {
   source = "../../modules/elasticache"
 
-  environment            = var.environment
-  vpc_id                = module.networking.vpc_id
-  cache_subnet_ids      = module.networking.private_subnet_ids
+  environment             = var.environment
+  vpc_id                  = module.networking.vpc_id
+  cache_subnet_ids        = module.networking.private_subnet_ids
   cache_subnet_group_name = module.networking.cache_subnet_group_name
-  security_group_ids    = [module.security.elasticache_security_group_id]
-  
-  node_type             = var.cache_node_type
-  num_cache_nodes       = var.cache_num_nodes
-  
+  security_group_ids      = [module.security.elasticache_security_group_id]
+
+  node_type       = var.cache_node_type
+  num_cache_nodes = var.cache_num_nodes
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -99,13 +99,13 @@ module "elasticache" {
 module "alb" {
   source = "../../modules/alb"
 
-  environment               = var.environment
-  vpc_id                   = module.networking.vpc_id
-  public_subnet_ids        = module.networking.public_subnet_ids
-  security_group_id        = module.security.alb_security_group_id
-  certificate_arn          = var.ssl_certificate_arn
+  environment                = var.environment
+  vpc_id                     = module.networking.vpc_id
+  public_subnet_ids          = module.networking.public_subnet_ids
+  security_group_id          = module.security.alb_security_group_id
+  certificate_arn            = var.ssl_certificate_arn
   enable_deletion_protection = var.alb_deletion_protection
-  
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -118,7 +118,7 @@ module "ecs_cluster" {
 
   environment = var.environment
   vpc_id      = module.networking.vpc_id
-  
+
   tags = {
     Environment = var.environment
     Product     = "inventory-management"
@@ -129,24 +129,24 @@ module "ecs_cluster" {
 module "api_gateway_service" {
   source = "../../modules/ecs-service"
 
-  environment                      = var.environment
-  service_name                    = "api-gateway"
-  cluster_id                      = module.ecs_cluster.cluster_id
-  cluster_name                    = module.ecs_cluster.cluster_name
-  task_execution_role_arn         = module.ecs_cluster.task_execution_role_arn
-  task_role_arn                   = module.ecs_cluster.task_role_arn
-  log_group_name                  = module.ecs_cluster.log_group_name
-  service_discovery_namespace_id  = module.ecs_cluster.service_discovery_namespace_id
+  environment                    = var.environment
+  service_name                   = "api-gateway"
+  cluster_id                     = module.ecs_cluster.cluster_id
+  cluster_name                   = module.ecs_cluster.cluster_name
+  task_execution_role_arn        = module.ecs_cluster.task_execution_role_arn
+  task_role_arn                  = module.ecs_cluster.task_role_arn
+  log_group_name                 = module.ecs_cluster.log_group_name
+  service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
   container_image = var.api_gateway_image
   container_port  = 8000
-  cpu            = var.api_gateway_cpu
-  memory         = var.api_gateway_memory
-  desired_count  = var.api_gateway_desired_count
+  cpu             = var.api_gateway_cpu
+  memory          = var.api_gateway_memory
+  desired_count   = var.api_gateway_desired_count
 
   security_group_ids = [module.security.ecs_security_group_id]
-  subnet_ids        = module.networking.private_subnet_ids
-  target_group_arn  = module.alb.api_gateway_target_group_arn
+  subnet_ids         = module.networking.private_subnet_ids
+  target_group_arn   = module.alb.api_gateway_target_group_arn
 
   min_capacity = var.api_gateway_min_capacity
   max_capacity = var.api_gateway_max_capacity
