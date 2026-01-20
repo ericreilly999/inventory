@@ -38,7 +38,7 @@ async def list_locations(
     limit: int = 100,
     location_type_id: Optional[UUID] = Query(None, description="Filter by location type"),
     db: Session = Depends(get_db),
-    _: User = Depends(require_location_read)
+    token_data = Depends(require_location_read)
 ):
     """List all locations with optional filtering."""
     query = db.query(Location).options(joinedload(Location.location_type))
@@ -56,7 +56,7 @@ async def list_locations_with_item_counts(
     limit: int = 100,
     location_type_id: Optional[UUID] = Query(None, description="Filter by location type"),
     db: Session = Depends(get_db),
-    _: User = Depends(require_location_read)
+    token_data = Depends(require_location_read)
 ):
     """List all locations with item counts."""
     query = db.query(Location).options(joinedload(Location.location_type))
@@ -83,7 +83,7 @@ async def list_locations_with_item_counts(
 @router.get("/{location_id}", response_model=LocationResponse)
 async def get_location(
     location: Location = Depends(get_location_by_id),
-    _: User = Depends(require_location_read)
+    token_data = Depends(require_location_read)
 ):
     """Get a specific location by ID."""
     return location
@@ -193,7 +193,7 @@ async def delete_location(
 async def get_location_items(
     location: Location = Depends(get_location_by_id),
     db: Session = Depends(get_db),
-    _: User = Depends(require_location_read)
+    token_data = Depends(require_location_read)
 ):
     """Get all items currently at this location."""
     items = db.query(ParentItem).filter(

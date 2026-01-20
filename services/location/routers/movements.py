@@ -93,7 +93,7 @@ async def get_move_history(
     from_date: Optional[datetime] = Query(None, description="Filter moves from this date"),
     to_date: Optional[datetime] = Query(None, description="Filter moves to this date"),
     db: Session = Depends(get_db),
-    _: User = Depends(require_location_read)
+    token_data = Depends(require_location_read)
 ):
     """Get move history with optional filtering."""
     query = db.query(MoveHistory).order_by(MoveHistory.moved_at.desc())
@@ -124,7 +124,7 @@ async def get_item_move_history(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    _: User = Depends(require_location_read)
+    token_data = Depends(require_location_read)
 ):
     """Get move history for a specific parent item."""
     # Verify the item exists
@@ -141,7 +141,7 @@ async def get_item_move_history(
 async def get_recent_moves(
     limit: int = Query(50, le=100, description="Number of recent moves to return"),
     db: Session = Depends(get_db),
-    _: User = Depends(require_location_read)
+    token_data = Depends(require_location_read)
 ):
     """Get recent item movements."""
     moves = db.query(MoveHistory).order_by(

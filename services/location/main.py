@@ -34,7 +34,7 @@ app.add_middleware(auth_middleware.AuthMiddleware)
 
 # Include routers
 app.include_router(locations.router, prefix="/api/v1/locations", tags=["locations"])
-app.include_router(location_types.router, prefix="/api/v1/location-types", tags=["location-types"])
+app.include_router(location_types.router, prefix="/api/v1/locations/types", tags=["location-types"])
 app.include_router(movements.router, prefix="/api/v1/movements", tags=["movements"])
 
 
