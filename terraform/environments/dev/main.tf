@@ -254,7 +254,7 @@ module "inventory_service" {
   service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
   container_image = var.inventory_service_image
-  container_port  = 8002
+  container_port  = 8003
   cpu             = 256
   memory          = 512
   desired_count   = 1
@@ -309,7 +309,7 @@ module "location_service" {
   service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
   container_image = var.location_service_image
-  container_port  = 8003
+  container_port  = 8002
   cpu             = 256
   memory          = 512
   desired_count   = 1
