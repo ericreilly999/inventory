@@ -3,110 +3,93 @@
 ## Problem
 GET `/api/v1/locations/types` was returning 422 Unprocessable Entity errors consistently.
 
-## Investigation Process
-
-### Initial Hypotheses (Ruled Out)
-1. ✅ Permission system issues - Already fixed with wildcard permission support
-2. ✅ JWT token format - Already fixed with array-to-dict conversion
-3. ✅ Route prefix mismatch - Already fixed (changed to `/api/v1/locations/types`)
-4. ✅ Type annotation issues - Already fixed (changed `_: User` to `token_data`)
-
-### Debug Logging Findings
-- Enabled debug mode and custom validation error handler in `services/location/main.py`
-- Logs showed:
-  - "Location Service - GET /api/v1/locations/types" ✅ Request received
-  - "422 Unprocessable Entity" ❌ Error occurred
-  - **NO "Validation error" log message** ⚠️ Custom handler never triggered!
-
-This indicated the 422 was happening BEFORE reaching our route handler or exception handler.
-
 ## Root Cause
 
-**FastAPI was trying to validate `token_data = Depends(require_location_read)` as a function parameter!**
+**FastAPI Route Matching Order Issue**
 
-When you use `Depends()` as a function parameter with a variable name like:
+The routers were included in this order:
 ```python
-async def list_location_types(
-    token_data = Depends(require_location_read)  # ❌ WRONG
-):
+app.include_router(locations.router, prefix="/api/v1/locations")
+app.include_router(location_types.router, prefix="/api/v1/locations/types")
 ```
 
-FastAPI tries to:
-1. Inject the dependency result into the parameter
-2. Validate the parameter type
-3. Include it in the OpenAPI schema
+When a request came for `/api/v1/locations/types`, FastAPI tried to match it against routes in order:
+1. First checked `locations.router` routes with prefix `/api/v1/locations`
+2. Found route `/{location_id}` which creates pattern `/api/v1/locations/{location_id}`
+3. Matched `/api/v1/locations/types` against this pattern
+4. Tried to parse "types" as a UUID for the `location_id` parameter
+5. Failed validation with error: "Input should be a valid UUID, invalid character: expected an optional prefix of `urn:uuid:` followed by [0-9a-fA-F-], found `t` at 1"
 
-Since `require_location_read` returns a `TokenData` object but there's no type annotation, FastAPI's validation was failing with 422 before even calling the route handler.
+The actual error from logs:
+```json
+{
+  "path": "/api/v1/locations/types",
+  "method": "GET",
+  "errors": [{
+    "type": "uuid_parsing",
+    "loc": ["path", "location_id"],
+    "msg": "Input should be a valid UUID, invalid character: expected an optional prefix of `urn:uuid:` followed by [0-9a-fA-F-], found `t` at 1",
+    "input": "types"
+  }]
+}
+```
 
 ## Solution
 
-Use `dependencies` parameter in the route decorator instead:
+**Include more specific routes BEFORE generic parameterized routes:**
+
 ```python
-@router.get("/", dependencies=[Depends(require_location_read)])  # ✅ CORRECT
-async def list_location_types(
-    # No token_data parameter needed
-):
+# ORDER MATTERS! More specific routes must come first
+app.include_router(location_types.router, prefix="/api/v1/locations/types")
+app.include_router(locations.router, prefix="/api/v1/locations")
 ```
 
-This tells FastAPI:
-- Execute the dependency for validation/authorization
-- Don't inject the result as a parameter
-- Don't include it in OpenAPI schema
+This is a fundamental FastAPI routing principle: when you have overlapping route patterns, the more specific route must be registered first. Otherwise, the generic parameterized route will match first and cause validation errors.
 
 ## Files Changed
 
-### services/location/routers/location_types.py
-- Changed `list_location_types()` to use `dependencies=[Depends(require_location_read)]`
-- Changed `get_location_type()` to use `dependencies=[Depends(require_location_read)]`
-- Removed `token_data` parameters
+### services/location/main.py
+- Swapped order of router includes
+- Added comment explaining the importance of order
 
-### services/location/routers/locations.py
-- Changed `list_locations()` to use `dependencies=[Depends(require_location_read)]`
-- Changed `list_locations_with_item_counts()` to use `dependencies=[Depends(require_location_read)]`
-- Changed `get_location()` to use `dependencies=[Depends(require_location_read)]`
-- Changed `get_location_items()` to use `dependencies=[Depends(require_location_read)]`
-- Removed `token_data` parameters
+## Why Previous Fixes Didn't Work
 
-### services/location/routers/movements.py
-- Changed `get_move_history()` to use `dependencies=[Depends(require_location_read)]`
-- Changed `get_item_move_history()` to use `dependencies=[Depends(require_location_read)]`
-- Changed `get_recent_moves()` to use `dependencies=[Depends(require_location_read)]`
-- Removed `token_data` parameters
+1. **Permission system fixes** - Were correct but not the issue
+2. **JWT token format fixes** - Were correct but not the issue  
+3. **Route prefix changes** - Were correct but not the issue
+4. **Type annotation fixes** - Were correct but not the issue
+5. **Dependencies parameter pattern** - Was correct but not the issue
 
-## Pattern Consistency
-
-This fix aligns the location service with the pattern already used in:
-- ✅ Inventory service (`services/inventory/routers/*.py`)
-- ✅ User service (`services/user/routers/*.py`)
-- ✅ Reporting service (if applicable)
-
-All services now consistently use `dependencies=[Depends(require_xxx)]` for authorization checks.
+All these fixes were valid improvements, but the actual problem was route matching order happening before any of our code executed.
 
 ## Deployment
 
-**Commit:** e9d0ad7
+**Commit:** f2af408
 **Status:** Pushed to main, CD pipeline triggered
 **Expected Result:** Location types endpoint should return 200 OK with data
 
 ## Testing
 
 After deployment completes:
-1. Log out and log back in to get fresh JWT token
-2. Navigate to Location Types page
-3. Should see list of location types without 422 errors
-4. Check CloudWatch logs - should see 200 OK responses
+1. Navigate to Location Types page
+2. Should see list of location types without 422 errors
+3. Check CloudWatch logs - should see 200 OK responses
+4. No need to log out/in - this wasn't a JWT issue
 
 ## Lessons Learned
 
-1. **FastAPI Dependency Patterns:**
-   - Use `dependencies=[Depends(xxx)]` for authorization/validation only
-   - Use `param = Depends(xxx)` only when you need the dependency result in your function
+1. **FastAPI Route Order is Critical:**
+   - More specific routes must be registered before generic ones
+   - `/api/v1/locations/types` must come before `/api/v1/locations/{location_id}`
+   - This applies to any framework with pattern-based routing
 
-2. **Debugging 422 Errors:**
-   - If custom exception handlers don't trigger, the error is happening in FastAPI's validation layer
-   - Check for parameter type mismatches or missing type annotations
-   - Compare with working examples in other services
+2. **Debug Logging is Essential:**
+   - The custom validation error handler we added revealed the actual error
+   - Without seeing the full validation error, we were guessing at the cause
+   - Always log validation errors with full context
 
-3. **Consistency Matters:**
-   - Following established patterns prevents subtle bugs
-   - Code review should catch pattern deviations
+3. **422 Errors Can Have Multiple Causes:**
+   - Request validation (query params, body)
+   - Path parameter validation (our case)
+   - Dependency injection validation
+   - Each requires different debugging approaches
