@@ -52,7 +52,7 @@ const Locations: React.FC = () => {
     try {
       const [locationsResponse, typesResponse] = await Promise.all([
         apiService.get('/api/v1/locations'),
-        apiService.get('/api/v1/locations/types'),
+        apiService.get('/api/v1/location-types'),
       ]);
 
       setLocations(locationsResponse.data);
