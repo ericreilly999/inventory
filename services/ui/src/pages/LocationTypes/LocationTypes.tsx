@@ -38,7 +38,7 @@ const LocationTypes: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const response = await apiService.get('/api/v1/location-types');
+      const response = await apiService.get('/api/v1/locations/types');
       setLocationTypes(response.data);
     } catch (error) {
       setError('Failed to fetch location types data');
@@ -73,9 +73,9 @@ const LocationTypes: React.FC = () => {
       };
 
       if (editingLocationType) {
-        await apiService.put(`/api/v1/location-types/${editingLocationType.id}`, data);
+        await apiService.put(`/api/v1/locations/types/${editingLocationType.id}`, data);
       } else {
-        await apiService.post('/api/v1/location-types', data);
+        await apiService.post('/api/v1/locations/types', data);
       }
 
       setDialogOpen(false);
@@ -89,7 +89,7 @@ const LocationTypes: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this location type?')) return;
 
     try {
-      await apiService.delete(`/api/v1/location-types/${id}`);
+      await apiService.delete(`/api/v1/locations/types/${id}`);
       fetchData();
     } catch (error: any) {
       setError(error.response?.data?.error?.message || 'Failed to delete location type');

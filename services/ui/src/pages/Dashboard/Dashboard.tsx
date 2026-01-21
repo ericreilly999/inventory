@@ -44,7 +44,7 @@ const Dashboard: React.FC = () => {
         // Fetch dashboard statistics
         const [itemsResponse, locationsResponse, movementsResponse, usersResponse] = await Promise.all([
           apiService.get('/api/v1/items/parent'),
-          apiService.get('/api/v1/locations'),
+          apiService.get('/api/v1/locations/locations'),
           apiService.get('/api/v1/movements/history?limit=100'),
           apiService.get('/api/v1/users'),
         ]);

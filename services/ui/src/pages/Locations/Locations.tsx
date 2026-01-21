@@ -51,8 +51,8 @@ const Locations: React.FC = () => {
   const fetchData = async () => {
     try {
       const [locationsResponse, typesResponse] = await Promise.all([
-        apiService.get('/api/v1/locations'),
-        apiService.get('/api/v1/location-types'),
+        apiService.get('/api/v1/locations/locations'),
+        apiService.get('/api/v1/locations/types'),
       ]);
 
       setLocations(locationsResponse.data);
@@ -93,9 +93,9 @@ const Locations: React.FC = () => {
       };
 
       if (editingLocation) {
-        await apiService.put(`/api/v1/locations/${editingLocation.id}`, data);
+        await apiService.put(`/api/v1/locations/locations/${editingLocation.id}`, data);
       } else {
-        await apiService.post('/api/v1/locations', data);
+        await apiService.post('/api/v1/locations/locations', data);
       }
 
       setDialogOpen(false);
@@ -109,7 +109,7 @@ const Locations: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this location?')) return;
 
     try {
-      await apiService.delete(`/api/v1/locations/${id}`);
+      await apiService.delete(`/api/v1/locations/locations/${id}`);
       fetchData();
     } catch (error: any) {
       setError(error.response?.data?.error?.message || 'Failed to delete location');

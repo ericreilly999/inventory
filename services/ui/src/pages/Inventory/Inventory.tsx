@@ -78,7 +78,7 @@ const Inventory: React.FC = () => {
         apiService.get('/api/v1/items/parent'),
         apiService.get('/api/v1/items/child'),
         apiService.get('/api/v1/items/types'),
-        apiService.get('/api/v1/locations'),
+        apiService.get('/api/v1/locations/locations'),
       ]);
 
       setParentItems(parentResponse.data);

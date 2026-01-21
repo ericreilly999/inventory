@@ -77,10 +77,9 @@ async def log_requests(request: Request, call_next):
     )
     return response
 
-# Include routers - ORDER MATTERS! More specific routes must come first
-# Note: location-types uses a separate prefix to avoid conflicts with locations/{location_id}
-app.include_router(location_types.router, prefix="/api/v1/location-types", tags=["location-types"])
-app.include_router(locations.router, prefix="/api/v1/locations", tags=["locations"])
+# Include routers - structured like inventory service to avoid route conflicts
+app.include_router(locations.router, prefix="/api/v1/locations/locations", tags=["locations"])
+app.include_router(location_types.router, prefix="/api/v1/locations/types", tags=["location-types"])
 app.include_router(movements.router, prefix="/api/v1/movements", tags=["movements"])
 
 

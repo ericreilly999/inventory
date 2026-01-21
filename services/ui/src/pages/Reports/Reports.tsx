@@ -68,7 +68,7 @@ const Reports: React.FC = () => {
   const fetchMetadata = async () => {
     try {
       const [locationsResponse, itemTypesResponse] = await Promise.all([
-        apiService.get('/api/v1/locations'),
+        apiService.get('/api/v1/locations/locations'),
         apiService.get('/api/v1/items/types'),
       ]);
 
