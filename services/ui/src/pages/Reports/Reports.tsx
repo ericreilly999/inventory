@@ -85,10 +85,10 @@ const Reports: React.FC = () => {
     
     try {
       const params = new URLSearchParams();
-      if (selectedLocation) params.append('location_id', selectedLocation);
-      if (selectedItemType) params.append('item_type_id', selectedItemType);
+      if (selectedLocation) params.append('location_ids', selectedLocation);
+      if (selectedItemType) params.append('item_type_ids', selectedItemType);
 
-      const response = await apiService.get(`/api/v1/reports/inventory?${params}`);
+      const response = await apiService.get(`/api/v1/reports/inventory/counts?${params}`);
       setInventoryReports(response.data);
     } catch (error: any) {
       setError(error.response?.data?.error?.message || 'Failed to generate inventory report');
@@ -105,9 +105,9 @@ const Reports: React.FC = () => {
       const params = new URLSearchParams();
       if (startDate) params.append('start_date', startDate.format('YYYY-MM-DD'));
       if (endDate) params.append('end_date', endDate.format('YYYY-MM-DD'));
-      if (selectedLocation) params.append('location_id', selectedLocation);
+      if (selectedLocation) params.append('location_ids', selectedLocation);
 
-      const response = await apiService.get(`/api/v1/reports/movements?${params}`);
+      const response = await apiService.get(`/api/v1/reports/movements/history?${params}`);
       setMovementReports(response.data);
     } catch (error: any) {
       setError(error.response?.data?.error?.message || 'Failed to generate movement report');
@@ -118,16 +118,28 @@ const Reports: React.FC = () => {
 
   const exportReport = async () => {
     try {
-      const endpoint = tabValue === 0 ? '/api/v1/reports/export/inventory' : '/api/v1/reports/export/movements';
+      // Only inventory export is available
+      const endpoint = '/api/v1/reports/export/inventory';
       const params = new URLSearchParams();
       
-      if (tabValue === 0) {
-        if (selectedLocation) params.append('location_id', selectedLocation);
-        if (selectedItemType) params.append('item_type_id', selectedItemType);
-      } else {
-        if (startDate) params.append('start_date', startDate.format('YYYY-MM-DD'));
-        if (endDate) params.append('end_date', endDate.format('YYYY-MM-DD'));
-        if (selectedLocation) params.append('location_id', selectedLocation);
+      if (selectedLocation) params.append('location_ids', selectedLocation);
+      
+      const response = await apiService.get(`${endpoint}?${params}`);
+      
+      // Create and download file
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tabValue === 0 ? 'inventory' : 'movement'}-report-${new Date().toISOString()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error: any) {
+      setError(error.response?.data?.error?.message || 'Failed to export report');
+    }
+  };
       }
 
       const response = await apiService.get(`${endpoint}?${params}`, {
