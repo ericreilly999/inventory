@@ -83,19 +83,28 @@ def require_permission(permission: str):
         token_data: TokenData = Depends(get_current_user_token)
     ) -> TokenData:
         """Check if user has required permission."""
+        from shared.logging.config import get_logger
+        logger = get_logger(__name__)
+        
+        logger.info(f"Checking permission '{permission}' for user {token_data.username}")
+        logger.info(f"User permissions: {token_data.permissions}")
+        
         permissions = token_data.permissions or {}
         
         # Check for wildcard permission (admin access)
         if permissions.get("*", False):
+            logger.info(f"User has wildcard permission")
             return token_data
         
         # Check for specific permission
         if not permissions.get(permission, False):
+            logger.error(f"User {token_data.username} missing permission '{permission}'")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Permission '{permission}' required"
             )
         
+        logger.info(f"Permission check passed for '{permission}'")
         return token_data
     
     return check_permission

@@ -36,8 +36,17 @@ async def list_location_types(
     db: Session = Depends(get_db)
 ):
     """List all location types."""
-    location_types = db.query(LocationType).offset(skip).limit(limit).all()
-    return location_types
+    from shared.logging.config import get_logger
+    logger = get_logger(__name__)
+    logger.info(f"INSIDE list_location_types handler - skip={skip}, limit={limit}")
+    
+    try:
+        location_types = db.query(LocationType).offset(skip).limit(limit).all()
+        logger.info(f"Found {len(location_types)} location types")
+        return location_types
+    except Exception as e:
+        logger.error(f"Error in list_location_types: {str(e)}", exc_info=True)
+        raise
 
 
 @router.get("/{location_type_id}", response_model=LocationTypeResponse, dependencies=[Depends(require_location_read)])

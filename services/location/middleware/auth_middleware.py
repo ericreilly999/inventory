@@ -18,14 +18,28 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.url.path in ["/health", "/", "/docs", "/redoc", "/openapi.json"]:
             return await call_next(request)
         
-        # Log the request
-        logger.info(f"Location Service - {request.method} {request.url.path}")
+        # Log the request with full details
+        logger.info(
+            f"Location Service - {request.method} {request.url.path}",
+            extra={
+                "query_params": dict(request.query_params),
+                "path": request.url.path,
+                "method": request.method
+            }
+        )
         
         try:
             response = await call_next(request)
+            logger.info(
+                f"Location Service - Response {response.status_code}",
+                extra={
+                    "path": request.url.path,
+                    "status_code": response.status_code
+                }
+            )
             return response
         except Exception as e:
-            logger.error(f"Location Service error: {str(e)}")
+            logger.error(f"Location Service error: {str(e)}", exc_info=True)
             return JSONResponse(
                 status_code=500,
                 content={"error": "Internal server error", "detail": str(e)}
