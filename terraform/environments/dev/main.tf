@@ -281,7 +281,7 @@ module "inventory_service" {
   ]
 
   health_check = {
-    command      = ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
+    command      = ["CMD-SHELL", "curl -f http://localhost:8003/health || exit 1"]
     interval     = 30
     timeout      = 5
     retries      = 3
@@ -336,7 +336,7 @@ module "location_service" {
   ]
 
   health_check = {
-    command      = ["CMD-SHELL", "curl -f http://localhost:8003/health || exit 1"]
+    command      = ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
     interval     = 30
     timeout      = 5
     retries      = 3
