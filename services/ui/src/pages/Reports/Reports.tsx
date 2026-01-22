@@ -30,26 +30,58 @@ import dayjs, { Dayjs } from 'dayjs';
 import { apiService } from '../../services/api';
 
 interface InventoryReport {
-  location_name: string;
-  location_type: string;
-  item_count: number;
-  item_types: { [key: string]: number };
+  generated_at: string;
+  by_item_type: Array<{
+    item_type: {
+      id: string;
+      name: string;
+      category: string;
+    };
+    parent_items_count: number;
+    child_items_count: number;
+  }>;
+  by_location_and_type: Array<{
+    location: {
+      id: string;
+      name: string;
+      location_type: string;
+    };
+    item_type: {
+      id: string;
+      name: string;
+      category: string;
+    };
+    parent_items_count: number;
+    child_items_count: number;
+  }>;
 }
 
 interface MovementReport {
-  id: string;
-  parent_item_name: string;
-  from_location: string;
-  to_location: string;
-  moved_at: string;
-  moved_by: string;
-  notes: string;
+  generated_at: string;
+  date_range_start: string | null;
+  date_range_end: string | null;
+  total_movements: number;
+  movements: Array<{
+    id: string;
+    parent_item_name: string;
+    from_location: {
+      name: string;
+    } | null;
+    to_location: {
+      name: string;
+    };
+    moved_at: string;
+    moved_by: {
+      username: string;
+    };
+    notes: string | null;
+  }>;
 }
 
 const Reports: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
-  const [inventoryReports, setInventoryReports] = useState<InventoryReport[]>([]);
-  const [movementReports, setMovementReports] = useState<MovementReport[]>([]);
+  const [inventoryReport, setInventoryReport] = useState<InventoryReport | null>(null);
+  const [movementReport, setMovementReport] = useState<MovementReport | null>(null);
   const [locations, setLocations] = useState<any[]>([]);
   const [itemTypes, setItemTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,7 +121,7 @@ const Reports: React.FC = () => {
       if (selectedItemType) params.append('item_type_ids', selectedItemType);
 
       const response = await apiService.get(`/api/v1/reports/inventory/counts?${params}`);
-      setInventoryReports(response.data);
+      setInventoryReport(response.data);
     } catch (error: any) {
       setError(error.response?.data?.error?.message || 'Failed to generate inventory report');
     } finally {
@@ -108,7 +140,7 @@ const Reports: React.FC = () => {
       if (selectedLocation) params.append('location_ids', selectedLocation);
 
       const response = await apiService.get(`/api/v1/reports/movements/history?${params}`);
-      setMovementReports(response.data);
+      setMovementReport(response.data);
     } catch (error: any) {
       setError(error.response?.data?.error?.message || 'Failed to generate movement report');
     } finally {
@@ -143,22 +175,22 @@ const Reports: React.FC = () => {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-  const inventoryChartData = inventoryReports.map(report => ({
-    name: report.location_name,
-    value: report.item_count,
-  }));
-
-  const itemTypeChartData = inventoryReports.reduce((acc: any[], report) => {
-    Object.entries(report.item_types).forEach(([type, count]) => {
-      const existing = acc.find(item => item.name === type);
-      if (existing) {
-        existing.value += count;
-      } else {
-        acc.push({ name: type, value: count });
-      }
-    });
+  // Transform data for charts
+  const inventoryChartData = inventoryReport?.by_location_and_type.reduce((acc: any[], item) => {
+    const existing = acc.find(x => x.name === item.location.name);
+    const count = item.parent_items_count + item.child_items_count;
+    if (existing) {
+      existing.value += count;
+    } else {
+      acc.push({ name: item.location.name, value: count });
+    }
     return acc;
-  }, []);
+  }, []) || [];
+
+  const itemTypeChartData = inventoryReport?.by_item_type.map(item => ({
+    name: item.item_type.name,
+    value: item.parent_items_count + item.child_items_count,
+  })) || [];
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -169,7 +201,7 @@ const Reports: React.FC = () => {
             variant="contained"
             startIcon={<DownloadIcon />}
             onClick={exportReport}
-            disabled={loading || (tabValue === 0 ? inventoryReports.length === 0 : movementReports.length === 0)}
+            disabled={loading || (tabValue === 0 ? !inventoryReport : !movementReport)}
           >
             Export Report
           </Button>
@@ -243,7 +275,7 @@ const Reports: React.FC = () => {
             </Card>
 
             {/* Inventory Charts */}
-            {inventoryReports.length > 0 && (
+            {inventoryReport && inventoryChartData.length > 0 && (
               <Grid container spacing={3} sx={{ mb: 3 }}>
                 <Grid item xs={12} md={6}>
                   <Card>
@@ -299,7 +331,7 @@ const Reports: React.FC = () => {
             )}
 
             {/* Inventory Table */}
-            {inventoryReports.length > 0 && (
+            {inventoryReport && inventoryReport.by_location_and_type.length > 0 && (
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
@@ -311,23 +343,21 @@ const Reports: React.FC = () => {
                         <TableRow>
                           <TableCell>Location</TableCell>
                           <TableCell>Location Type</TableCell>
+                          <TableCell>Item Type</TableCell>
+                          <TableCell align="right">Parent Items</TableCell>
+                          <TableCell align="right">Child Items</TableCell>
                           <TableCell align="right">Total Items</TableCell>
-                          <TableCell>Item Types Breakdown</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {inventoryReports.map((report, index) => (
+                        {inventoryReport.by_location_and_type.map((item, index) => (
                           <TableRow key={index}>
-                            <TableCell>{report.location_name}</TableCell>
-                            <TableCell>{report.location_type}</TableCell>
-                            <TableCell align="right">{report.item_count}</TableCell>
-                            <TableCell>
-                              {Object.entries(report.item_types).map(([type, count]) => (
-                                <Typography key={type} variant="body2">
-                                  {type}: {count}
-                                </Typography>
-                              ))}
-                            </TableCell>
+                            <TableCell>{item.location.name}</TableCell>
+                            <TableCell>{item.location.location_type}</TableCell>
+                            <TableCell>{item.item_type.name}</TableCell>
+                            <TableCell align="right">{item.parent_items_count}</TableCell>
+                            <TableCell align="right">{item.child_items_count}</TableCell>
+                            <TableCell align="right">{item.parent_items_count + item.child_items_count}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -396,11 +426,11 @@ const Reports: React.FC = () => {
             </Card>
 
             {/* Movement Table */}
-            {movementReports.length > 0 && (
+            {movementReport && movementReport.movements.length > 0 && (
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Movement History Report
+                    Movement History Report ({movementReport.total_movements} movements)
                   </Typography>
                   <TableContainer>
                     <Table>
@@ -415,16 +445,16 @@ const Reports: React.FC = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {movementReports.map((movement) => (
+                        {movementReport.movements.map((movement) => (
                           <TableRow key={movement.id}>
                             <TableCell>{movement.parent_item_name}</TableCell>
-                            <TableCell>{movement.from_location}</TableCell>
-                            <TableCell>{movement.to_location}</TableCell>
+                            <TableCell>{movement.from_location?.name || 'N/A'}</TableCell>
+                            <TableCell>{movement.to_location.name}</TableCell>
                             <TableCell>
                               {dayjs(movement.moved_at).format('YYYY-MM-DD HH:mm')}
                             </TableCell>
-                            <TableCell>{movement.moved_by}</TableCell>
-                            <TableCell>{movement.notes}</TableCell>
+                            <TableCell>{movement.moved_by.username}</TableCell>
+                            <TableCell>{movement.notes || '-'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
