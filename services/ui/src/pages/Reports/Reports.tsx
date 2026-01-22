@@ -140,23 +140,6 @@ const Reports: React.FC = () => {
       setError(error.response?.data?.error?.message || 'Failed to export report');
     }
   };
-      }
-
-      const response = await apiService.get(`${endpoint}?${params}`, {
-        responseType: 'blob',
-      });
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${tabValue === 0 ? 'inventory' : 'movements'}_report.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error: any) {
-      setError('Failed to export report');
-    }
-  };
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
