@@ -4,10 +4,10 @@ from datetime import datetime, timezone
 from sqlalchemy import Column, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
-from .base import Base, UUIDMixin, GUID
+from .base import Base, UUIDMixin, TimestampMixin, GUID
 
 
-class AssignmentHistory(Base, UUIDMixin):
+class AssignmentHistory(Base, UUIDMixin, TimestampMixin):
     """Assignment history model for tracking child item assignments to parent items."""
     
     __tablename__ = "assignment_history"
