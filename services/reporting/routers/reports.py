@@ -189,7 +189,7 @@ async def get_movement_history_report(
         query = db.query(MoveHistory).options(
             joinedload(MoveHistory.parent_item).joinedload(ParentItem.item_type),
             joinedload(MoveHistory.from_location).joinedload(Location.location_type),
-            joinedload(MoveHistory.to_location).joinedload(LocationType),
+            joinedload(MoveHistory.to_location).joinedload(Location.location_type),
             joinedload(MoveHistory.moved_by_user)
         )
         
@@ -302,9 +302,13 @@ async def get_inventory_count_report(
         # Get counts by item type
         item_type_query = db.query(
             ItemType,
-            func.count(ParentItem.id).label('parent_count'),
-            func.count(ChildItem.id).label('child_count')
-        ).outerjoin(ParentItem).outerjoin(ChildItem)
+            func.count(func.distinct(ParentItem.id)).label('parent_count'),
+            func.count(func.distinct(ChildItem.id)).label('child_count')
+        ).outerjoin(
+            ParentItem, ParentItem.item_type_id == ItemType.id
+        ).outerjoin(
+            ChildItem, ChildItem.parent_item_id == ParentItem.id
+        )
         
         if item_type_ids:
             item_type_query = item_type_query.filter(ItemType.id.in_(item_type_ids))
@@ -327,9 +331,11 @@ async def get_inventory_count_report(
         location_type_query = db.query(
             Location,
             ItemType,
-            func.count(ParentItem.id).label('parent_count'),
-            func.count(ChildItem.id).label('child_count')
-        ).join(LocationType).outerjoin(
+            func.count(func.distinct(ParentItem.id)).label('parent_count'),
+            func.count(func.distinct(ChildItem.id)).label('child_count')
+        ).join(
+            Location.location_type
+        ).outerjoin(
             ParentItem, ParentItem.current_location_id == Location.id
         ).outerjoin(
             ItemType, ParentItem.item_type_id == ItemType.id
