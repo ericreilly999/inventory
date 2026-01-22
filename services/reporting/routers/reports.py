@@ -1,9 +1,11 @@
 """Reports router for Reporting Service."""
 
+import traceback
 from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session, joinedload
@@ -22,6 +24,7 @@ from ..schemas import (
     ReportError
 )
 
+logger = structlog.get_logger(__name__)
 router = APIRouter()
 
 
@@ -42,6 +45,11 @@ async def get_inventory_status_report(
     
     Requirements: 3.1, 3.4, 3.5
     """
+    logger.info(
+        "Generating inventory status report",
+        location_ids=location_ids,
+        include_item_details=include_item_details
+    )
     try:
         # Build base query for locations
         location_query = db.query(Location).options(joinedload(Location.location_type))
@@ -127,6 +135,14 @@ async def get_inventory_status_report(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(
+            "Error generating inventory status report",
+            error=str(e),
+            error_type=type(e).__name__,
+            traceback=traceback.format_exc(),
+            location_ids=location_ids,
+            include_item_details=include_item_details
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating inventory status report: {str(e)}"
@@ -153,6 +169,14 @@ async def get_movement_history_report(
     
     Requirements: 3.2, 5.2, 3.4, 3.5
     """
+    logger.info(
+        "Generating movement history report",
+        start_date=start_date,
+        end_date=end_date,
+        location_ids=location_ids,
+        item_type_ids=item_type_ids,
+        user_ids=user_ids
+    )
     try:
         # Validate date range
         if start_date and end_date and start_date > end_date:
@@ -235,6 +259,17 @@ async def get_movement_history_report(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(
+            "Error generating movement history report",
+            error=str(e),
+            error_type=type(e).__name__,
+            traceback=traceback.format_exc(),
+            start_date=start_date,
+            end_date=end_date,
+            location_ids=location_ids,
+            item_type_ids=item_type_ids,
+            user_ids=user_ids
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating movement history report: {str(e)}"
@@ -258,6 +293,11 @@ async def get_inventory_count_report(
     
     Requirements: 3.3, 3.4, 3.5
     """
+    logger.info(
+        "Generating inventory count report",
+        location_type_ids=location_type_ids,
+        item_type_ids=item_type_ids
+    )
     try:
         # Get counts by item type
         item_type_query = db.query(
@@ -338,6 +378,14 @@ async def get_inventory_count_report(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(
+            "Error generating inventory count report",
+            error=str(e),
+            error_type=type(e).__name__,
+            traceback=traceback.format_exc(),
+            location_type_ids=location_type_ids,
+            item_type_ids=item_type_ids
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating inventory count report: {str(e)}"
@@ -360,6 +408,11 @@ async def export_inventory_data(
     
     Requirements: 3.4, 3.5
     """
+    logger.info(
+        "Exporting inventory data",
+        format=format,
+        location_ids=location_ids
+    )
     try:
         if format not in ["json", "csv"]:
             raise HTTPException(
@@ -437,6 +490,14 @@ async def export_inventory_data(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(
+            "Error exporting inventory data",
+            error=str(e),
+            error_type=type(e).__name__,
+            traceback=traceback.format_exc(),
+            format=format,
+            location_ids=location_ids
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error exporting inventory data: {str(e)}"
