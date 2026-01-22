@@ -168,9 +168,20 @@ async def validate_item_type_category(
     expected_category: str
 ) -> ItemType:
     """Validate that item type has expected category."""
-    if item_type.category.value != expected_category:
+    actual_category = item_type.category.value if hasattr(item_type.category, 'value') else str(item_type.category)
+    
+    if actual_category != expected_category:
+        from shared.logging.config import get_logger
+        logger = get_logger(__name__)
+        logger.error(
+            "Item type category mismatch",
+            item_type_id=str(item_type.id),
+            item_type_name=item_type.name,
+            expected_category=expected_category,
+            actual_category=actual_category
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Item type must be of category '{expected_category}'"
+            detail=f"Item type '{item_type.name}' has category '{actual_category}' but '{expected_category}' is required"
         )
     return item_type

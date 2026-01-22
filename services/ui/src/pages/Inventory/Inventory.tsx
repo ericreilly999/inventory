@@ -153,8 +153,8 @@ const Inventory: React.FC = () => {
 
   const handleMoveItemSubmit = async () => {
     try {
-      await apiService.post(`/api/v1/movements`, {
-        parent_item_id: movingItem.id,
+      await apiService.post(`/api/v1/movements/move`, {
+        item_id: movingItem.id,
         to_location_id: formData.current_location_id,
         notes: 'Moved via UI',
       });
