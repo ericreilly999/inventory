@@ -477,11 +477,10 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
 
         # Check location type references
         for location in self.locations.values():
-            assert (
-                location.location_type_id in self.location_types
-            ), f"Location {
-                location.id} has invalid location type {
-                location.location_type_id}"
+            assert location.location_type_id in self.location_types, (
+                f"Location {location.id} has invalid location type "
+                f"{location.location_type_id}"
+            )
 
         # Check parent item references
         for parent_item in self.parent_items.values():

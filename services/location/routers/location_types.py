@@ -129,8 +129,10 @@ async def update_location_type(
             if existing:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=f"Location type with name '{
-                        location_type_data.name}' already exists",
+                    detail=(
+                        f"Location type with name "
+                        f"'{location_type_data.name}' already exists"
+                    ),
                 )
 
         # Update fields

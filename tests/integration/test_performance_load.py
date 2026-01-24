@@ -283,10 +283,10 @@ class TestAPIPerformance:
 
         if report_metrics.success_count > 0:
             # Report queries should complete within reasonable time
-            assert (
-                report_metrics.avg_response_time < 15.0
-            ), f"Report query avg time {
-                report_metrics.avg_response_time:.3f}s > 15.0s"
+            assert report_metrics.avg_response_time < 15.0, (
+                f"Report query avg time "
+                f"{report_metrics.avg_response_time:.3f}s > 15.0s"
+            )
 
         # Test move history queries
         history_metrics = perf_runner.run_concurrent_requests(

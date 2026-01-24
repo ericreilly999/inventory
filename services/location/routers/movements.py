@@ -85,9 +85,10 @@ async def move_item(
         )
 
         return MessageResponse(
-            message=f"Item '{
-                parent_item.name}' moved to location '{
-                to_location.name}' successfully"
+            message=(
+                f"Item '{parent_item.name}' moved to location "
+                f"'{to_location.name}' successfully"
+            )
         )
 
     except HTTPException:

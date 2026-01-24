@@ -184,8 +184,10 @@ def validate_location_deletion(location: Location, db: Session) -> None:
     if items_count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot delete location '{
-                location.name}' - {items_count} items are currently assigned to it",
+            detail=(
+                f"Cannot delete location '{location.name}' - {items_count} "
+                f"items are currently assigned to it"
+            ),
         )
 
 

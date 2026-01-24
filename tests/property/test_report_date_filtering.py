@@ -221,9 +221,11 @@ def test_report_date_filtering_property(
                 # This movement should be outside the date range
                 assert not (
                     filter_start_date <= movement.moved_at <= filter_end_date
-                ), f"Movement {
-                    movement.id} at {
-                    movement.moved_at} should be excluded but is within range [{filter_start_date}, {filter_end_date}]"
+                ), (
+                    f"Movement {movement.id} at {movement.moved_at} should be "
+                    f"excluded but is within range [{filter_start_date}, "
+                    f"{filter_end_date}]"
+                )
 
         # Test edge cases: exact boundary conditions
         # Movements exactly at start_date should be included
