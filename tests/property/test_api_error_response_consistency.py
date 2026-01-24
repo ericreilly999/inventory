@@ -231,7 +231,9 @@ class TestAPIErrorResponseConsistencyProperties:
         import httpx
 
         with patch("httpx.AsyncClient.request") as mock_request:
-            mock_request.side_effect = httpx.TimeoutException("Request timeout")
+            mock_request.side_effect = httpx.TimeoutException(
+                "Request timeout"
+            )
 
             response = self.client.get("/api/v1/items/parent", headers=headers)
 
@@ -359,7 +361,9 @@ class TestAPIErrorResponseConsistencyProperties:
         """
         # Ensure we have a clearly invalid token
         if invalid_token.startswith("Bearer "):
-            invalid_token = invalid_token[7:]  # Remove Bearer prefix if present
+            invalid_token = invalid_token[
+                7:
+            ]  # Remove Bearer prefix if present
 
         headers = {"Authorization": f"Bearer {invalid_token}"}
         response = self.client.get(endpoint, headers=headers)

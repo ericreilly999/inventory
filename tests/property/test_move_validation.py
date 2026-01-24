@@ -88,7 +88,11 @@ def create_test_data(session):
     return user, valid_location, item_type
 
 
-@given(item_names=st.lists(st.text(min_size=1, max_size=50), min_size=1, max_size=3))
+@given(
+    item_names=st.lists(
+        st.text(min_size=1, max_size=50), min_size=1, max_size=3
+    )
+)
 def test_move_validation_and_error_handling_property(item_names):
     """
     Property 5: Move Validation and Error Handling
@@ -162,7 +166,9 @@ def test_move_validation_and_error_handling_property(item_names):
                     session.commit()
 
                     # If we reach here, the test should fail
-                    assert False, "Move to non-existent location should have failed"
+                    assert (
+                        False
+                    ), "Move to non-existent location should have failed"
 
                 except ValueError as e:
                     # Expected behavior: error is raised
@@ -170,7 +176,9 @@ def test_move_validation_and_error_handling_property(item_names):
 
                     # Property verification: item remains at original location
                     session.refresh(parent_item)
-                    assert parent_item.current_location_id == original_location_id
+                    assert (
+                        parent_item.current_location_id == original_location_id
+                    )
                     assert parent_item.current_location_id == valid_location.id
 
                 except Exception:
@@ -178,7 +186,9 @@ def test_move_validation_and_error_handling_property(item_names):
                     # location
                     session.rollback()  # Rollback any partial changes
                     session.refresh(parent_item)
-                    assert parent_item.current_location_id == original_location_id
+                    assert (
+                        parent_item.current_location_id == original_location_id
+                    )
 
         # Additional verification: Test that valid moves still work
         # Create another valid location for testing successful moves
@@ -223,5 +233,7 @@ def test_move_validation_and_error_handling_property(item_names):
 
 if __name__ == "__main__":
     # Run a simple test to verify the property works
-    test_move_validation_and_error_handling_property(["TestItem1", "TestItem2"])
+    test_move_validation_and_error_handling_property(
+        ["TestItem1", "TestItem2"]
+    )
     print("Property test passed!")

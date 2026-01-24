@@ -28,7 +28,9 @@ app = FastAPI(
 
 # Add custom exception handler for validation errors
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+):
     """Log and return detailed validation errors."""
     logger.error(
         "Validation error",
@@ -94,7 +96,9 @@ app.include_router(
     prefix="/api/v1/locations/types",
     tags=["location-types"],
 )
-app.include_router(movements.router, prefix="/api/v1/movements", tags=["movements"])
+app.include_router(
+    movements.router, prefix="/api/v1/movements", tags=["movements"]
+)
 
 
 @app.get("/health")

@@ -58,7 +58,9 @@ class PerformanceTestRunner:
             return {"Authorization": f"Bearer {self.auth_token}"}
         return {}
 
-    def make_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
+    def make_request(
+        self, method: str, endpoint: str, **kwargs
+    ) -> Dict[str, Any]:
         """Make a timed HTTP request."""
         url = f"{self.base_url}{endpoint}"
         headers = self.get_auth_headers()
@@ -71,7 +73,11 @@ class PerformanceTestRunner:
                 url=url,
                 headers=headers,
                 timeout=kwargs.get("timeout", 30),
-                **{k: v for k, v in kwargs.items() if k not in ["headers", "timeout"]},
+                **{
+                    k: v
+                    for k, v in kwargs.items()
+                    if k not in ["headers", "timeout"]
+                },
             )
 
             end_time = time.time()
@@ -81,7 +87,9 @@ class PerformanceTestRunner:
                 "success": True,
                 "status_code": response.status_code,
                 "response_time": response_time,
-                "response_size": (len(response.content) if response.content else 0),
+                "response_size": (
+                    len(response.content) if response.content else 0
+                ),
             }
 
         except requests.RequestException as e:
@@ -103,7 +111,9 @@ class PerformanceTestRunner:
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all requests
-            futures = [executor.submit(request_func) for _ in range(num_requests)]
+            futures = [
+                executor.submit(request_func) for _ in range(num_requests)
+            ]
 
             # Collect results
             start_time = time.time()
@@ -130,7 +140,9 @@ class PerformanceTestRunner:
         total_time = end_time - start_time
         throughput = len(results) / total_time if total_time > 0 else 0
 
-        avg_response_time = statistics.mean(response_times) if response_times else 0
+        avg_response_time = (
+            statistics.mean(response_times) if response_times else 0
+        )
         p95_response_time = (
             statistics.quantiles(response_times, n=20)[18]
             if len(response_times) >= 20
@@ -164,7 +176,9 @@ class TestAPIPerformance:
             pytest.skip("Authentication failed - API not available")
         return runner
 
-    def test_single_request_response_times(self, perf_runner: PerformanceTestRunner):
+    def test_single_request_response_times(
+        self, perf_runner: PerformanceTestRunner
+    ):
         """Test individual API endpoint response times."""
 
         endpoints = [
@@ -190,9 +204,13 @@ class TestAPIPerformance:
                     200 <= result["status_code"] < 300
                 ), f"{method} {endpoint} returned status {result['status_code']}"
             else:
-                pytest.skip(f"Endpoint {endpoint} not available: {result.get('error')}")
+                pytest.skip(
+                    f"Endpoint {endpoint} not available: {result.get('error')}"
+                )
 
-    def test_concurrent_read_operations(self, perf_runner: PerformanceTestRunner):
+    def test_concurrent_read_operations(
+        self, perf_runner: PerformanceTestRunner
+    ):
         """Test concurrent read operations performance."""
 
         def read_inventory():
@@ -220,7 +238,9 @@ class TestAPIPerformance:
                 metrics.p95_response_time < 10.0
             ), f"P95 response time {metrics.p95_response_time:.3f}s > 10.0s"
 
-    def test_mixed_read_write_operations(self, perf_runner: PerformanceTestRunner):
+    def test_mixed_read_write_operations(
+        self, perf_runner: PerformanceTestRunner
+    ):
         """Test mixed read/write operations under load."""
 
         def mixed_operations():
@@ -267,7 +287,9 @@ class TestAPIPerformance:
             metrics.throughput > 0.5
         ), f"Throughput {metrics.throughput:.2f} req/s < 0.5 req/s"
 
-    def test_database_query_performance(self, perf_runner: PerformanceTestRunner):
+    def test_database_query_performance(
+        self, perf_runner: PerformanceTestRunner
+    ):
         """Test database-intensive operations performance."""
 
         def query_reports():
@@ -303,7 +325,6 @@ class TestAPIPerformance:
 
 class TestLoadTesting:
     """Test system behavior under various load conditions."""
-
 
     @pytest.fixture
     def perf_runner(self):
@@ -343,7 +364,9 @@ class TestLoadTesting:
             time.sleep(1)
 
         # Analyze sustained performance
-        total_requests = sum(m.success_count + m.error_count for m in all_metrics)
+        total_requests = sum(
+            m.success_count + m.error_count for m in all_metrics
+        )
         total_successes = sum(m.success_count for m in all_metrics)
 
         if total_requests > 0:
@@ -366,7 +389,6 @@ class TestLoadTesting:
 
     def test_burst_load_handling(self, perf_runner: PerformanceTestRunner):
         """Test system handling of burst traffic."""
-
 
         def burst_request():
             return perf_runner.make_request("GET", "/api/v1/items/parent")
@@ -473,7 +495,9 @@ class TestConcurrencyHandling:
             pytest.skip("Authentication failed - API not available")
         return runner
 
-    def test_concurrent_item_creation(self, perf_runner: PerformanceTestRunner):
+    def test_concurrent_item_creation(
+        self, perf_runner: PerformanceTestRunner
+    ):
         """Test concurrent item creation for race conditions."""
 
         def create_item(item_suffix):
@@ -502,7 +526,9 @@ class TestConcurrencyHandling:
 
         # Analyze results for race conditions
         successful_creates = [
-            r for r in results if r["success"] and r.get("status_code") in [200, 201]
+            r
+            for r in results
+            if r["success"] and r.get("status_code") in [200, 201]
         ]
 
         # Should handle concurrent creates without major issues

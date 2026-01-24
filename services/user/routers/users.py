@@ -169,7 +169,9 @@ async def update_user(
     if user_data.username and user_data.username != user.username:
         existing = (
             db.query(User)
-            .filter(and_(User.username == user_data.username, User.id != user_id))
+            .filter(
+                and_(User.username == user_data.username, User.id != user_id)
+            )
             .first()
         )
         if existing:
@@ -209,7 +211,9 @@ async def update_user(
     db.commit()
     db.refresh(user)
 
-    logger.info("User updated", user_id=str(user.id), updated_by=str(current_user.id))
+    logger.info(
+        "User updated", user_id=str(user.id), updated_by=str(current_user.id)
+    )
 
     return UserResponse.from_orm(user)
 
@@ -277,7 +281,9 @@ async def change_user_password(
 
     # Verify current password (only for self-change)
     if user_id == current_user.id:
-        if not verify_password(password_data.current_password, user.password_hash):
+        if not verify_password(
+            password_data.current_password, user.password_hash
+        ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Current password is incorrect",

@@ -72,7 +72,9 @@ def get_test_db_session():
         poolclass=StaticPool,
     )
 
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    TestingSessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=engine
+    )
 
     # Create all tables
     Base.metadata.create_all(bind=engine)
@@ -88,7 +90,9 @@ class TestUserAuthenticationProperties:
 
     @given(user_data=valid_user_data(), role_data=valid_role_data())
     @settings(max_examples=10)
-    def test_user_authentication_and_authorization_property(self, user_data, role_data):
+    def test_user_authentication_and_authorization_property(
+        self, user_data, role_data
+    ):
         """
         Property 12: User Authentication and Authorization
 
@@ -124,9 +128,14 @@ class TestUserAuthenticationProperties:
             db.refresh(user)
 
             # Test password verification (authentication)
-            assert verify_password(user_data["password"], user.password_hash) is True
             assert (
-                verify_password(user_data["password"] + "wrong", user.password_hash)
+                verify_password(user_data["password"], user.password_hash)
+                is True
+            )
+            assert (
+                verify_password(
+                    user_data["password"] + "wrong", user.password_hash
+                )
                 is False
             )
 
@@ -154,7 +163,8 @@ class TestUserAuthenticationProperties:
             # Test role-based permissions are correctly included
             for permission_key, permission_value in role.permissions.items():
                 assert (
-                    decoded_payload["permissions"][permission_key] == permission_value
+                    decoded_payload["permissions"][permission_key]
+                    == permission_value
                 )
 
             # Test invalid token verification
@@ -206,7 +216,10 @@ class TestUserAuthenticationProperties:
 
             # Password verification should still work (for password
             # correctness)
-            assert verify_password(user_data["password"], user.password_hash) is True
+            assert (
+                verify_password(user_data["password"], user.password_hash)
+                is True
+            )
 
             # But user should be marked as inactive
             assert user.active is False
@@ -266,7 +279,10 @@ class TestUserAuthenticationProperties:
             db.refresh(user)
 
             # Correct password should work
-            assert verify_password(user_data["password"], user.password_hash) is True
+            assert (
+                verify_password(user_data["password"], user.password_hash)
+                is True
+            )
 
             # Wrong password should fail
             assert verify_password(wrong_password, user.password_hash) is False

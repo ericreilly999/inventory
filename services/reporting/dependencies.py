@@ -17,7 +17,9 @@ security = HTTPBearer()
 class TokenData:
     """Token data class."""
 
-    def __init__(self, user_id: UUID, username: str, role_id: UUID, permissions: dict):
+    def __init__(
+        self, user_id: UUID, username: str, role_id: UUID, permissions: dict
+    ):
         self.user_id = user_id
         self.username = username
         self.role_id = role_id
@@ -49,7 +51,9 @@ async def get_current_user_token(
     return TokenData(
         user_id=UUID(user_id),
         username=payload.get("username"),
-        role_id=(UUID(payload.get("role_id")) if payload.get("role_id") else None),
+        role_id=(
+            UUID(payload.get("role_id")) if payload.get("role_id") else None
+        ),
         permissions=payload.get("permissions", {}),
     )
 

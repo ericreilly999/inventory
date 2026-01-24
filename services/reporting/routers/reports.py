@@ -61,10 +61,14 @@ async def get_inventory_status_report(
     )
     try:
         # Build base query for locations
-        location_query = db.query(Location).options(joinedload(Location.location_type))
+        location_query = db.query(Location).options(
+            joinedload(Location.location_type)
+        )
 
         if location_ids:
-            location_query = location_query.filter(Location.id.in_(location_ids))
+            location_query = location_query.filter(
+                Location.id.in_(location_ids)
+            )
 
         locations = location_query.all()
 
@@ -183,7 +187,9 @@ async def get_movement_history_report(
     start_date: Optional[datetime] = Query(
         None, description="Start date for filtering"
     ),
-    end_date: Optional[datetime] = Query(None, description="End date for filtering"),
+    end_date: Optional[datetime] = Query(
+        None, description="End date for filtering"
+    ),
     location_ids: Optional[List[UUID]] = Query(
         None, description="Filter by specific locations"
     ),
@@ -218,9 +224,15 @@ async def get_movement_history_report(
 
         # Build query for movement history
         query = db.query(MoveHistory).options(
-            joinedload(MoveHistory.parent_item).joinedload(ParentItem.item_type),
-            joinedload(MoveHistory.from_location).joinedload(Location.location_type),
-            joinedload(MoveHistory.to_location).joinedload(Location.location_type),
+            joinedload(MoveHistory.parent_item).joinedload(
+                ParentItem.item_type
+            ),
+            joinedload(MoveHistory.from_location).joinedload(
+                Location.location_type
+            ),
+            joinedload(MoveHistory.to_location).joinedload(
+                Location.location_type
+            ),
             joinedload(MoveHistory.moved_by_user),
         )
 
@@ -352,7 +364,9 @@ async def get_inventory_count_report(
         )
 
         if item_type_ids:
-            item_type_query = item_type_query.filter(ItemType.id.in_(item_type_ids))
+            item_type_query = item_type_query.filter(
+                ItemType.id.in_(item_type_ids)
+            )
 
         item_type_counts = item_type_query.group_by(ItemType.id).all()
 
@@ -379,7 +393,9 @@ async def get_inventory_count_report(
                 func.count(func.distinct(ChildItem.id)).label("child_count"),
             )
             .join(Location.location_type)
-            .outerjoin(ParentItem, ParentItem.current_location_id == Location.id)
+            .outerjoin(
+                ParentItem, ParentItem.current_location_id == Location.id
+            )
             .outerjoin(ItemType, ParentItem.item_type_id == ItemType.id)
             .outerjoin(ChildItem, ChildItem.parent_item_id == ParentItem.id)
         )
@@ -471,7 +487,9 @@ async def export_inventory_data(
 
     Requirements: 3.4, 3.5
     """
-    logger.info("Exporting inventory data", format=format, location_ids=location_ids)
+    logger.info(
+        "Exporting inventory data", format=format, location_ids=location_ids
+    )
     try:
         if format not in ["json", "csv"]:
             raise HTTPException(
@@ -482,12 +500,16 @@ async def export_inventory_data(
         # Get all inventory data
         query = db.query(ParentItem).options(
             joinedload(ParentItem.item_type),
-            joinedload(ParentItem.current_location).joinedload(Location.location_type),
+            joinedload(ParentItem.current_location).joinedload(
+                Location.location_type
+            ),
             joinedload(ParentItem.child_items).joinedload(ChildItem.item_type),
         )
 
         if location_ids:
-            query = query.filter(ParentItem.current_location_id.in_(location_ids))
+            query = query.filter(
+                ParentItem.current_location_id.in_(location_ids)
+            )
 
         parent_items = query.all()
 

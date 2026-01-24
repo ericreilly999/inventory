@@ -145,7 +145,9 @@ def test_referential_integrity_validation_property(location_name, item_name):
         try:
             session.commit()
             # If we reach here, the constraint was not enforced
-            assert False, "Expected IntegrityError for non-existent location_type_id"
+            assert (
+                False
+            ), "Expected IntegrityError for non-existent location_type_id"
         except IntegrityError:
             # This is expected - referential integrity enforced
             session.rollback()
@@ -165,7 +167,9 @@ def test_referential_integrity_validation_property(location_name, item_name):
         try:
             session.commit()
             # If we reach here, the constraint was not enforced
-            assert False, "Expected IntegrityError for non-existent location_id"
+            assert (
+                False
+            ), "Expected IntegrityError for non-existent location_id"
         except IntegrityError:
             # This is expected - referential integrity enforced
             session.rollback()
@@ -185,7 +189,9 @@ def test_referential_integrity_validation_property(location_name, item_name):
         try:
             session.commit()
             # If we reach here, the constraint was not enforced
-            assert False, "Expected IntegrityError for non-existent item_type_id"
+            assert (
+                False
+            ), "Expected IntegrityError for non-existent item_type_id"
         except IntegrityError:
             # This is expected - referential integrity enforced
             session.rollback()
@@ -205,7 +211,9 @@ def test_referential_integrity_validation_property(location_name, item_name):
         try:
             session.commit()
             # If we reach here, the constraint was not enforced
-            assert False, "Expected IntegrityError for non-existent parent_item_id"
+            assert (
+                False
+            ), "Expected IntegrityError for non-existent parent_item_id"
         except IntegrityError:
             # This is expected - referential integrity enforced
             session.rollback()
@@ -247,15 +255,21 @@ def test_referential_integrity_validation_property(location_name, item_name):
 
         # Verify all valid entities were created successfully
         assert (
-            session.query(Location).filter_by(name=location_name + "_valid").first()
+            session.query(Location)
+            .filter_by(name=location_name + "_valid")
+            .first()
             is not None
         )
         assert (
-            session.query(ParentItem).filter_by(name=item_name + "_valid").first()
+            session.query(ParentItem)
+            .filter_by(name=item_name + "_valid")
+            .first()
             is not None
         )
         assert (
-            session.query(ChildItem).filter_by(name=item_name + "_valid_child").first()
+            session.query(ChildItem)
+            .filter_by(name=item_name + "_valid_child")
+            .first()
             is not None
         )
 

@@ -58,7 +58,10 @@ async def route_request(
     # Add user context headers if available
     if hasattr(request.state, "user_id") and request.state.user_id is not None:
         headers["X-User-ID"] = str(request.state.user_id)
-    if hasattr(request.state, "user_role") and request.state.user_role is not None:
+    if (
+        hasattr(request.state, "user_role")
+        and request.state.user_role is not None
+    ):
         headers["X-User-Role"] = str(request.state.user_role)
 
     try:
@@ -193,7 +196,9 @@ async def logout(
 
 
 # User management routes
-@router.api_route("/users/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@router.api_route(
+    "/users/{path:path}", methods=["GET", "POST", "PUT", "DELETE"]
+)
 async def users_routes(
     request: Request,
     path: str,
@@ -203,7 +208,9 @@ async def users_routes(
     return await route_request(request, "user", f"/users/{path}", client)
 
 
-@router.api_route("/roles/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@router.api_route(
+    "/roles/{path:path}", methods=["GET", "POST", "PUT", "DELETE"]
+)
 async def roles_routes(
     request: Request,
     path: str,
@@ -214,7 +221,9 @@ async def roles_routes(
 
 
 # Admin routes
-@router.api_route("/admin/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@router.api_route(
+    "/admin/{path:path}", methods=["GET", "POST", "PUT", "DELETE"]
+)
 async def admin_routes(
     request: Request,
     path: str,
@@ -225,7 +234,9 @@ async def admin_routes(
 
 
 # Inventory management routes
-@router.api_route("/items/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@router.api_route(
+    "/items/{path:path}", methods=["GET", "POST", "PUT", "DELETE"]
+)
 async def items_routes(
     request: Request,
     path: str,
@@ -236,24 +247,32 @@ async def items_routes(
 
 
 # Location management routes
-@router.api_route("/locations/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@router.api_route(
+    "/locations/{path:path}", methods=["GET", "POST", "PUT", "DELETE"]
+)
 async def locations_routes(
     request: Request,
     path: str,
     client: httpx.AsyncClient = Depends(get_service_client),
 ):
     """Route location management requests to location service."""
-    return await route_request(request, "location", f"/locations/{path}", client)
+    return await route_request(
+        request, "location", f"/locations/{path}", client
+    )
 
 
-@router.api_route("/movements/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@router.api_route(
+    "/movements/{path:path}", methods=["GET", "POST", "PUT", "DELETE"]
+)
 async def movements_routes(
     request: Request,
     path: str,
     client: httpx.AsyncClient = Depends(get_service_client),
 ):
     """Route movement requests to location service."""
-    return await route_request(request, "location", f"/movements/{path}", client)
+    return await route_request(
+        request, "location", f"/movements/{path}", client
+    )
 
 
 # Reporting routes
@@ -264,4 +283,6 @@ async def reports_routes(
     client: httpx.AsyncClient = Depends(get_service_client),
 ):
     """Route reporting requests to reporting service."""
-    return await route_request(request, "reporting", f"/reports/{path}", client)
+    return await route_request(
+        request, "reporting", f"/reports/{path}", client
+    )

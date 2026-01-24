@@ -67,7 +67,9 @@ def get_test_db_session():
         poolclass=StaticPool,
     )
 
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    TestingSessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=engine
+    )
 
     # Create all tables
     Base.metadata.create_all(bind=engine)
@@ -166,7 +168,8 @@ class TestUserUniquenessProperties:
                 try:
                     duplicate_username_user = User(
                         username=user2_data["username"],  # Same username
-                        email=user2_data["email"] + "_different",  # Different email
+                        email=user2_data["email"]
+                        + "_different",  # Different email
                         password_hash=hash_password(user2_data["password"]),
                         role_id=role.id,
                         active=True,

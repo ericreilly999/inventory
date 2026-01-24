@@ -117,7 +117,9 @@ def test_child_item_assignment_uniqueness_property(parent_count, child_count):
         session = SessionLocal()
 
         # Create test data
-        user, location, parent_item_type, child_item_type = create_test_data(session)
+        user, location, parent_item_type, child_item_type = create_test_data(
+            session
+        )
 
         # Create multiple parent items
         parent_items = []
@@ -216,7 +218,9 @@ def test_child_item_assignment_uniqueness_property(parent_count, child_count):
                 # or application-level validation
 
                 # Verify child is not already assigned to this other parent
-                other_parent_child_ids = [c.id for c in other_parent.child_items]
+                other_parent_child_ids = [
+                    c.id for c in other_parent.child_items
+                ]
                 assert test_child.id not in other_parent_child_ids
 
         # Final verification: All children are uniquely assigned

@@ -37,18 +37,24 @@ class HealthCheck:
             try:
                 check_name = check.__name__
                 check_result = (
-                    await check() if asyncio.iscoroutinefunction(check) else check()
+                    await check()
+                    if asyncio.iscoroutinefunction(check)
+                    else check()
                 )
                 results["checks"][check_name] = {
                     "status": "healthy" if check_result else "unhealthy",
-                    "details": (check_result if isinstance(check_result, dict) else {}),
+                    "details": (
+                        check_result if isinstance(check_result, dict) else {}
+                    ),
                 }
 
                 if not check_result:
                     results["status"] = "unhealthy"
 
             except Exception as e:
-                logger.error(f"Health check {check.__name__} failed", error=str(e))
+                logger.error(
+                    f"Health check {check.__name__} failed", error=str(e)
+                )
                 results["checks"][check.__name__] = {
                     "status": "unhealthy",
                     "error": str(e),

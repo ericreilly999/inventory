@@ -62,7 +62,9 @@ def api_endpoint_data(draw):
     """Generate API endpoint data for testing."""
     service = draw(st.sampled_from(["users", "items", "locations", "reports"]))
     resource_id = draw(st.uuids())
-    action = draw(st.sampled_from(["", f"/{resource_id}", f"/{resource_id}/details"]))
+    action = draw(
+        st.sampled_from(["", f"/{resource_id}", f"/{resource_id}/details"])
+    )
     return f"/api/v1/{service}{action}"
 
 
@@ -75,7 +77,9 @@ class TestAPIAuthenticationValidationProperties:
 
     @given(request_data=valid_api_request_data(), endpoint=api_endpoint_data())
     @settings(max_examples=10)
-    def test_api_authentication_and_validation_property(self, request_data, endpoint):
+    def test_api_authentication_and_validation_property(
+        self, request_data, endpoint
+    ):
         """
         Property 14: API Authentication and Validation
 
@@ -169,7 +173,9 @@ class TestAPIAuthenticationValidationProperties:
         elif invalid_token.startswith("NotBearer"):
             invalid_headers.append({"Authorization": invalid_token})
         else:
-            invalid_headers.append({"Authorization": f"Bearer {invalid_token}"})
+            invalid_headers.append(
+                {"Authorization": f"Bearer {invalid_token}"}
+            )
 
         for headers in invalid_headers:
             response = self.client.get(endpoint, headers=headers)
@@ -280,7 +286,9 @@ class TestAPIAuthenticationValidationProperties:
                         assert kwargs["user_id"] == request_data["user_id"]
                         break
 
-                assert auth_log_found, "Authentication successful log not found"
+                assert (
+                    auth_log_found
+                ), "Authentication successful log not found"
 
     def test_public_endpoints_no_authentication_required(self):
         """
@@ -340,11 +348,16 @@ class TestAPIAuthenticationValidationProperties:
 
                 # Should include authorization header
                 assert "authorization" in forwarded_headers
-                assert forwarded_headers["authorization"] == f"Bearer {valid_token}"
+                assert (
+                    forwarded_headers["authorization"]
+                    == f"Bearer {valid_token}"
+                )
 
                 # Should include user context headers
                 assert "X-User-ID" in forwarded_headers
-                assert forwarded_headers["X-User-ID"] == request_data["user_id"]
+                assert (
+                    forwarded_headers["X-User-ID"] == request_data["user_id"]
+                )
 
                 assert "X-User-Role" in forwarded_headers
                 assert forwarded_headers["X-User-Role"] == request_data["role"]

@@ -24,7 +24,9 @@ async def cleanup_admin(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Clean up existing admin user with invalid data."""
     try:
         # Delete existing admin user and role
-        existing_admin = db.query(User).filter(User.username == "admin").first()
+        existing_admin = (
+            db.query(User).filter(User.username == "admin").first()
+        )
         if existing_admin:
             db.delete(existing_admin)
 
@@ -52,7 +54,9 @@ async def seed_database(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Seed the database with initial admin user and sample data."""
     try:
         # Check if admin user already exists
-        existing_admin = db.query(User).filter(User.username == "admin").first()
+        existing_admin = (
+            db.query(User).filter(User.username == "admin").first()
+        )
         if existing_admin:
             return {
                 "message": "Admin user already exists",
@@ -98,7 +102,9 @@ async def seed_database(db: Session = Depends(get_db)) -> Dict[str, Any]:
         location_types = {}
         for name, description in location_types_data:
             existing_type = (
-                db.query(LocationType).filter(LocationType.name == name).first()
+                db.query(LocationType)
+                .filter(LocationType.name == name)
+                .first()
             )
             if not existing_type:
                 location_type = LocationType(
@@ -123,7 +129,9 @@ async def seed_database(db: Session = Depends(get_db)) -> Dict[str, Any]:
         ]
 
         for name, description, type_name in locations_data:
-            existing_location = db.query(Location).filter(Location.name == name).first()
+            existing_location = (
+                db.query(Location).filter(Location.name == name).first()
+            )
             if not existing_location and type_name in location_types:
                 location = Location(
                     id=uuid.uuid4(),
@@ -162,7 +170,9 @@ async def seed_database(db: Session = Depends(get_db)) -> Dict[str, Any]:
         # Commit all changes
         db.commit()
 
-        logger.info("Database seeded successfully with admin user and sample data")
+        logger.info(
+            "Database seeded successfully with admin user and sample data"
+        )
 
         return {
             "message": "Database seeded successfully!",
@@ -183,7 +193,9 @@ async def seed_database(db: Session = Depends(get_db)) -> Dict[str, Any]:
     except Exception as e:
         db.rollback()
         logger.error(f"Error seeding database: {e}")
-        raise HTTPException(status_code=500, detail=f"Error seeding database: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error seeding database: {str(e)}"
+        )
 
 
 @router.get("/seed-status")
@@ -311,10 +323,14 @@ async def test_password() -> Dict[str, Any]:
 
         test_password = "admin"
         logger.info(f"Testing password hashing with password: {test_password}")
-        logger.info(f"Password length in bytes: {len(test_password.encode('utf-8'))}")
+        logger.info(
+            f"Password length in bytes: {len(test_password.encode('utf-8'))}"
+        )
 
         password_hash = hash_password(test_password)
-        logger.info(f"Password hash generated successfully: {password_hash[:20]}...")
+        logger.info(
+            f"Password hash generated successfully: {password_hash[:20]}..."
+        )
 
         return {
             "message": "Password hashing test successful",
@@ -326,4 +342,6 @@ async def test_password() -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error testing password: {e}")
-        raise HTTPException(status_code=500, detail=f"Error testing password: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error testing password: {str(e)}"
+        )

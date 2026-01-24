@@ -135,7 +135,9 @@ async def update_item_type(
     if item_type_data.name and item_type_data.name != item_type.name:
         existing = (
             db.query(ItemType)
-            .filter(ItemType.name == item_type_data.name, ItemType.id != type_id)
+            .filter(
+                ItemType.name == item_type_data.name, ItemType.id != type_id
+            )
             .first()
         )
         if existing:
@@ -194,7 +196,6 @@ async def delete_item_type(
                 f"this type"
             ),
         )
-
 
     db.delete(item_type)
     db.commit()

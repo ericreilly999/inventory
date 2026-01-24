@@ -62,7 +62,9 @@ class RedisCache:
             logger.error("Redis get failed", key=key, error=str(e))
             return None
 
-    async def set(self, key: str, value: str, expire: Optional[int] = None) -> bool:
+    async def set(
+        self, key: str, value: str, expire: Optional[int] = None
+    ) -> bool:
         """Set value in cache."""
         try:
             return self.client.set(key, value, ex=expire)

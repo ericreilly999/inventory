@@ -67,7 +67,9 @@ class AssignmentHistory(Base, UUIDMixin, TimestampMixin):
 
     def __repr__(self) -> str:
         child_name = self.child_item.name if self.child_item else None
-        from_name = self.from_parent_item.name if self.from_parent_item else None
+        from_name = (
+            self.from_parent_item.name if self.from_parent_item else None
+        )
         to_name = self.to_parent_item.name if self.to_parent_item else None
         return (
             f"<AssignmentHistory(id={self.id}, "

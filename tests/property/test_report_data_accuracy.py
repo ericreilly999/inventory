@@ -103,7 +103,9 @@ def create_test_data(session):
     location_configs=st.lists(
         st.tuples(
             st.text(min_size=1, max_size=20),  # location name
-            st.sampled_from([0, 1]),  # location type index (warehouse or delivery)
+            st.sampled_from(
+                [0, 1]
+            ),  # location type index (warehouse or delivery)
             st.integers(min_value=0, max_value=5),  # parent items count
             st.integers(min_value=0, max_value=3),  # child items per parent
         ),
@@ -203,7 +205,9 @@ def test_report_data_accuracy_property(location_configs):
                     session.add(child_item)
 
                     expected_totals["total_child_items"] += 1
-                    expected_totals["by_item_type"]["child"]["child_count"] += 1
+                    expected_totals["by_item_type"]["child"][
+                        "child_count"
+                    ] += 1
 
             session.commit()
 
@@ -234,12 +238,15 @@ def test_report_data_accuracy_property(location_configs):
             }
 
         # Verify inventory status report accuracy (Requirement 3.1)
-        for location_id, expected_data in expected_totals["by_location"].items():
+        for location_id, expected_data in expected_totals[
+            "by_location"
+        ].items():
             actual_data = actual_location_data[location_id]
 
             # Verify parent items count matches
             assert (
-                actual_data["parent_items_count"] == expected_data["parent_items_count"]
+                actual_data["parent_items_count"]
+                == expected_data["parent_items_count"]
             ), (
                 f"Parent items count mismatch at location {expected_data['location_name']}: "
                 f"expected {expected_data['parent_items_count']}, got {actual_data['parent_items_count']}"
@@ -247,15 +254,20 @@ def test_report_data_accuracy_property(location_configs):
 
             # Verify child items count matches
             assert (
-                actual_data["child_items_count"] == expected_data["child_items_count"]
+                actual_data["child_items_count"]
+                == expected_data["child_items_count"]
             ), (
                 f"Child items count mismatch at location {expected_data['location_name']}: "
                 f"expected {expected_data['child_items_count']}, got {actual_data['child_items_count']}"
             )
 
             # Verify location metadata matches
-            assert actual_data["location_name"] == expected_data["location_name"]
-            assert actual_data["location_type"] == expected_data["location_type"]
+            assert (
+                actual_data["location_name"] == expected_data["location_name"]
+            )
+            assert (
+                actual_data["location_type"] == expected_data["location_type"]
+            )
 
         # Generate inventory count report data (simulating the report logic)
         # Requirement 3.3: Inventory counts by item type
@@ -290,7 +302,8 @@ def test_report_data_accuracy_property(location_configs):
 
         # Verify total counts consistency
         total_actual_parents = sum(
-            data["parent_items_count"] for data in actual_location_data.values()
+            data["parent_items_count"]
+            for data in actual_location_data.values()
         )
         total_actual_children = sum(
             data["child_items_count"] for data in actual_location_data.values()
@@ -307,12 +320,13 @@ def test_report_data_accuracy_property(location_configs):
         )
 
         # Verify location count
-        assert len(actual_location_data) == expected_totals["total_locations"], (
+        assert (
+            len(actual_location_data) == expected_totals["total_locations"]
+        ), (
             f"Total locations mismatch: expected "
             f"{expected_totals['total_locations']}, got "
             f"{len(actual_location_data)}"
         )
-
 
         session.close()
 
