@@ -295,14 +295,15 @@ class TestAPIPerformance:
 
         if history_metrics.success_count > 0:
             # History queries should be reasonably fast
-            assert (
-                history_metrics.avg_response_time < 10.0
-            ), f"History query avg time {
-                history_metrics.avg_response_time:.3f}s > 10.0s"
+            assert history_metrics.avg_response_time < 10.0, (
+                f"History query avg time "
+                f"{history_metrics.avg_response_time:.3f}s > 10.0s"
+            )
 
 
 class TestLoadTesting:
     """Test system behavior under various load conditions."""
+
 
     @pytest.fixture
     def perf_runner(self):

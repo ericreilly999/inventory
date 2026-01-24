@@ -168,8 +168,7 @@ async def delete_location_type(
         db.commit()
 
         return MessageResponse(
-            message=f"Location type '{
-                location_type.name}' deleted successfully"
+            message=f"Location type '{location_type.name}' deleted successfully"
         )
 
     except IntegrityError:

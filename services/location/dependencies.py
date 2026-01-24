@@ -201,6 +201,9 @@ def validate_location_type_deletion(location_type: LocationType, db: Session) ->
     if locations_count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot delete location type '{
-                location_type.name}' - {locations_count} locations are using it",
+            detail=(
+                f"Cannot delete location type '{location_type.name}' - "
+                f"{locations_count} locations are using it"
+            ),
         )
+
