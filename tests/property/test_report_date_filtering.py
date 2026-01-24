@@ -199,11 +199,10 @@ def test_report_date_filtering_property(
 
         # Verify all filtered movements are within the date range
         for movement in filtered_movements:
-            assert (
-                filter_start_date <= movement.moved_at <= filter_end_date
-            ), f"Movement {
-                movement.id} at {
-                movement.moved_at} is outside filter range [{filter_start_date}, {filter_end_date}]"
+            assert filter_start_date <= movement.moved_at <= filter_end_date, (
+                f"Movement {movement.id} at {movement.moved_at} is outside "
+                f"filter range [{filter_start_date}, {filter_end_date}]"
+            )
 
         # Verify chronological ordering (most recent first)
         # Requirement 5.2: Chronologically ordered movement records

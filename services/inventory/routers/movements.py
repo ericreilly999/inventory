@@ -91,10 +91,12 @@ async def move_parent_item(
     )
 
     return MessageResponse(
-        message=f"Item '{
-            parent_item.name}' moved to '{
-            to_location.name}' successfully"
+        message=(
+            f"Item '{parent_item.name}' moved to "
+            f"'{to_location.name}' successfully"
+        )
     )
+
 
 
 @router.get(

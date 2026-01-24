@@ -181,7 +181,9 @@ async def validate_item_type_category(
         )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Item type '{
-                item_type.name}' has category '{actual_category}' but '{expected_category}' is required",
+            detail=(
+                f"Item type '{item_type.name}' has category "
+                f"'{actual_category}' but '{expected_category}' is required"
+            ),
         )
     return item_type

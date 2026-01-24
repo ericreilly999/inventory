@@ -29,10 +29,10 @@ class ItemType(Base, UUIDMixin, TimestampMixin):
     child_items = relationship("ChildItem", back_populates="item_type")
 
     def __repr__(self) -> str:
-        return f"<ItemType(id={
-            self.id}, name='{
-            self.name}', category='{
-            self.category.value}')>"
+        return (
+            f"<ItemType(id={self.id}, name='{self.name}', "
+            f"category='{self.category.value}')>"
+        )
 
 
 class ParentItem(Base, UUIDMixin, TimestampMixin):

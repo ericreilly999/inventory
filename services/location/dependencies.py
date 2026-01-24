@@ -96,12 +96,13 @@ def require_permission(permission: str):
         logger = get_logger(__name__)
 
         logger.info(
-            f"Checking permission '{permission}' for user {
-                token_data.username}"
+            f"Checking permission '{permission}' for user "
+            f"{token_data.username}"
         )
         logger.info(f"User permissions: {token_data.permissions}")
 
         permissions = token_data.permissions or {}
+
 
         # Check for wildcard permission (admin access)
         if permissions.get("*", False):

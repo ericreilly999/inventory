@@ -57,7 +57,8 @@ class Location(Base, UUIDMixin, TimestampMixin):
     )
 
     def __repr__(self) -> str:
-        return f"<Location(id={
-            self.id}, name='{
-            self.name}', type='{
-            self.location_type.name if self.location_type else None}')>"
+        type_name = self.location_type.name if self.location_type else None
+        return (
+            f"<Location(id={self.id}, name='{self.name}', "
+            f"type='{type_name}')>"
+        )

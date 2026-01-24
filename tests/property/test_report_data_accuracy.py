@@ -296,22 +296,23 @@ def test_report_data_accuracy_property(location_configs):
             data["child_items_count"] for data in actual_location_data.values()
         )
 
-        assert (
-            total_actual_parents == expected_totals["total_parent_items"]
-        ), f"Total parent items mismatch: expected {
-            expected_totals['total_parent_items']}, got {total_actual_parents}"
+        assert total_actual_parents == expected_totals["total_parent_items"], (
+            f"Total parent items mismatch: expected "
+            f"{expected_totals['total_parent_items']}, got {total_actual_parents}"
+        )
 
-        assert (
-            total_actual_children == expected_totals["total_child_items"]
-        ), f"Total child items mismatch: expected {
-            expected_totals['total_child_items']}, got {total_actual_children}"
+        assert total_actual_children == expected_totals["total_child_items"], (
+            f"Total child items mismatch: expected "
+            f"{expected_totals['total_child_items']}, got {total_actual_children}"
+        )
 
         # Verify location count
-        assert (
-            len(actual_location_data) == expected_totals["total_locations"]
-        ), f"Total locations mismatch: expected {
-            expected_totals['total_locations']}, got {
-            len(actual_location_data)}"
+        assert len(actual_location_data) == expected_totals["total_locations"], (
+            f"Total locations mismatch: expected "
+            f"{expected_totals['total_locations']}, got "
+            f"{len(actual_location_data)}"
+        )
+
 
         session.close()
 

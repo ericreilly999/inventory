@@ -186,12 +186,15 @@ async def delete_item_type(
     )
 
     if parent_items_count > 0 or child_items_count > 0:
+        total_items = parent_items_count + child_items_count
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot delete item type: {
-                parent_items_count +
-                child_items_count} items are using this type",
+            detail=(
+                f"Cannot delete item type: {total_items} items are using "
+                f"this type"
+            ),
         )
+
 
     db.delete(item_type)
     db.commit()

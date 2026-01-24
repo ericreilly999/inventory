@@ -180,10 +180,10 @@ class TestAPIPerformance:
 
             if result["success"]:
                 # Response time should be under 2 seconds for single requests
-                assert (
-                    result["response_time"] < 2.0
-                ), f"{method} {endpoint} took {
-                    result['response_time']:.3f}s (> 2.0s)"
+                assert result["response_time"] < 2.0, (
+                    f"{method} {endpoint} took "
+                    f"{result['response_time']:.3f}s (> 2.0s)"
+                )
 
                 # Should return successful status codes
                 assert (

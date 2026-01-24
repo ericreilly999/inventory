@@ -7,9 +7,13 @@ resource "random_password" "db_password" {
 
 # Local value to handle password
 locals {
-  # Use try() to avoid conditional evaluation of marked values
-  # This prevents "value is marked" errors during terraform validation
-  db_password = var.db_password != null ? var.db_password : try(nonsensitive(random_password.db_password[0].result), "")
+  # Use coalesce with try to safely handle marked values
+  # When var.db_password is null, use the random password
+  # The nonsensitive() wrapper is needed because random_password is marked as sensitive
+  db_password = coalesce(
+    var.db_password,
+    try(random_password.db_password[0].result, null)
+  )
 }
 
 # RDS instance

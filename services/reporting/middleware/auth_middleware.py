@@ -30,8 +30,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             logger.warning(
-                f"Missing or invalid Authorization header for {
-                    request.url.path}"
+                f"Missing or invalid Authorization header for "
+                f"{request.url.path}"
             )
             return JSONResponse(
                 status_code=401,

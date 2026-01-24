@@ -52,9 +52,10 @@ async def move_item(
         if parent_item.current_location_id == move_request.to_location_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Item '{
-                    parent_item.name}' is already at location '{
-                    to_location.name}'",
+                detail=(
+                    f"Item '{parent_item.name}' is already at location "
+                    f"'{to_location.name}'"
+                ),
             )
 
         # Store the original location for history

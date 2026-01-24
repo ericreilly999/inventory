@@ -436,10 +436,11 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
                 if sorted_moves:
                     last_move = sorted_moves[-1]
                     current_location = self.parent_items[item_id].current_location_id
-                    assert (
-                        last_move.to_location_id == current_location
-                    ), f"Item {item_id} move history inconsistent: last move to {
-                        last_move.to_location_id}, current location {current_location}"
+                    assert last_move.to_location_id == current_location, (
+                        f"Item {item_id} move history inconsistent: "
+                        f"last move to {last_move.to_location_id}, "
+                        f"current location {current_location}"
+                    )
 
     @invariant()
     def assignment_history_consistency(self):
