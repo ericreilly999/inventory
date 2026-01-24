@@ -5,6 +5,13 @@ resource "random_password" "db_password" {
   special = true
 }
 
+# Local value to handle password
+locals {
+  db_password = var.db_password != null ? var.db_password : (
+    length(random_password.db_password) > 0 ? random_password.db_password[0].result : ""
+  )
+}
+
 # RDS instance
 resource "aws_db_instance" "main" {
   identifier = "${var.environment}-inventory-db"
@@ -23,7 +30,7 @@ resource "aws_db_instance" "main" {
   # Database configuration
   db_name  = var.db_name
   username = var.db_username
-  password = var.db_password != null ? var.db_password : random_password.db_password[0].result
+  password = local.db_password
 
   # Network configuration
   db_subnet_group_name   = var.db_subnet_group_name
@@ -125,7 +132,7 @@ resource "aws_secretsmanager_secret_version" "db_password" {
   secret_id = aws_secretsmanager_secret.db_password.id
   secret_string = jsonencode({
     username = var.db_username
-    password = var.db_password != null ? var.db_password : random_password.db_password[0].result
+    password = local.db_password
     engine   = "postgres"
     host     = aws_db_instance.main.endpoint
     port     = aws_db_instance.main.port

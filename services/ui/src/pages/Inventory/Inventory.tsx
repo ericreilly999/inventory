@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -69,11 +69,7 @@ const Inventory: React.FC = () => {
     parent_item_id: '',
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [parentResponse, childResponse, typesResponse, locationsResponse] = await Promise.all([
         apiService.get('/api/v1/items/parent'),
@@ -94,7 +90,11 @@ const Inventory: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setError]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleAddItem = () => {
     setEditingItem(null);

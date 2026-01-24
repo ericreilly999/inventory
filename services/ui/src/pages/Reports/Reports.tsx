@@ -17,7 +17,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Tabs,
   Tab,
 } from '@mui/material';

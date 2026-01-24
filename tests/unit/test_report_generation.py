@@ -666,20 +666,21 @@ class TestReportErrorHandling:
         except ValueError:
             # Invalid UUID format would raise ValueError
             pass
-    
+
     def test_report_database_error_simulation(self, test_db_session):
         """Test report generation error handling for database issues."""
         # Simulate database connection issues
-        # In a real scenario, this would test database timeout or connection errors
-        
+        # In a real scenario, this would test database timeout or
+        # connection errors
+
         # Test with empty database (no data scenario)
         parent_items_count = test_db_session.query(ParentItem).count()
         child_items_count = test_db_session.query(ChildItem).count()
-        
+
         # Verify empty database handling
         assert parent_items_count == 0
         assert child_items_count == 0
-    
+
     def test_report_large_dataset_handling(self, test_db_session):
         """Test report generation with large datasets."""
         # Create test data for performance testing
@@ -689,7 +690,7 @@ class TestReportErrorHandling:
             description="Inventory Manager Role",
             permissions={"reports": ["read"]}
         )
-        
+
         user = User(
             id=uuid4(),
             username="test_user",
@@ -699,13 +700,13 @@ class TestReportErrorHandling:
             role_id=role.id,
             role=role
         )
-        
+
         location_type = LocationType(
             id=uuid4(),
             name="Warehouse",
             description="Storage facility"
         )
-        
+
         location = Location(
             id=uuid4(),
             name="Large Warehouse",
@@ -713,18 +714,20 @@ class TestReportErrorHandling:
             location_type_id=location_type.id,
             location_type=location_type
         )
-        
+
         item_type = ItemType(
             id=uuid4(),
             name="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT
         )
-        
+
         # Add base entities
-        test_db_session.add_all([role, user, location_type, location, item_type])
+        test_db_session.add_all([
+            role, user, location_type, location, item_type
+        ])
         test_db_session.commit()
-        
+
         # Create multiple items (simulating larger dataset)
         items = []
         for i in range(10):  # Reduced for test performance
@@ -740,20 +743,20 @@ class TestReportErrorHandling:
                 creator=user
             )
             items.append(item)
-        
+
         test_db_session.add_all(items)
         test_db_session.commit()
-        
+
         # Test query performance with larger dataset
         start_time = datetime.now()
         items_count = test_db_session.query(ParentItem).filter(
             ParentItem.current_location_id == location.id
         ).count()
         end_time = datetime.now()
-        
+
         # Verify query completed and returned correct count
         assert items_count == 10
-        
+
         # Basic performance check (should complete quickly)
         query_duration = (end_time - start_time).total_seconds()
         assert query_duration < 1.0  # Should complete within 1 second
@@ -761,20 +764,20 @@ class TestReportErrorHandling:
 
 class TestReportDataExport:
     """Test report data export functionality."""
-    
+
     def test_export_format_validation(self):
         """Test export format validation."""
         valid_formats = ["json", "csv"]
         invalid_formats = ["xml", "pdf", "excel"]
-        
+
         # Test valid formats
         for fmt in valid_formats:
             assert fmt in ["json", "csv"]
-        
+
         # Test invalid formats
         for fmt in invalid_formats:
             assert fmt not in ["json", "csv"]
-    
+
     def test_export_data_structure(self, test_db_session):
         """Test export data structure consistency."""
         # Create minimal test data
@@ -784,7 +787,7 @@ class TestReportDataExport:
             description="Inventory Manager Role",
             permissions={"reports": ["read"]}
         )
-        
+
         user = User(
             id=uuid4(),
             username="test_user",
@@ -794,13 +797,13 @@ class TestReportDataExport:
             role_id=role.id,
             role=role
         )
-        
+
         location_type = LocationType(
             id=uuid4(),
             name="Warehouse",
             description="Storage facility"
         )
-        
+
         location = Location(
             id=uuid4(),
             name="Export Test Warehouse",
@@ -808,14 +811,14 @@ class TestReportDataExport:
             location_type_id=location_type.id,
             location_type=location_type
         )
-        
+
         item_type = ItemType(
             id=uuid4(),
             name="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT
         )
-        
+
         parent_item = ParentItem(
             id=uuid4(),
             name="Export Test Item",
@@ -827,13 +830,13 @@ class TestReportDataExport:
             current_location=location,
             creator=user
         )
-        
+
         # Add all entities to database
         test_db_session.add_all([
             role, user, location_type, location, item_type, parent_item
         ])
         test_db_session.commit()
-        
+
         # Simulate export data structure
         export_data = {
             "parent_item_id": str(parent_item.id),
@@ -841,22 +844,24 @@ class TestReportDataExport:
             "parent_item_description": parent_item.description,
             "parent_item_type": parent_item.item_type.name,
             "location_name": parent_item.current_location.name,
-            "location_type": parent_item.current_location.location_type.name,
+            "location_type": (
+                parent_item.current_location.location_type.name
+            ),
             "child_items_count": len(parent_item.child_items),
             "created_at": parent_item.created_at.isoformat(),
             "updated_at": parent_item.updated_at.isoformat()
         }
-        
+
         # Verify export data structure
         required_fields = [
             "parent_item_id", "parent_item_name", "parent_item_type",
             "location_name", "location_type", "child_items_count"
         ]
-        
+
         for field in required_fields:
             assert field in export_data
             assert export_data[field] is not None
-        
+
         # Verify data types
         assert isinstance(export_data["child_items_count"], int)
         assert isinstance(export_data["parent_item_name"], str)
