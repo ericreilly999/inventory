@@ -284,6 +284,7 @@ async def get_movement_history_report(
     dependencies=[Depends(require_reports_read)]
 )
 async def get_inventory_count_report(
+    location_ids: Optional[List[UUID]] = Query(None, description="Filter by specific locations"),
     location_type_ids: Optional[List[UUID]] = Query(None, description="Filter by location types"),
     item_type_ids: Optional[List[UUID]] = Query(None, description="Filter by item types"),
     db: Session = Depends(get_db)
@@ -295,6 +296,7 @@ async def get_inventory_count_report(
     """
     logger.info(
         "Generating inventory count report",
+        location_ids=location_ids,
         location_type_ids=location_type_ids,
         item_type_ids=item_type_ids
     )
@@ -343,6 +345,12 @@ async def get_inventory_count_report(
             ChildItem, ChildItem.parent_item_id == ParentItem.id
         )
         
+        # Apply location filter
+        if location_ids:
+            location_type_query = location_type_query.filter(
+                Location.id.in_(location_ids)
+            )
+        
         if location_type_ids:
             location_type_query = location_type_query.filter(
                 Location.location_type_id.in_(location_type_ids)
@@ -389,6 +397,7 @@ async def get_inventory_count_report(
             error=str(e),
             error_type=type(e).__name__,
             traceback=traceback.format_exc(),
+            location_ids=location_ids,
             location_type_ids=location_type_ids,
             item_type_ids=item_type_ids
         )

@@ -33,7 +33,7 @@ router = APIRouter()
 async def move_item(
     move_request: ItemMoveRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_location_write)
+    token_data = Depends(require_location_write)
 ):
     """Move a parent item to a new location."""
     from shared.logging.config import get_logger
@@ -45,7 +45,7 @@ async def move_item(
             "Processing move request",
             item_id=str(move_request.item_id),
             to_location_id=str(move_request.to_location_id),
-            user_id=str(current_user.id)
+            user_id=str(token_data.user_id)
         )
         
         # Get the parent item
@@ -73,7 +73,7 @@ async def move_item(
             from_location_id=from_location_id,
             to_location_id=move_request.to_location_id,
             moved_at=datetime.utcnow(),
-            moved_by=current_user.id,
+            moved_by=token_data.user_id,
             notes=move_request.notes
         )
         
