@@ -38,6 +38,20 @@ def test_db_session():
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
 
+    # Ensure all models are imported and registered
+    # This forces the metadata to be populated
+    from shared.models import (  # noqa: F401
+        AssignmentHistory,
+        ChildItem,
+        ItemType,
+        Location,
+        LocationType,
+        MoveHistory,
+        ParentItem,
+        Role,
+        User,
+    )
+
     # Create all tables
     Base.metadata.create_all(bind=test_engine)
 
