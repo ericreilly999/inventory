@@ -12,13 +12,14 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Alert,
   Tabs,
   Tab,
 } from '@mui/material';
 import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, MoveUp as MoveIcon } from '@mui/icons-material';
 import { apiService } from '../../services/api';
+import ErrorDetails from '../../components/ErrorDetails';
+import { useApiError } from '../../hooks/useApiError';
 
 interface ParentItem {
   id: string;
@@ -59,7 +60,7 @@ const Inventory: React.FC = () => {
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [movingItem, setMovingItem] = useState<any>(null);
-  const [error, setError] = useState('');
+  const { errorState, setError, clearError } = useApiError();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -85,8 +86,11 @@ const Inventory: React.FC = () => {
       setChildItems(childResponse.data);
       setItemTypes(typesResponse.data);
       setLocations(locationsResponse.data);
-    } catch (error) {
-      setError('Failed to fetch inventory data');
+    } catch (error: any) {
+      setError(error, {
+        method: 'GET',
+        endpoint: 'Multiple endpoints (parent, child, types, locations)',
+      });
     } finally {
       setLoading(false);
     }
@@ -147,22 +151,32 @@ const Inventory: React.FC = () => {
       setDialogOpen(false);
       fetchData();
     } catch (error: any) {
-      setError(error.response?.data?.error?.message || 'Failed to save item');
+      setError(error, {
+        method: editingItem ? 'PUT' : 'POST',
+        endpoint: editingItem ? `${endpoint}/${editingItem.id}` : endpoint,
+        requestPayload: data,
+      });
     }
   };
 
   const handleMoveItemSubmit = async () => {
+    const payload = {
+      item_id: movingItem.id,
+      to_location_id: formData.current_location_id,
+      notes: 'Moved via UI',
+    };
+    
     try {
-      await apiService.post(`/api/v1/movements/move`, {
-        item_id: movingItem.id,
-        to_location_id: formData.current_location_id,
-        notes: 'Moved via UI',
-      });
+      await apiService.post(`/api/v1/movements/move`, payload);
 
       setMoveDialogOpen(false);
       fetchData();
     } catch (error: any) {
-      setError(error.response?.data?.error?.message || 'Failed to move item');
+      setError(error, {
+        method: 'POST',
+        endpoint: '/api/v1/movements/move',
+        requestPayload: payload,
+      });
     }
   };
 
@@ -174,7 +188,10 @@ const Inventory: React.FC = () => {
       await apiService.delete(`${endpoint}/${id}`);
       fetchData();
     } catch (error: any) {
-      setError(error.response?.data?.error?.message || 'Failed to delete item');
+      setError(error, {
+        method: 'DELETE',
+        endpoint: `${tabValue === 0 ? '/api/v1/items/parent' : '/api/v1/items/child'}/${id}`,
+      });
     }
   };
 
@@ -280,10 +297,14 @@ const Inventory: React.FC = () => {
         </Button>
       </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
-          {error}
-        </Alert>
+      {errorState && (
+        <ErrorDetails
+          error={errorState.error}
+          requestPayload={errorState.requestPayload}
+          endpoint={errorState.endpoint}
+          method={errorState.method}
+          onClose={clearError}
+        />
       )}
 
       <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)} sx={{ mb: 2 }}>

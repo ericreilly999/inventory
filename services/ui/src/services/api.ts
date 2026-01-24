@@ -30,6 +30,15 @@ class ApiService {
     this.api.interceptors.response.use(
       (response) => response,
       (error) => {
+        // Attach request metadata to error for better debugging
+        if (error.config) {
+          error.requestMetadata = {
+            method: error.config.method?.toUpperCase(),
+            endpoint: error.config.url,
+            payload: error.config.data ? JSON.parse(error.config.data) : undefined,
+          };
+        }
+        
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
           window.location.href = '/login';
