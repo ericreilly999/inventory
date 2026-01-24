@@ -36,7 +36,18 @@ async def move_item(
     current_user: User = Depends(require_location_write)
 ):
     """Move a parent item to a new location."""
+    from shared.logging.config import get_logger
+    import traceback
+    logger = get_logger(__name__)
+    
     try:
+        logger.info(
+            "Processing move request",
+            item_id=str(move_request.item_id),
+            to_location_id=str(move_request.to_location_id),
+            user_id=str(current_user.id)
+        )
+        
         # Get the parent item
         parent_item = await get_parent_item_by_id(move_request.item_id, db)
         
@@ -69,6 +80,13 @@ async def move_item(
         db.add(move_history)
         db.commit()
         
+        logger.info(
+            "Item moved successfully",
+            item_id=str(parent_item.id),
+            from_location_id=str(from_location_id),
+            to_location_id=str(move_request.to_location_id)
+        )
+        
         return MessageResponse(
             message=f"Item '{parent_item.name}' moved to location '{to_location.name}' successfully"
         )
@@ -78,6 +96,14 @@ async def move_item(
         raise
     except Exception as e:
         db.rollback()
+        logger.error(
+            "Failed to move item",
+            error=str(e),
+            error_type=type(e).__name__,
+            traceback=traceback.format_exc(),
+            item_id=str(move_request.item_id) if move_request else None,
+            to_location_id=str(move_request.to_location_id) if move_request else None
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to move item: {str(e)}"
