@@ -484,40 +484,35 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
 
         # Check parent item references
         for parent_item in self.parent_items.values():
-            assert (
-                parent_item.item_type_id in self.item_types
-            ), f"Parent item {
-                parent_item.id} has invalid item type {
-                parent_item.item_type_id}"
-            assert (
-                parent_item.current_location_id in self.locations
-            ), f"Parent item {
-                parent_item.id} has invalid location {
-                parent_item.current_location_id}"
-            assert (
-                parent_item.created_by in self.users
-            ), f"Parent item {
-                parent_item.id} has invalid creator {
-                parent_item.created_by}"
+            assert parent_item.item_type_id in self.item_types, (
+                f"Parent item {parent_item.id} has invalid item type "
+                f"{parent_item.item_type_id}"
+            )
+            assert parent_item.current_location_id in self.locations, (
+                f"Parent item {parent_item.id} has invalid location "
+                f"{parent_item.current_location_id}"
+            )
+            assert parent_item.created_by in self.users, (
+                f"Parent item {parent_item.id} has invalid creator "
+                f"{parent_item.created_by}"
+            )
 
         # Check child item references
         for child_item in self.child_items.values():
-            assert (
-                child_item.item_type_id in self.item_types
-            ), f"Child item {
-                child_item.id} has invalid item type {
-                child_item.item_type_id}"
-            assert (
-                child_item.created_by in self.users
-            ), f"Child item {
-                child_item.id} has invalid creator {
-                child_item.created_by}"
+            assert child_item.item_type_id in self.item_types, (
+                f"Child item {child_item.id} has invalid item type "
+                f"{child_item.item_type_id}"
+            )
+            assert child_item.created_by in self.users, (
+                f"Child item {child_item.id} has invalid creator "
+                f"{child_item.created_by}"
+            )
             if child_item.parent_item_id is not None:
-                assert (
-                    child_item.parent_item_id in self.parent_items
-                ), f"Child item {
-                    child_item.id} has invalid parent {
-                    child_item.parent_item_id}"
+                assert child_item.parent_item_id in self.parent_items, (
+                    f"Child item {child_item.id} has invalid parent "
+                    f"{child_item.parent_item_id}"
+                )
+
 
 
 # Property-based tests using the state machine

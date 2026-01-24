@@ -359,13 +359,14 @@ class TestLoadTesting:
 
             if first_batch_avg > 0:
                 degradation_ratio = last_batch_avg / first_batch_avg
-                assert (
-                    degradation_ratio < 3.0
-                ), f"Performance degraded by {
-                    degradation_ratio:.1f}x under sustained load"
+                assert degradation_ratio < 3.0, (
+                    f"Performance degraded by {degradation_ratio:.1f}x "
+                    f"under sustained load"
+                )
 
     def test_burst_load_handling(self, perf_runner: PerformanceTestRunner):
         """Test system handling of burst traffic."""
+
 
         def burst_request():
             return perf_runner.make_request("GET", "/api/v1/items/parent")
