@@ -596,14 +596,14 @@ class TestInventoryCountReports:
             location_type_id=delivery_type.id,
             location_type=delivery_type
         )
-        
+
         item_type = ItemType(
             id=uuid4(),
             name="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT
         )
-        
+
         # Create items at different location types
         warehouse_item = ParentItem(
             id=uuid4(),
@@ -616,7 +616,7 @@ class TestInventoryCountReports:
             current_location=warehouse,
             creator=user
         )
-        
+
         delivery_item = ParentItem(
             id=uuid4(),
             name="Delivery Equipment",
@@ -628,23 +628,28 @@ class TestInventoryCountReports:
             current_location=delivery_site,
             creator=user
         )
-        
+
         # Add all entities to database
         test_db_session.add_all([
-            role, user, warehouse_type, delivery_type, 
-            warehouse, delivery_site, item_type, warehouse_item, delivery_item
+            role, user, warehouse_type, delivery_type,
+            warehouse, delivery_site, item_type,
+            warehouse_item, delivery_item
         ])
         test_db_session.commit()
-        
+
         # Simulate inventory count by location type
-        warehouse_items = test_db_session.query(ParentItem).join(Location).filter(
+        warehouse_items = test_db_session.query(ParentItem).join(
+            Location
+        ).filter(
             Location.location_type_id == warehouse_type.id
         ).count()
-        
-        delivery_items = test_db_session.query(ParentItem).join(Location).filter(
+
+        delivery_items = test_db_session.query(ParentItem).join(
+            Location
+        ).filter(
             Location.location_type_id == delivery_type.id
         ).count()
-        
+
         # Verify counts by location type
         assert warehouse_items == 1
         assert delivery_items == 1
@@ -652,12 +657,12 @@ class TestInventoryCountReports:
 
 class TestReportErrorHandling:
     """Test report generation error handling."""
-    
+
     def test_report_with_invalid_filters(self, test_db_session):
         """Test report generation with invalid filter parameters."""
         # Test with invalid UUID format
         invalid_uuid = "not-a-uuid"
-        
+
         # This would trigger validation errors in the actual API
         # The test verifies the validation logic
         try:

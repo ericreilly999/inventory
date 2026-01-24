@@ -2,7 +2,7 @@
 
 import pytest
 from sqlalchemy import create_engine, event
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, scoped_session
 from sqlalchemy.pool import StaticPool
 
 # Import Base first
@@ -19,58 +19,54 @@ from shared.models.assignment_history import AssignmentHistory
 from shared.database.config import get_db
 
 
-# Create in-memory SQLite database for testing
+# Create in-memory SQLite database for testing with a shared connection
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
+# Create a single engine and connection for all tests
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+    echo=False  # Set to True for SQL debugging
+)
 
-@pytest.fixture(scope="session")
-def engine():
-    """Create a test database engine for the entire test session."""
-    test_engine = create_engine(
-        SQLALCHEMY_DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        echo=False  # Set to True for SQL debugging
-    )
-    
-    # Enable foreign keys for SQLite
-    @event.listens_for(test_engine, "connect")
-    def set_sqlite_pragma(dbapi_conn, connection_record):
-        cursor = dbapi_conn.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
-    
-    # Create all tables once for the session
-    Base.metadata.create_all(bind=test_engine)
-    
-    yield test_engine
-    
-    # Drop all tables at the end of the session
-    Base.metadata.drop_all(bind=test_engine)
-    test_engine.dispose()
+# Enable foreign keys for SQLite
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_conn, connection_record):
+    cursor = dbapi_conn.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
+# Create all tables once at module load
+Base.metadata.create_all(bind=engine)
+
+# Create a session factory
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @pytest.fixture(scope="function")
-def test_db_session(engine):
-    """Create a test database session with transaction rollback for each test."""
-    # Create a connection
-    connection = engine.connect()
-    
-    # Begin a transaction
-    transaction = connection.begin()
-    
-    # Create session bound to the connection
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
+def test_db_session():
+    """Create a test database session with savepoint rollback for each test."""
+    # Create a new session for this test
     session = TestingSessionLocal()
+    
+    # Start a savepoint
+    session.begin_nested()
+    
+    # Setup an event listener to recreate savepoint after each commit
+    @event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(session, transaction):
+        if transaction.nested and not transaction._parent.nested:
+            session.begin_nested()
     
     try:
         yield session
     finally:
         session.close()
-        # Rollback transaction to clean up test data
-        transaction.rollback()
-        # Close connection
-        connection.close()
+        # Clean up all data after test
+        for table in reversed(Base.metadata.sorted_tables):
+            session.execute(table.delete())
+        session.commit()
 
 
 @pytest.fixture(scope="function")
