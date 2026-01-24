@@ -205,7 +205,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
     def create_location(self, location_type_id, name, description):
         """Create a new location."""
         assume(location_type_id in self.location_types)
-        assume(name not in [l.name for l in self.locations.values()])
+        assume(name not in [loc.name for loc in self.locations.values()])
 
         location = Location(
             name=name,
@@ -459,8 +459,8 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
                         item_id
                     ].current_location_id
                     assert (
-                        last_move.to_location_id == current_location
-                    ), f"Item {item_id} move history inconsistent: last move to {last_move.to_location_id}, current location {current_location}"
+                        last_move.to_location_id == current_location), f"Item {item_id} move history inconsistent: last move to {
+                        last_move.to_location_id}, current location {current_location}"
 
     @invariant()
     def assignment_history_consistency(self):
@@ -500,33 +500,40 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
         # Check location type references
         for location in self.locations.values():
             assert (
-                location.location_type_id in self.location_types
-            ), f"Location {location.id} has invalid location type {location.location_type_id}"
+                location.location_type_id in self.location_types), f"Location {
+                location.id} has invalid location type {
+                location.location_type_id}"
 
         # Check parent item references
         for parent_item in self.parent_items.values():
             assert (
-                parent_item.item_type_id in self.item_types
-            ), f"Parent item {parent_item.id} has invalid item type {parent_item.item_type_id}"
+                parent_item.item_type_id in self.item_types), f"Parent item {
+                parent_item.id} has invalid item type {
+                parent_item.item_type_id}"
             assert (
-                parent_item.current_location_id in self.locations
-            ), f"Parent item {parent_item.id} has invalid location {parent_item.current_location_id}"
+                parent_item.current_location_id in self.locations), f"Parent item {
+                parent_item.id} has invalid location {
+                parent_item.current_location_id}"
             assert (
-                parent_item.created_by in self.users
-            ), f"Parent item {parent_item.id} has invalid creator {parent_item.created_by}"
+                parent_item.created_by in self.users), f"Parent item {
+                parent_item.id} has invalid creator {
+                parent_item.created_by}"
 
         # Check child item references
         for child_item in self.child_items.values():
             assert (
-                child_item.item_type_id in self.item_types
-            ), f"Child item {child_item.id} has invalid item type {child_item.item_type_id}"
+                child_item.item_type_id in self.item_types), f"Child item {
+                child_item.id} has invalid item type {
+                child_item.item_type_id}"
             assert (
-                child_item.created_by in self.users
-            ), f"Child item {child_item.id} has invalid creator {child_item.created_by}"
+                child_item.created_by in self.users), f"Child item {
+                child_item.id} has invalid creator {
+                child_item.created_by}"
             if child_item.parent_item_id is not None:
                 assert (
-                    child_item.parent_item_id in self.parent_items
-                ), f"Child item {child_item.id} has invalid parent {child_item.parent_item_id}"
+                    child_item.parent_item_id in self.parent_items), f"Child item {
+                    child_item.id} has invalid parent {
+                    child_item.parent_item_id}"
 
 
 # Property-based tests using the state machine

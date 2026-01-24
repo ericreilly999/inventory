@@ -29,7 +29,10 @@ class ItemType(Base, UUIDMixin, TimestampMixin):
     child_items = relationship("ChildItem", back_populates="item_type")
 
     def __repr__(self) -> str:
-        return f"<ItemType(id={self.id}, name='{self.name}', category='{self.category.value}')>"
+        return f"<ItemType(id={
+            self.id}, name='{
+            self.name}', category='{
+            self.category.value}')>"
 
 
 class ParentItem(Base, UUIDMixin, TimestampMixin):
@@ -92,7 +95,10 @@ class ParentItem(Base, UUIDMixin, TimestampMixin):
     )
 
     def __repr__(self) -> str:
-        return f"<ParentItem(id={self.id}, name='{self.name}', location='{self.current_location.name if self.current_location else None}')>"
+        return f"<ParentItem(id={
+            self.id}, name='{
+            self.name}', location='{
+            self.current_location.name if self.current_location else None}')>"
 
 
 class ChildItem(Base, UUIDMixin, TimestampMixin):
@@ -138,4 +144,7 @@ class ChildItem(Base, UUIDMixin, TimestampMixin):
     )
 
     def __repr__(self) -> str:
-        return f"<ChildItem(id={self.id}, name='{self.name}', parent='{self.parent_item.name if self.parent_item else None}')>"
+        return f"<ChildItem(id={
+            self.id}, name='{
+            self.name}', parent='{
+            self.parent_item.name if self.parent_item else None}')>"

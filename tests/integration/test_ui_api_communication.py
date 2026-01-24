@@ -323,7 +323,7 @@ class TestUIErrorHandling:
         """Test UI can handle network timeouts."""
         try:
             # Use very short timeout to simulate network issues
-            response = requests.get(
+            requests.get(
                 f"{api_base_url}/api/v1/items/parent",
                 timeout=0.001,  # 1ms timeout
             )

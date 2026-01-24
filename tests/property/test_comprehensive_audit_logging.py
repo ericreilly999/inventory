@@ -127,17 +127,17 @@ class TestComprehensiveAuditLoggingProperties:
 
                     # Make request
                     if method == "GET":
-                        response = self.client.get(endpoint, headers=headers)
+                        _ = self.client.get(endpoint, headers=headers)
                     elif method == "POST":
-                        response = self.client.post(
+                        _ = self.client.post(
                             endpoint, headers=headers, json={}
                         )
                     elif method == "PUT":
-                        response = self.client.put(
+                        _ = self.client.put(
                             endpoint, headers=headers, json={}
                         )
                     elif method == "DELETE":
-                        response = self.client.delete(
+                        _ = self.client.delete(
                             endpoint, headers=headers
                         )
 
@@ -185,7 +185,7 @@ class TestComprehensiveAuditLoggingProperties:
 
             elif scenario_type == "authentication_failure":
                 # Test authentication failure logging
-                response = self.client.get(endpoint)
+                _ = self.client.get(endpoint)
 
                 # Should log authentication failure
                 assert mock_logger.warning.call_count >= 1
@@ -221,7 +221,7 @@ class TestComprehensiveAuditLoggingProperties:
                     )
 
                     headers = {"Authorization": f"Bearer {valid_token}"}
-                    response = self.client.get(endpoint, headers=headers)
+                    _ = self.client.get(endpoint, headers=headers)
 
                     # Should log the error
                     assert mock_logger.error.call_count >= 1
@@ -272,7 +272,7 @@ class TestComprehensiveAuditLoggingProperties:
             with patch(
                 "services.api_gateway.middleware.auth_middleware.logger"
             ) as mock_logger:
-                response = self.client.get(
+                _ = self.client.get(
                     request_data["endpoint"], headers=headers
                 )
 
@@ -330,7 +330,7 @@ class TestComprehensiveAuditLoggingProperties:
                     "X-Forwarded-For": "192.168.1.100",
                 }
 
-                response = self.client.get(
+                _ = self.client.get(
                     request_data["endpoint"], headers=headers
                 )
 
@@ -380,7 +380,7 @@ class TestComprehensiveAuditLoggingProperties:
             with patch(
                 "services.api_gateway.middleware.auth_middleware.logger"
             ) as mock_logger:
-                response = self.client.get(
+                _ = self.client.get(
                     request_data["endpoint"], headers=headers
                 )
 
@@ -462,7 +462,7 @@ class TestComprehensiveAuditLoggingProperties:
         with patch(
             "services.api_gateway.middleware.auth_middleware.logger"
         ) as mock_logger:
-            response = self.client.get(endpoint, headers=headers)
+            _ = self.client.get(endpoint, headers=headers)
 
             # Should log authentication failure
             auth_failure_logged = False
@@ -512,7 +512,7 @@ class TestComprehensiveAuditLoggingProperties:
             with patch(
                 "services.api_gateway.middleware.auth_middleware.logger"
             ) as mock_logger:
-                response = self.client.get(
+                _ = self.client.get(
                     request_data["endpoint"], headers=headers
                 )
 

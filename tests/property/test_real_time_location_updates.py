@@ -139,7 +139,8 @@ def test_real_time_location_updates_property(item_names):
 
         # Update each item's location to location2
         for parent_item in parent_items:
-            # Requirement 1.3: System maintains accurate location data in real-time
+            # Requirement 1.3: System maintains accurate location data in
+            # real-time
             parent_item.current_location_id = location2.id
             session.commit()
 
@@ -158,7 +159,8 @@ def test_real_time_location_updates_property(item_names):
             assert updated_item.current_location.id == location2.id
             assert updated_item.current_location.name == location2.name
 
-        # Additional verification: Query all items and verify they're all at location2
+        # Additional verification: Query all items and verify they're all at
+        # location2
         all_items_at_location2 = (
             session.query(ParentItem)
             .filter(ParentItem.current_location_id == location2.id)

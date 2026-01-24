@@ -98,15 +98,15 @@ def require_permission(permission: str):
         logger = get_logger(__name__)
 
         logger.info(
-            f"Checking permission '{permission}' for user {token_data.username}"
-        )
+            f"Checking permission '{permission}' for user {
+                token_data.username}")
         logger.info(f"User permissions: {token_data.permissions}")
 
         permissions = token_data.permissions or {}
 
         # Check for wildcard permission (admin access)
         if permissions.get("*", False):
-            logger.info(f"User has wildcard permission")
+            logger.info("User has wildcard permission")
             return token_data
 
         # Check for specific permission
@@ -186,7 +186,8 @@ def validate_location_deletion(location: Location, db: Session) -> None:
     if items_count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot delete location '{location.name}' - {items_count} items are currently assigned to it",
+            detail=f"Cannot delete location '{
+                location.name}' - {items_count} items are currently assigned to it",
         )
 
 
@@ -204,5 +205,6 @@ def validate_location_type_deletion(
     if locations_count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot delete location type '{location_type.name}' - {locations_count} locations are using it",
+            detail=f"Cannot delete location type '{
+                location_type.name}' - {locations_count} locations are using it",
         )

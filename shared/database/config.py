@@ -6,6 +6,19 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 
+from shared.models.base import Base
+# Import all models to ensure they're registered with SQLAlchemy
+from shared.models import (  # noqa: F401
+    ChildItem,
+    ItemType,
+    Location,
+    LocationType,
+    MoveHistory,
+    ParentItem,
+    Role,
+    User,
+)
+
 # Get database URL directly from environment variable
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -28,20 +41,7 @@ engine = create_engine(
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Import all models to ensure they're registered with SQLAlchemy
-from shared.models import (  # noqa: F401
-    ChildItem,
-    ItemType,
-    Location,
-    LocationType,
-    MoveHistory,
-    ParentItem,
-    Role,
-    User,
-)
-
 # Create base class for models
-from shared.models.base import Base
 
 # Metadata for migrations
 metadata = MetaData(

@@ -154,11 +154,13 @@ def test_child_item_assignment_uniqueness_property(parent_count, child_count):
 
         session.commit()
 
-        # Property verification: Each child item is assigned to exactly one parent
+        # Property verification: Each child item is assigned to exactly one
+        # parent
         for child_item in child_items:
             session.refresh(child_item)
 
-            # Requirement 9.2: Child item should be assigned to exactly one parent
+            # Requirement 9.2: Child item should be assigned to exactly one
+            # parent
             assert child_item.parent_item_id is not None
             assert child_item.parent_item_id == parent_items[0].id
 
@@ -199,7 +201,8 @@ def test_child_item_assignment_uniqueness_property(parent_count, child_count):
                 if child_item in parent_item.child_items:
                     parent_count_for_child += 1
 
-            # Property verification: Child appears in exactly one parent's child list
+            # Property verification: Child appears in exactly one parent's
+            # child list
             assert parent_count_for_child == 1
 
         # Test constraint: Attempt to create duplicate assignment should fail

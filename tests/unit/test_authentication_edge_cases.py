@@ -26,13 +26,13 @@ class TestAuthenticationEdgeCases:
         # Test with correct password
         password = "correct_password123"
         hashed = hash_password(password)
-        assert verify_password(password, hashed) == True
+        assert verify_password(password, hashed)
 
         # Test with wrong password
-        assert verify_password("wrong_password", hashed) == False
+        assert verify_password("wrong_password", hashed) is False
 
         # Test with empty password
-        assert verify_password("", hashed) == False
+        assert verify_password("", hashed) is False
 
         # Test with None password - functions handle None gracefully
         # by converting to string, so no TypeError is raised
@@ -44,7 +44,7 @@ class TestAuthenticationEdgeCases:
             pass
 
         # Test with empty hash
-        assert verify_password(password, "") == False
+        assert verify_password(password, "") is False
 
         # Test with None hash - functions handle None gracefully
         try:
@@ -191,8 +191,8 @@ class TestAuthenticationEdgeCases:
         payload = verify_token(token)
         assert payload is not None
         assert payload["role_id"] == original_role_id
-        assert payload["permissions"]["read"] == True
-        assert payload["permissions"]["write"] == False
+        assert payload["permissions"]["read"]
+        assert payload["permissions"]["write"] is False
 
         # Token should remain valid even if user's role changes in database
         # (This is expected behavior - tokens contain snapshot of permissions)
@@ -203,30 +203,31 @@ class TestAuthenticationEdgeCases:
         password = "test_password123"
 
         # Same password should produce different hashes (due to salt in bcrypt)
-        # However, if bcrypt fails and SHA256 fallback is used, hashes will be the same
+        # However, if bcrypt fails and SHA256 fallback is used, hashes will be
+        # the same
         hash1 = hash_password(password)
         hash2 = hash_password(password)
 
         # Both should verify correctly regardless
-        assert verify_password(password, hash1) == True
-        assert verify_password(password, hash2) == True
+        assert verify_password(password, hash1)
+        assert verify_password(password, hash2)
 
         # Different password should not verify
-        assert verify_password("wrong_password", hash1) == False
-        assert verify_password("wrong_password", hash2) == False
+        assert verify_password("wrong_password", hash1) is False
+        assert verify_password("wrong_password", hash2) is False
 
     def test_empty_and_whitespace_passwords(self):
         """Test handling of empty and whitespace-only passwords."""
         # Empty password
         empty_hash = hash_password("")
-        assert verify_password("", empty_hash) == True
-        assert verify_password("not_empty", empty_hash) == False
+        assert verify_password("", empty_hash)
+        assert verify_password("not_empty", empty_hash) is False
 
         # Whitespace-only password
         whitespace_password = "   \t\n  "
         whitespace_hash = hash_password(whitespace_password)
-        assert verify_password(whitespace_password, whitespace_hash) == True
-        assert verify_password("different", whitespace_hash) == False
+        assert verify_password(whitespace_password, whitespace_hash)
+        assert verify_password("different", whitespace_hash) is False
 
     def test_unicode_passwords(self):
         """Test handling of unicode characters in passwords."""
@@ -234,8 +235,8 @@ class TestAuthenticationEdgeCases:
         unicode_password = "пароль123🔐"[:50]  # Truncate to avoid bcrypt limit
         unicode_hash = hash_password(unicode_password)
 
-        assert verify_password(unicode_password, unicode_hash) == True
-        assert verify_password("different", unicode_hash) == False
+        assert verify_password(unicode_password, unicode_hash)
+        assert verify_password("different", unicode_hash) is False
 
     def test_very_long_passwords(self):
         """Test handling of very long passwords."""
@@ -243,8 +244,8 @@ class TestAuthenticationEdgeCases:
         long_password = "a" * 70  # Just under bcrypt's 72-byte limit
         long_hash = hash_password(long_password)
 
-        assert verify_password(long_password, long_hash) == True
-        assert verify_password(long_password[:-1], long_hash) == False
+        assert verify_password(long_password, long_hash)
+        assert verify_password(long_password[:-1], long_hash) is False
 
     def test_token_payload_edge_cases(self):
         """Test token creation with various payload edge cases."""
@@ -274,5 +275,5 @@ class TestAuthenticationEdgeCases:
         complex_token = create_access_token(complex_payload)
         payload = verify_token(complex_token)
         assert payload is not None
-        assert payload["permissions"]["nested"]["deep"]["value"] == True
+        assert payload["permissions"]["nested"]["deep"]["value"]
         assert payload["permissions"]["list"] == [1, 2, 3]

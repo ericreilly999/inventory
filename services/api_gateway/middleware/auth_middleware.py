@@ -96,8 +96,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                             "message": "Invalid or expired authentication token",
                             "timestamp": time.time(),
                             "request_id": id(request),
-                        }
-                    },
+                        }},
                 )
 
             # Add user context to request state

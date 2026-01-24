@@ -9,7 +9,7 @@ from shared.config.settings import settings
 
 # Import all models to ensure they're registered for migrations
 from shared.models import (  # noqa: F401
-    User, Role, Location, LocationType, 
+    User, Role, Location, LocationType,
     ParentItem, ChildItem, ItemType, MoveHistory
 )
 
@@ -78,7 +78,7 @@ def run_migrations_online() -> None:
     """
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = get_url()
-    
+
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",

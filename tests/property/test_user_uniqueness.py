@@ -134,7 +134,8 @@ class TestUserUniquenessProperties:
             # Test role permissions are correctly assigned
             assert user1.role.permissions == role_data["permissions"]
 
-            # If user2 has different credentials, it should be created successfully
+            # If user2 has different credentials, it should be created
+            # successfully
             if (
                 user2_data["username"] != user1_data["username"]
                 and user2_data["email"] != user1_data["email"]
@@ -175,7 +176,8 @@ class TestUserUniquenessProperties:
                     )
                     db.add(duplicate_username_user)
                     db.commit()
-                    # If we reach here, the constraint wasn't enforced (test failure)
+                    # If we reach here, the constraint wasn't enforced (test
+                    # failure)
                     assert False, "Username uniqueness constraint not enforced"
                 except Exception:
                     # Expected behavior - constraint violation
@@ -195,7 +197,8 @@ class TestUserUniquenessProperties:
                     )
                     db.add(duplicate_email_user)
                     db.commit()
-                    # If we reach here, the constraint wasn't enforced (test failure)
+                    # If we reach here, the constraint wasn't enforced (test
+                    # failure)
                     assert False, "Email uniqueness constraint not enforced"
                 except Exception:
                     # Expected behavior - constraint violation
@@ -318,7 +321,8 @@ class TestUserUniquenessProperties:
                 )
                 db.add(role2)
                 db.commit()
-                # If we reach here, the constraint wasn't enforced (test failure)
+                # If we reach here, the constraint wasn't enforced (test
+                # failure)
                 assert False, "Role name uniqueness constraint not enforced"
             except Exception:
                 # Expected behavior - constraint violation

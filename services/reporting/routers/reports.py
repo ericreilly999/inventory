@@ -33,13 +33,12 @@ logger = structlog.get_logger(__name__)
 router = APIRouter()
 
 
-@router.get(
-    "/inventory/status",
-    response_model=InventoryStatusReport,
-    summary="Get inventory status report",
-    description="Generate a report showing current inventory status by location",
-    dependencies=[Depends(require_reports_read)],
-)
+@router.get("/inventory/status",
+            response_model=InventoryStatusReport,
+            summary="Get inventory status report",
+            description="Generate a report showing current inventory status by location",
+            dependencies=[Depends(require_reports_read)],
+            )
 async def get_inventory_status_report(
     location_ids: Optional[List[UUID]] = Query(
         None, description="Filter by specific locations"
@@ -176,13 +175,12 @@ async def get_inventory_status_report(
         )
 
 
-@router.get(
-    "/movements/history",
-    response_model=MovementHistoryReport,
-    summary="Get movement history report",
-    description="Generate a report showing item movement history with optional date filtering",
-    dependencies=[Depends(require_reports_read)],
-)
+@router.get("/movements/history",
+            response_model=MovementHistoryReport,
+            summary="Get movement history report",
+            description="Generate a report showing item movement history with optional date filtering",
+            dependencies=[Depends(require_reports_read)],
+            )
 async def get_movement_history_report(
     start_date: Optional[datetime] = Query(
         None, description="Start date for filtering"
@@ -321,13 +319,12 @@ async def get_movement_history_report(
         )
 
 
-@router.get(
-    "/inventory/counts",
-    response_model=InventoryCountReport,
-    summary="Get inventory count report",
-    description="Generate a report showing inventory counts by item type and location type",
-    dependencies=[Depends(require_reports_read)],
-)
+@router.get("/inventory/counts",
+            response_model=InventoryCountReport,
+            summary="Get inventory count report",
+            description="Generate a report showing inventory counts by item type and location type",
+            dependencies=[Depends(require_reports_read)],
+            )
 async def get_inventory_count_report(
     location_ids: Optional[List[UUID]] = Query(
         None, description="Filter by specific locations"

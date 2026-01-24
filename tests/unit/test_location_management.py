@@ -352,7 +352,8 @@ class TestLocationEdgeCases:
     def test_location_with_empty_name_should_fail_validation(self):
         """Test that location with empty name should fail validation."""
         # This would typically be caught by Pydantic validation in the API layer
-        # Here we test the model can handle it but validation should happen upstream
+        # Here we test the model can handle it but validation should happen
+        # upstream
 
         # Arrange & Act
         location = Location(

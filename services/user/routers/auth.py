@@ -49,7 +49,8 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     permissions_dict = {}
     if user.role and user.role.permissions:
         if isinstance(user.role.permissions, list):
-            # Convert array format ["*", "user:read"] to dict format {"*": True, "user:read": True}
+            # Convert array format ["*", "user:read"] to dict format {"*":
+            # True, "user:read": True}
             for perm in user.role.permissions:
                 permissions_dict[perm] = True
         elif isinstance(user.role.permissions, dict):
@@ -121,7 +122,8 @@ async def refresh_token(current_user: User = Depends(get_current_user)):
     permissions_dict = {}
     if current_user.role and current_user.role.permissions:
         if isinstance(current_user.role.permissions, list):
-            # Convert array format ["*", "user:read"] to dict format {"*": True, "user:read": True}
+            # Convert array format ["*", "user:read"] to dict format {"*":
+            # True, "user:read": True}
             for perm in current_user.role.permissions:
                 permissions_dict[perm] = True
         elif isinstance(current_user.role.permissions, dict):

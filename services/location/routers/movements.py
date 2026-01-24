@@ -51,9 +51,9 @@ async def move_item(
         # Check if item is already at the destination
         if parent_item.current_location_id == move_request.to_location_id:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Item '{parent_item.name}' is already at location '{to_location.name}'",
-            )
+                status_code=status.HTTP_400_BAD_REQUEST, detail=f"Item '{
+                    parent_item.name}' is already at location '{
+                    to_location.name}'", )
 
         # Store the original location for history
         from_location_id = parent_item.current_location_id
@@ -82,8 +82,9 @@ async def move_item(
         )
 
         return MessageResponse(
-            message=f"Item '{parent_item.name}' moved to location '{to_location.name}' successfully"
-        )
+            message=f"Item '{
+                parent_item.name}' moved to location '{
+                to_location.name}' successfully")
 
     except HTTPException:
         # Re-raise validation errors

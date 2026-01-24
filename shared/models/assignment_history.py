@@ -66,4 +66,9 @@ class AssignmentHistory(Base, UUIDMixin, TimestampMixin):
     )
 
     def __repr__(self) -> str:
-        return f"<AssignmentHistory(id={self.id}, child_item='{self.child_item.name if self.child_item else None}', from='{self.from_parent_item.name if self.from_parent_item else None}', to='{self.to_parent_item.name if self.to_parent_item else None}', at='{self.assigned_at}')>"
+        return f"<AssignmentHistory(id={
+            self.id}, child_item='{
+            self.child_item.name if self.child_item else None}', from='{
+            self.from_parent_item.name if self.from_parent_item else None}', to='{
+                self.to_parent_item.name if self.to_parent_item else None}', at='{
+                    self.assigned_at}')>"

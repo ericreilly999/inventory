@@ -260,7 +260,7 @@ def test_chronological_move_history_ordering(test_db_session, data):
             to_location_id=current_to.id,
             moved_at=move_time,
             moved_by=user.id,
-            notes=f"Move {i+1}",
+            notes=f"Move {i + 1}",
         )
 
         test_db_session.add(move_history)

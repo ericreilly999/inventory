@@ -161,7 +161,8 @@ def test_cascading_item_movement_property(parent_name, child_names):
         # Verify initial state: parent is at location1
         assert parent_item.current_location_id == location1.id
 
-        # Verify initial state: all child items are conceptually at parent's location
+        # Verify initial state: all child items are conceptually at parent's
+        # location
         for child_item in child_items:
             assert child_item.parent_item_id == parent_item.id
             # Child items inherit location from parent

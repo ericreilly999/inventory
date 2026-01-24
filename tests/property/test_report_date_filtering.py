@@ -144,7 +144,8 @@ def test_report_date_filtering_property(
         filter_start_date = base_time + timedelta(days=filter_start_days)
         filter_end_date = base_time + timedelta(days=filter_end_days)
 
-        # Create parent items and movements based on the generated configuration
+        # Create parent items and movements based on the generated
+        # configuration
         movements_created = []
         expected_filtered_movements = []
 
@@ -203,8 +204,9 @@ def test_report_date_filtering_property(
         # Verify all filtered movements are within the date range
         for movement in filtered_movements:
             assert (
-                filter_start_date <= movement.moved_at <= filter_end_date
-            ), f"Movement {movement.id} at {movement.moved_at} is outside filter range [{filter_start_date}, {filter_end_date}]"
+                filter_start_date <= movement.moved_at <= filter_end_date), f"Movement {
+                movement.id} at {
+                movement.moved_at} is outside filter range [{filter_start_date}, {filter_end_date}]"
 
         # Verify chronological ordering (most recent first)
         # Requirement 5.2: Chronologically ordered movement records
@@ -222,8 +224,9 @@ def test_report_date_filtering_property(
             if movement not in filtered_movements:
                 # This movement should be outside the date range
                 assert not (
-                    filter_start_date <= movement.moved_at <= filter_end_date
-                ), f"Movement {movement.id} at {movement.moved_at} should be excluded but is within range [{filter_start_date}, {filter_end_date}]"
+                    filter_start_date <= movement.moved_at <= filter_end_date), f"Movement {
+                    movement.id} at {
+                    movement.moved_at} should be excluded but is within range [{filter_start_date}, {filter_end_date}]"
 
         # Test edge cases: exact boundary conditions
         # Movements exactly at start_date should be included
@@ -248,7 +251,8 @@ def test_report_date_filtering_property(
                 movement in filtered_movements
             ), f"Movement at end boundary {filter_end_date} should be included"
 
-        # Test with no date filters (should return all movements in chronological order)
+        # Test with no date filters (should return all movements in
+        # chronological order)
         all_movements_ordered = (
             session.query(MoveHistory)
             .order_by(MoveHistory.moved_at.desc())

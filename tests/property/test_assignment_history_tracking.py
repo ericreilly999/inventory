@@ -391,7 +391,7 @@ def test_multiple_assignment_history_chronological_order(
             to_parent_item_id=current_to.id,
             assigned_at=assignment_time,
             assigned_by=user.id,
-            notes=f"Assignment {i+1}",
+            notes=f"Assignment {i + 1}",
         )
 
         test_db_session.add(assignment_history)

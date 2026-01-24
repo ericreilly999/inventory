@@ -162,10 +162,12 @@ def test_location_query_consistency_property(parent_names, child_counts):
 
             session.commit()
 
-        # Property verification: Query all parent items and verify location consistency
+        # Property verification: Query all parent items and verify location
+        # consistency
         queried_parent_items = session.query(ParentItem).all()
 
-        # Requirement 1.1: All parent items should return their current location
+        # Requirement 1.1: All parent items should return their current
+        # location
         for parent_item in queried_parent_items:
             assert parent_item.current_location_id is not None
             assert parent_item.current_location_id == location.id
@@ -174,10 +176,12 @@ def test_location_query_consistency_property(parent_names, child_counts):
             assert parent_item.current_location is not None
             assert parent_item.current_location.id == location.id
 
-        # Property verification: Query all child items and verify location consistency
+        # Property verification: Query all child items and verify location
+        # consistency
         queried_child_items = session.query(ChildItem).all()
 
-        # Requirement 1.2: All child items should appear at their parent item's location
+        # Requirement 1.2: All child items should appear at their parent item's
+        # location
         for child_item in queried_child_items:
             assert child_item.parent_item_id is not None
             assert child_item.parent_item is not None
@@ -189,7 +193,8 @@ def test_location_query_consistency_property(parent_names, child_counts):
             # Verify the parent-child relationship is consistent
             assert child_item.parent_item.current_location.id == location.id
 
-        # Additional consistency check: Verify parent-child relationships are bidirectional
+        # Additional consistency check: Verify parent-child relationships are
+        # bidirectional
         for parent_item in queried_parent_items:
             for child_item in parent_item.child_items:
                 # Each child should reference this parent

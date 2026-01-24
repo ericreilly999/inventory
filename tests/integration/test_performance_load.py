@@ -195,8 +195,8 @@ class TestAPIPerformance:
             if result["success"]:
                 # Response time should be under 2 seconds for single requests
                 assert (
-                    result["response_time"] < 2.0
-                ), f"{method} {endpoint} took {result['response_time']:.3f}s (> 2.0s)"
+                    result["response_time"] < 2.0), f"{method} {endpoint} took {
+                    result['response_time']:.3f}s (> 2.0s)"
 
                 # Should return successful status codes
                 assert (
@@ -305,8 +305,8 @@ class TestAPIPerformance:
         if report_metrics.success_count > 0:
             # Report queries should complete within reasonable time
             assert (
-                report_metrics.avg_response_time < 15.0
-            ), f"Report query avg time {report_metrics.avg_response_time:.3f}s > 15.0s"
+                report_metrics.avg_response_time < 15.0), f"Report query avg time {
+                report_metrics.avg_response_time:.3f}s > 15.0s"
 
         # Test move history queries
         history_metrics = perf_runner.run_concurrent_requests(
@@ -316,8 +316,8 @@ class TestAPIPerformance:
         if history_metrics.success_count > 0:
             # History queries should be reasonably fast
             assert (
-                history_metrics.avg_response_time < 10.0
-            ), f"History query avg time {history_metrics.avg_response_time:.3f}s > 10.0s"
+                history_metrics.avg_response_time < 10.0), f"History query avg time {
+                history_metrics.avg_response_time:.3f}s > 10.0s"
 
 
 class TestLoadTesting:
@@ -380,8 +380,8 @@ class TestLoadTesting:
             if first_batch_avg > 0:
                 degradation_ratio = last_batch_avg / first_batch_avg
                 assert (
-                    degradation_ratio < 3.0
-                ), f"Performance degraded by {degradation_ratio:.1f}x under sustained load"
+                    degradation_ratio < 3.0), f"Performance degraded by {
+                    degradation_ratio:.1f}x under sustained load"
 
     def test_burst_load_handling(self, perf_runner: PerformanceTestRunner):
         """Test system handling of burst traffic."""
@@ -407,8 +407,8 @@ class TestLoadTesting:
         if burst_metrics.response_times:
             max_response_time = max(burst_metrics.response_times)
             assert (
-                max_response_time < 30.0
-            ), f"Max response time {max_response_time:.3f}s > 30.0s during burst"
+                max_response_time < 30.0), f"Max response time {
+                max_response_time:.3f}s > 30.0s during burst"
 
     def test_error_rate_under_load(self, perf_runner: PerformanceTestRunner):
         """Test error rates under increasing load."""
@@ -468,14 +468,14 @@ class TestLoadTesting:
                 response_times[: len(response_times) // 3]
             )
             last_third_avg = statistics.mean(
-                response_times[-len(response_times) // 3 :]
+                response_times[-len(response_times) // 3:]
             )
 
             if first_third_avg > 0:
                 time_increase_ratio = last_third_avg / first_third_avg
                 assert (
-                    time_increase_ratio < 2.5
-                ), f"Response time increased {time_increase_ratio:.1f}x - possible memory leak"
+                    time_increase_ratio < 2.5), f"Response time increased {
+                    time_increase_ratio:.1f}x - possible memory leak"
 
 
 class TestConcurrencyHandling:

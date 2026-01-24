@@ -24,7 +24,8 @@ def hash_password(password: str) -> str:
         if len(password_str.encode("utf-8")) > 72:
             password_str = password_str[:72]
 
-        # Try to use bcrypt with explicit configuration to avoid version detection issues
+        # Try to use bcrypt with explicit configuration to avoid version
+        # detection issues
         from passlib.handlers.bcrypt import bcrypt
 
         return bcrypt.using(rounds=12).hash(password_str)

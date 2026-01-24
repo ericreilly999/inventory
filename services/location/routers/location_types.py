@@ -86,7 +86,8 @@ async def create_location_type(
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Location type with name '{location_type_data.name}' already exists",
+                detail=f"Location type with name '{
+                    location_type_data.name}' already exists",
             )
 
         # Create new location type
@@ -97,7 +98,7 @@ async def create_location_type(
 
         return location_type
 
-    except IntegrityError as e:
+    except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -131,7 +132,8 @@ async def update_location_type(
             if existing:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=f"Location type with name '{location_type_data.name}' already exists",
+                    detail=f"Location type with name '{
+                        location_type_data.name}' already exists",
                 )
 
         # Update fields
@@ -144,7 +146,7 @@ async def update_location_type(
 
         return location_type
 
-    except IntegrityError as e:
+    except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -167,10 +169,10 @@ async def delete_location_type(
         db.commit()
 
         return MessageResponse(
-            message=f"Location type '{location_type.name}' deleted successfully"
-        )
+            message=f"Location type '{
+                location_type.name}' deleted successfully")
 
-    except IntegrityError as e:
+    except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

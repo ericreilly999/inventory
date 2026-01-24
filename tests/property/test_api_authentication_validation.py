@@ -267,7 +267,7 @@ class TestAPIAuthenticationValidationProperties:
             with patch(
                 "services.api_gateway.middleware.auth_middleware.logger"
             ) as mock_logger:
-                response = self.client.get(
+                _ = self.client.get(
                     "/api/v1/items/parent", headers=headers
                 )
 
@@ -341,7 +341,7 @@ class TestAPIAuthenticationValidationProperties:
             mock_response.headers = {"content-type": "application/json"}
             mock_request.return_value = mock_response
 
-            response = self.client.get("/api/v1/items/parent", headers=headers)
+            _ = self.client.get("/api/v1/items/parent", headers=headers)
 
             # Verify that the request was forwarded with user context
             if mock_request.called:

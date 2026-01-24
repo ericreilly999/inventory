@@ -214,7 +214,8 @@ class TestUserAuthenticationProperties:
             db.commit()
             db.refresh(user)
 
-            # Password verification should still work (for password correctness)
+            # Password verification should still work (for password
+            # correctness)
             assert (
                 verify_password(user_data["password"], user.password_hash)
                 is True

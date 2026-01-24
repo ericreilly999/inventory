@@ -114,7 +114,7 @@ async def create_location(
     """Create a new location."""
     try:
         # Validate that location type exists
-        location_type = await get_location_type_by_id(
+        await get_location_type_by_id(
             location_data.location_type_id, db
         )
 
@@ -138,7 +138,7 @@ async def create_location(
     except HTTPException:
         # Re-raise validation errors from get_location_type_by_id
         raise
-    except IntegrityError as e:
+    except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -180,7 +180,7 @@ async def update_location(
     except HTTPException:
         # Re-raise validation errors
         raise
-    except IntegrityError as e:
+    except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -207,7 +207,7 @@ async def delete_location(
             message=f"Location '{location_name}' deleted successfully"
         )
 
-    except IntegrityError as e:
+    except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

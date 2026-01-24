@@ -88,11 +88,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 detail={
                     "error": {
                         "code": "RATE_LIMIT_EXCEEDED",
-                        "message": f"Rate limit exceeded. Maximum {self.requests_per_window} requests per {self.window_seconds} seconds.",
+                        "message": f"Rate limit exceeded. Maximum {
+                            self.requests_per_window} requests per {
+                            self.window_seconds} seconds.",
                         "timestamp": time.time(),
                         "request_id": id(request),
-                    }
-                },
+                    }},
             )
 
         return await call_next(request)

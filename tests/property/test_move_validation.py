@@ -152,13 +152,13 @@ def test_move_validation_and_error_handling_property(item_names):
                 assert not location_exists
 
                 # Requirement 2.5: If move fails, maintain original location and return error
-                # Simulate what should happen when trying to move to non-existent location
+                # Simulate what should happen when trying to move to
+                # non-existent location
                 try:
                     # This would be the validation logic in the actual service
                     if not location_exists:
                         raise ValueError(
-                            f"Location {non_existent_location_id} does not exist"
-                        )
+                            f"Location {non_existent_location_id} does not exist")
 
                     # This line should never be reached due to validation
                     parent_item.current_location_id = non_existent_location_id
@@ -180,8 +180,9 @@ def test_move_validation_and_error_handling_property(item_names):
                     )
                     assert parent_item.current_location_id == valid_location.id
 
-                except Exception as e:
-                    # Any other exception should also leave item at original location
+                except Exception:
+                    # Any other exception should also leave item at original
+                    # location
                     session.rollback()  # Rollback any partial changes
                     session.refresh(parent_item)
                     assert (
