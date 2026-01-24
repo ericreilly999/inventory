@@ -5,7 +5,7 @@ Tests history recording, querying, and filtering capabilities.
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from shared.models.item import ParentItem, ItemType, ItemCategory
