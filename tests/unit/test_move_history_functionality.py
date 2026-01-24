@@ -112,7 +112,13 @@ class TestMoveHistoryRecording:
         assert move_history.to_location_id == to_location.id
         assert move_history.moved_by == user.id
         assert move_history.notes == "Test move"
-        assert move_history.moved_at == move_time
+        # SQLite doesn't preserve timezone, so compare as timezone-aware
+        if move_history.moved_at.tzinfo is None:
+            assert move_history.moved_at.replace(
+                tzinfo=timezone.utc
+            ) == move_time
+        else:
+            assert move_history.moved_at == move_time
 
     def test_initial_placement_move_history(self, test_db_session):
         """Test move history for initial item placement (no from_location)."""
