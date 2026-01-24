@@ -66,9 +66,13 @@ class MoveHistory(Base, UUIDMixin):
     )
 
     def __repr__(self) -> str:
-        return f"<MoveHistory(id={
-            self.id}, item='{
-            self.parent_item.name if self.parent_item else None}', from='{
-            self.from_location.name if self.from_location else None}', to='{
-                self.to_location.name if self.to_location else None}', at='{
-                    self.moved_at}')>"
+        item_name = self.parent_item.name if self.parent_item else None
+        from_name = self.from_location.name if self.from_location else None
+        to_name = self.to_location.name if self.to_location else None
+        return (
+            f"<MoveHistory(id={self.id}, "
+            f"item='{item_name}', "
+            f"from='{from_name}', "
+            f"to='{to_name}', "
+            f"at='{self.moved_at}')>"
+        )

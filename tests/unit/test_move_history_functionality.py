@@ -114,9 +114,7 @@ class TestMoveHistoryRecording:
         assert move_history.notes == "Test move"
         # SQLite doesn't preserve timezone, so compare as timezone-aware
         if move_history.moved_at.tzinfo is None:
-            assert move_history.moved_at.replace(
-                tzinfo=timezone.utc
-            ) == move_time
+            assert move_history.moved_at.replace(tzinfo=timezone.utc) == move_time
         else:
             assert move_history.moved_at == move_time
 
@@ -683,9 +681,7 @@ class TestMoveHistoryFiltering:
             notes="Recent move 2",
         )
 
-        test_db_session.add_all(
-            [old_move, future_move, recent_move1, recent_move2]
-        )
+        test_db_session.add_all([old_move, future_move, recent_move1, recent_move2])
         test_db_session.commit()
 
         # Define filter range (last 3 hours)

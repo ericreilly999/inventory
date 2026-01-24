@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 
 from shared.models.base import Base
+
 # Import all models to ensure they're registered with SQLAlchemy
 from shared.models import (  # noqa: F401
     ChildItem,

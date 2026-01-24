@@ -338,9 +338,7 @@ def test_initial_assignment_history_tracking(test_db_session, data):
     deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-def test_multiple_assignment_history_chronological_order(
-    test_db_session, data
-):
+def test_multiple_assignment_history_chronological_order(test_db_session, data):
     """
     Test that multiple assignment history records are maintained in chronological order.
 
@@ -411,8 +409,7 @@ def test_multiple_assignment_history_chronological_order(
     assert len(ordered_assignments) == 4
     for i in range(len(ordered_assignments) - 1):
         assert (
-            ordered_assignments[i].assigned_at
-            >= ordered_assignments[i + 1].assigned_at
+            ordered_assignments[i].assigned_at >= ordered_assignments[i + 1].assigned_at
         )
 
     # Verify the most recent assignment is first
@@ -538,7 +535,4 @@ def test_assignment_history_filtering_by_date_range(test_db_session, data):
     ]
 
     # Verify chronological ordering within filtered results
-    assert (
-        filtered_assignments[0].assigned_at
-        >= filtered_assignments[1].assigned_at
-    )
+    assert filtered_assignments[0].assigned_at >= filtered_assignments[1].assigned_at

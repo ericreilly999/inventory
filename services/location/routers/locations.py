@@ -84,9 +84,7 @@ async def list_locations_with_item_counts(
             .count()
         )
 
-        location_dict = LocationWithItemsResponse.model_validate(
-            location
-        ).model_dump()
+        location_dict = LocationWithItemsResponse.model_validate(location).model_dump()
         location_dict["item_count"] = item_count
         result.append(LocationWithItemsResponse(**location_dict))
 
@@ -103,9 +101,7 @@ async def get_location(location: Location = Depends(get_location_by_id)):
     return location
 
 
-@router.post(
-    "/", response_model=LocationResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/", response_model=LocationResponse, status_code=status.HTTP_201_CREATED)
 async def create_location(
     location_data: LocationCreate,
     db: Session = Depends(get_db),
@@ -114,9 +110,7 @@ async def create_location(
     """Create a new location."""
     try:
         # Validate that location type exists
-        await get_location_type_by_id(
-            location_data.location_type_id, db
-        )
+        await get_location_type_by_id(location_data.location_type_id, db)
 
         # Create new location
         location = Location(**location_data.model_dump())
@@ -226,9 +220,7 @@ async def get_location_items(
 ):
     """Get all items currently at this location."""
     items = (
-        db.query(ParentItem)
-        .filter(ParentItem.current_location_id == location.id)
-        .all()
+        db.query(ParentItem).filter(ParentItem.current_location_id == location.id).all()
     )
 
     # Return basic item information

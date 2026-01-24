@@ -80,9 +80,7 @@ class TestComprehensiveAuditLoggingProperties:
 
     @given(request_data=api_request_data(), audit_data=audit_scenario_data())
     @settings(max_examples=10)
-    def test_comprehensive_audit_logging_property(
-        self, request_data, audit_data
-    ):
+    def test_comprehensive_audit_logging_property(self, request_data, audit_data):
         """
         Property 16: Comprehensive Audit Logging
 
@@ -115,9 +113,7 @@ class TestComprehensiveAuditLoggingProperties:
                     mock_response.status_code = 200
                     mock_response.json.return_value = {"status": "success"}
                     mock_response.content = b'{"status": "success"}'
-                    mock_response.headers = {
-                        "content-type": "application/json"
-                    }
+                    mock_response.headers = {"content-type": "application/json"}
                     mock_request.return_value = mock_response
 
                     headers = {
@@ -129,17 +125,11 @@ class TestComprehensiveAuditLoggingProperties:
                     if method == "GET":
                         _ = self.client.get(endpoint, headers=headers)
                     elif method == "POST":
-                        _ = self.client.post(
-                            endpoint, headers=headers, json={}
-                        )
+                        _ = self.client.post(endpoint, headers=headers, json={})
                     elif method == "PUT":
-                        _ = self.client.put(
-                            endpoint, headers=headers, json={}
-                        )
+                        _ = self.client.put(endpoint, headers=headers, json={})
                     elif method == "DELETE":
-                        _ = self.client.delete(
-                            endpoint, headers=headers
-                        )
+                        _ = self.client.delete(endpoint, headers=headers)
 
                     # Verify comprehensive logging occurred
                     assert (
@@ -152,8 +142,7 @@ class TestComprehensiveAuditLoggingProperties:
 
                     # Should log request received
                     assert any(
-                        "request received" in msg.lower()
-                        for msg in log_messages
+                        "request received" in msg.lower() for msg in log_messages
                     )
 
                     # Should log authentication successful
@@ -164,8 +153,7 @@ class TestComprehensiveAuditLoggingProperties:
 
                     # Should log request completed
                     assert any(
-                        "request completed" in msg.lower()
-                        for msg in log_messages
+                        "request completed" in msg.lower() for msg in log_messages
                     )
 
                     # Verify user context is logged
@@ -195,8 +183,7 @@ class TestComprehensiveAuditLoggingProperties:
 
                 # Should log authentication failure
                 assert any(
-                    "authentication failed" in msg.lower()
-                    for msg in warning_messages
+                    "authentication failed" in msg.lower() for msg in warning_messages
                 )
 
                 # Should include path and client IP in logs
@@ -216,9 +203,7 @@ class TestComprehensiveAuditLoggingProperties:
             elif scenario_type == "service_error":
                 # Test service error logging
                 with patch("httpx.AsyncClient.request") as mock_request:
-                    mock_request.side_effect = Exception(
-                        "Service connection failed"
-                    )
+                    mock_request.side_effect = Exception("Service connection failed")
 
                     headers = {"Authorization": f"Bearer {valid_token}"}
                     _ = self.client.get(endpoint, headers=headers)
@@ -272,9 +257,7 @@ class TestComprehensiveAuditLoggingProperties:
             with patch(
                 "services.api_gateway.middleware.auth_middleware.logger"
             ) as mock_logger:
-                _ = self.client.get(
-                    request_data["endpoint"], headers=headers
-                )
+                _ = self.client.get(request_data["endpoint"], headers=headers)
 
                 # Should log processing time
                 timing_logged = False
@@ -284,9 +267,7 @@ class TestComprehensiveAuditLoggingProperties:
                         "request completed" in args[0].lower()
                         and "processing_time_ms" in kwargs
                     ):
-                        assert isinstance(
-                            kwargs["processing_time_ms"], (int, float)
-                        )
+                        assert isinstance(kwargs["processing_time_ms"], (int, float))
                         assert kwargs["processing_time_ms"] >= 0
                         timing_logged = True
                         break
@@ -330,9 +311,7 @@ class TestComprehensiveAuditLoggingProperties:
                     "X-Forwarded-For": "192.168.1.100",
                 }
 
-                _ = self.client.get(
-                    request_data["endpoint"], headers=headers
-                )
+                _ = self.client.get(request_data["endpoint"], headers=headers)
 
                 # Should log security context
                 security_context_logged = False
@@ -380,9 +359,7 @@ class TestComprehensiveAuditLoggingProperties:
             with patch(
                 "services.api_gateway.middleware.auth_middleware.logger"
             ) as mock_logger:
-                _ = self.client.get(
-                    request_data["endpoint"], headers=headers
-                )
+                _ = self.client.get(request_data["endpoint"], headers=headers)
 
                 # Should log error with complete context
                 error_context_logged = False
@@ -399,9 +376,7 @@ class TestComprehensiveAuditLoggingProperties:
                         assert kwargs["method"] == "GET"
                         assert kwargs["path"] == request_data["endpoint"]
                         assert kwargs["user_id"] == request_data["user_id"]
-                        assert isinstance(
-                            kwargs["processing_time_ms"], (int, float)
-                        )
+                        assert isinstance(kwargs["processing_time_ms"], (int, float))
                         error_context_logged = True
                         break
 
@@ -443,14 +418,10 @@ class TestComprehensiveAuditLoggingProperties:
 
     @given(
         invalid_token=st.text(min_size=1, max_size=100),
-        endpoint=st.sampled_from(
-            ["/api/v1/items/parent", "/api/v1/locations"]
-        ),
+        endpoint=st.sampled_from(["/api/v1/items/parent", "/api/v1/locations"]),
     )
     @settings(max_examples=10)
-    def test_invalid_authentication_audit_logging(
-        self, invalid_token, endpoint
-    ):
+    def test_invalid_authentication_audit_logging(self, invalid_token, endpoint):
         """
         Property: Invalid authentication attempts should be logged for security monitoring
 
@@ -512,9 +483,7 @@ class TestComprehensiveAuditLoggingProperties:
             with patch(
                 "services.api_gateway.middleware.auth_middleware.logger"
             ) as mock_logger:
-                _ = self.client.get(
-                    request_data["endpoint"], headers=headers
-                )
+                _ = self.client.get(request_data["endpoint"], headers=headers)
 
                 # Verify structured logging format
                 for call in mock_logger.info.call_args_list:
@@ -535,17 +504,13 @@ class TestComprehensiveAuditLoggingProperties:
                             "client_ip",
                         ]
                         for field in required_fields:
-                            assert (
-                                field in kwargs
-                            ), f"Missing required field: {field}"
+                            assert field in kwargs, f"Missing required field: {field}"
 
                     elif "authentication successful" in args[0].lower():
                         # Authentication logs should have user context
                         required_fields = ["user_id", "user_role", "path"]
                         for field in required_fields:
-                            assert (
-                                field in kwargs
-                            ), f"Missing required field: {field}"
+                            assert field in kwargs, f"Missing required field: {field}"
 
                     elif "request completed" in args[0].lower():
                         # Completion logs should have timing and status
@@ -556,6 +521,4 @@ class TestComprehensiveAuditLoggingProperties:
                             "processing_time_ms",
                         ]
                         for field in required_fields:
-                            assert (
-                                field in kwargs
-                            ), f"Missing required field: {field}"
+                            assert field in kwargs, f"Missing required field: {field}"

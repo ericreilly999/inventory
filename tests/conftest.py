@@ -21,21 +21,21 @@ def test_db_session():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    
+
     # Enable foreign keys for SQLite
     @event.listens_for(test_engine, "connect")
     def set_sqlite_pragma(dbapi_conn, connection_record):
         cursor = dbapi_conn.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
-    
+
     # Create all tables
     Base.metadata.create_all(bind=test_engine)
-    
+
     # Create session
     SessionLocal = sessionmaker(bind=test_engine)
     session = SessionLocal()
-    
+
     try:
         yield session
     finally:

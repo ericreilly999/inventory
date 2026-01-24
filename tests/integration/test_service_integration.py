@@ -103,9 +103,7 @@ class TestInterServiceCommunication:
         }
 
     @pytest.mark.asyncio
-    async def test_authentication_flow_integration(
-        self, mock_service_responses
-    ):
+    async def test_authentication_flow_integration(self, mock_service_responses):
         """Test authentication flow between API Gateway and User Service."""
 
         # Mock the httpx client for user service
@@ -113,9 +111,9 @@ class TestInterServiceCommunication:
             # Configure mock response for login
             mock_response = AsyncMock()
             mock_response.status_code = 200
-            mock_response.json.return_value = mock_service_responses[
-                "user_service"
-            ]["login"]
+            mock_response.json.return_value = mock_service_responses["user_service"][
+                "login"
+            ]
             mock_response.headers = {"content-type": "application/json"}
             mock_response.content = b'{"access_token": "test-token-123"}'
             mock_request.return_value = mock_response
@@ -140,9 +138,7 @@ class TestInterServiceCommunication:
             client.request = mock_request
 
             # Test the routing
-            response = await route_request(
-                request, "user", "/auth/login", client
-            )
+            response = await route_request(request, "user", "/auth/login", client)
 
             # Verify the request was routed correctly
             mock_request.assert_called_once()
@@ -154,9 +150,7 @@ class TestInterServiceCommunication:
             assert response.status_code == 200
 
     @pytest.mark.asyncio
-    async def test_inventory_location_integration(
-        self, mock_service_responses
-    ):
+    async def test_inventory_location_integration(self, mock_service_responses):
         """Test integration between Inventory and Location services."""
 
         with patch("httpx.AsyncClient.request") as mock_request:
@@ -205,9 +199,7 @@ class TestInterServiceCommunication:
             assert response.status_code == 200
 
             # Get locations
-            response = await route_request(
-                request, "location", "/locations", client
-            )
+            response = await route_request(request, "location", "/locations", client)
             assert response.status_code == 200
 
             # Verify both services were called
@@ -255,9 +247,7 @@ class TestInterServiceCommunication:
 
         with patch("httpx.AsyncClient.request") as mock_request:
             # Mock service error
-            mock_request.side_effect = httpx.ConnectError(
-                "Service unavailable"
-            )
+            mock_request.side_effect = httpx.ConnectError("Service unavailable")
 
             from fastapi import HTTPException, Request
 
@@ -275,9 +265,7 @@ class TestInterServiceCommunication:
 
             # Test error handling
             with pytest.raises(HTTPException) as exc_info:
-                await route_request(
-                    request, "inventory", "/items/parent", client
-                )
+                await route_request(request, "inventory", "/items/parent", client)
 
             assert exc_info.value.status_code == 503
             assert "SERVICE_UNAVAILABLE" in str(exc_info.value.detail)
@@ -444,9 +432,7 @@ class TestAPIContractCompliance:
 class TestDatabaseTransactionBoundaries:
     """Test database transaction boundaries across services."""
 
-    def test_item_movement_transaction_integrity(
-        self, test_db_session: Session
-    ):
+    def test_item_movement_transaction_integrity(self, test_db_session: Session):
         """Test that item movements maintain transaction integrity."""
 
         # Create test data
@@ -468,9 +454,7 @@ class TestDatabaseTransactionBoundaries:
         test_db_session.add(user)
         test_db_session.flush()
 
-        location_type = LocationType(
-            name="Warehouse", description="Storage warehouse"
-        )
+        location_type = LocationType(name="Warehouse", description="Storage warehouse")
         test_db_session.add(location_type)
         test_db_session.flush()
 
@@ -562,9 +546,7 @@ class TestDatabaseTransactionBoundaries:
         test_db_session.add(user)
         test_db_session.flush()
 
-        location_type = LocationType(
-            name="Warehouse", description="Storage warehouse"
-        )
+        location_type = LocationType(name="Warehouse", description="Storage warehouse")
         test_db_session.add(location_type)
         test_db_session.flush()
 
@@ -663,9 +645,7 @@ class TestDatabaseTransactionBoundaries:
         test_db_session.add(user)
         test_db_session.flush()
 
-        location_type = LocationType(
-            name="Warehouse", description="Storage warehouse"
-        )
+        location_type = LocationType(name="Warehouse", description="Storage warehouse")
         test_db_session.add(location_type)
         test_db_session.flush()
 
@@ -948,6 +928,4 @@ class TestEventDrivenCommunication:
         event_2_processed = next(
             e for e in processed_events if e["data"]["event_id"] == "event-2"
         )
-        assert (
-            event_2_processed["retry_count"] == 2
-        )  # Succeeded on 3rd attempt
+        assert event_2_processed["retry_count"] == 2  # Succeeded on 3rd attempt

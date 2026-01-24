@@ -66,9 +66,7 @@ class TestUIAPICommunication:
             # API might not be running, skip test
             pytest.skip("API Gateway not available")
 
-    def test_inventory_endpoints(
-        self, api_base_url: str, auth_headers: Dict[str, str]
-    ):
+    def test_inventory_endpoints(self, api_base_url: str, auth_headers: Dict[str, str]):
         """Test inventory endpoints that UI consumes."""
         if not auth_headers:
             pytest.skip("Authentication not available")
@@ -98,9 +96,7 @@ class TestUIAPICommunication:
             except requests.RequestException:
                 pytest.skip(f"Endpoint {endpoint} not available")
 
-    def test_location_endpoints(
-        self, api_base_url: str, auth_headers: Dict[str, str]
-    ):
+    def test_location_endpoints(self, api_base_url: str, auth_headers: Dict[str, str]):
         """Test location endpoints that UI consumes."""
         if not auth_headers:
             pytest.skip("Authentication not available")
@@ -124,9 +120,7 @@ class TestUIAPICommunication:
             except requests.RequestException:
                 pytest.skip(f"Endpoint {endpoint} not available")
 
-    def test_reporting_endpoints(
-        self, api_base_url: str, auth_headers: Dict[str, str]
-    ):
+    def test_reporting_endpoints(self, api_base_url: str, auth_headers: Dict[str, str]):
         """Test reporting endpoints that UI consumes."""
         if not auth_headers:
             pytest.skip("Authentication not available")
@@ -188,9 +182,7 @@ class TestUIAPICommunication:
             assert response.status_code == 404
 
             # Should return JSON error format
-            if response.headers.get("content-type", "").startswith(
-                "application/json"
-            ):
+            if response.headers.get("content-type", "").startswith("application/json"):
                 data = response.json()
                 assert "error" in data
 
@@ -231,9 +223,7 @@ class TestUIAPICommunication:
         except requests.RequestException:
             pytest.skip("API Gateway not available")
 
-    def test_api_response_times(
-        self, api_base_url: str, auth_headers: Dict[str, str]
-    ):
+    def test_api_response_times(self, api_base_url: str, auth_headers: Dict[str, str]):
         """Test API response times for UI performance."""
         if not auth_headers:
             pytest.skip("Authentication not available")
@@ -261,9 +251,7 @@ class TestUIAPICommunication:
             except requests.RequestException:
                 pytest.skip(f"Endpoint {endpoint} not available")
 
-    def test_pagination_support(
-        self, api_base_url: str, auth_headers: Dict[str, str]
-    ):
+    def test_pagination_support(self, api_base_url: str, auth_headers: Dict[str, str]):
         """Test pagination parameters for UI data grids."""
         if not auth_headers:
             pytest.skip("Authentication not available")

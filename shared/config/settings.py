@@ -22,9 +22,7 @@ class Settings(BaseSettings):
 
     # Redis settings
     redis_url: str = Field(default="redis://localhost:6379", env="REDIS_URL")
-    redis_decode_responses: bool = Field(
-        default=True, env="REDIS_DECODE_RESPONSES"
-    )
+    redis_decode_responses: bool = Field(default=True, env="REDIS_DECODE_RESPONSES")
     redis_socket_connect_timeout: int = Field(
         default=5, env="REDIS_SOCKET_CONNECT_TIMEOUT"
     )
@@ -91,9 +89,7 @@ class Settings(BaseSettings):
         class RedisSettings:
             def __init__(self, settings_instance):
                 self.url = settings_instance.redis_url
-                self.decode_responses = (
-                    settings_instance.redis_decode_responses
-                )
+                self.decode_responses = settings_instance.redis_decode_responses
                 self.socket_connect_timeout = (
                     settings_instance.redis_socket_connect_timeout
                 )
@@ -109,12 +105,8 @@ class Settings(BaseSettings):
             def __init__(self, settings_instance):
                 self.jwt_secret_key = settings_instance.jwt_secret_key
                 self.jwt_algorithm = settings_instance.jwt_algorithm
-                self.jwt_expiration_hours = (
-                    settings_instance.jwt_expiration_hours
-                )
-                self.password_hash_rounds = (
-                    settings_instance.password_hash_rounds
-                )
+                self.jwt_expiration_hours = settings_instance.jwt_expiration_hours
+                self.password_hash_rounds = settings_instance.password_hash_rounds
 
         return AuthSettings(self)
 
@@ -137,9 +129,7 @@ class Settings(BaseSettings):
         class MonitoringSettings:
             def __init__(self, settings_instance):
                 self.prometheus_port = settings_instance.prometheus_port
-                self.health_check_timeout = (
-                    settings_instance.health_check_timeout
-                )
+                self.health_check_timeout = settings_instance.health_check_timeout
                 self.metrics_enabled = settings_instance.metrics_enabled
 
         return MonitoringSettings(self)
@@ -154,9 +144,7 @@ class Settings(BaseSettings):
                 self.version = settings_instance.api_version
                 self.description = settings_instance.api_description
                 self.cors_origins = settings_instance.cors_origins
-                self.rate_limit_requests = (
-                    settings_instance.rate_limit_requests
-                )
+                self.rate_limit_requests = settings_instance.rate_limit_requests
                 self.rate_limit_window = settings_instance.rate_limit_window
 
         return APISettings(self)

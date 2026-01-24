@@ -56,15 +56,12 @@ def setup_file_logging() -> None:
 
     # Create formatters
     json_formatter = logging.Formatter(
-        '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "logger": "%(name)s", "message": "%(message)s", "service": "' +
-        os.getenv(
-            "SERVICE_NAME",
-            "unknown") +
-        '", "environment": "' +
-        os.getenv(
-            "ENVIRONMENT",
-            "development") +
-        '"}')
+        '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "logger": "%(name)s", "message": "%(message)s", "service": "'
+        + os.getenv("SERVICE_NAME", "unknown")
+        + '", "environment": "'
+        + os.getenv("ENVIRONMENT", "development")
+        + '"}'
+    )
 
     app_handler.setFormatter(json_formatter)
     error_handler.setFormatter(json_formatter)

@@ -58,9 +58,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         client_data["requests"] += 1
         return False
 
-    async def dispatch(
-        self, request: Request, call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with rate limiting."""
 
         # Skip rate limiting for health checks
@@ -93,7 +91,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                             self.window_seconds} seconds.",
                         "timestamp": time.time(),
                         "request_id": id(request),
-                    }},
+                    }
+                },
             )
 
         return await call_next(request)

@@ -176,9 +176,7 @@ def test_constraint_enforcement_property(
             session.delete(location_type)
             session.commit()
             # If we reach here, the constraint was not enforced
-            assert (
-                False
-            ), "Expected IntegrityError when deleting location type in use"
+            assert False, "Expected IntegrityError when deleting location type in use"
         except IntegrityError:
             # This is expected - constraint enforced
             session.rollback()
@@ -189,9 +187,7 @@ def test_constraint_enforcement_property(
             session.delete(parent_item_type)
             session.commit()
             # If we reach here, the constraint was not enforced
-            assert (
-                False
-            ), "Expected IntegrityError when deleting item type in use"
+            assert False, "Expected IntegrityError when deleting item type in use"
         except IntegrityError:
             # This is expected - constraint enforced
             session.rollback()
@@ -229,9 +225,7 @@ def test_constraint_enforcement_property(
             .filter_by(name=location_type_name + "_unused")
             .first()
         )
-        assert (
-            deleted_location_type is None
-        ), "Unused location type should be deleted"
+        assert deleted_location_type is None, "Unused location type should be deleted"
 
         # Delete unused item type should work
         session.delete(unused_item_type)
@@ -239,9 +233,7 @@ def test_constraint_enforcement_property(
 
         # Verify it was deleted
         deleted_item_type = (
-            session.query(ItemType)
-            .filter_by(name=item_type_name + "_unused")
-            .first()
+            session.query(ItemType).filter_by(name=item_type_name + "_unused").first()
         )
         assert deleted_item_type is None, "Unused item type should be deleted"
 
@@ -256,9 +248,7 @@ def test_constraint_enforcement_property(
         session.commit()
 
         # Verify location was deleted
-        deleted_location = (
-            session.query(Location).filter_by(id=location.id).first()
-        )
+        deleted_location = session.query(Location).filter_by(id=location.id).first()
         assert (
             deleted_location is None
         ), "Location should be deleted after removing dependencies"
@@ -316,9 +306,7 @@ def test_location_deletion_with_items_constraint(location_name):
             session.rollback()
 
         # Verify location still exists
-        existing_location = (
-            session.query(Location).filter_by(id=location.id).first()
-        )
+        existing_location = session.query(Location).filter_by(id=location.id).first()
         assert (
             existing_location is not None
         ), "Location should still exist after failed deletion"

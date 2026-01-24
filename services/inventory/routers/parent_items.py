@@ -210,4 +210,5 @@ async def delete_parent_item(
     )
 
     return MessageResponse(
-        message=f"Parent item deleted successfully (including {child_count} child items)")
+        message=f"Parent item deleted successfully (including {child_count} child items)"
+    )

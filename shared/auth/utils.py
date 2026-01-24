@@ -56,14 +56,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
             # Try the context method as fallback
             return pwd_context.verify(plain_password, hashed_password)
     except Exception as e:
-        logger.error(
-            f"Bcrypt verification failed: {e}, trying SHA256 fallback"
-        )
+        logger.error(f"Bcrypt verification failed: {e}, trying SHA256 fallback")
         # Fallback to SHA256 verification
         salt = "inventory_salt_2025"
-        expected_hash = hashlib.sha256(
-            (plain_password + salt).encode()
-        ).hexdigest()
+        expected_hash = hashlib.sha256((plain_password + salt).encode()).hexdigest()
         return expected_hash == hashed_password
 
 

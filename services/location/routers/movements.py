@@ -51,9 +51,11 @@ async def move_item(
         # Check if item is already at the destination
         if parent_item.current_location_id == move_request.to_location_id:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=f"Item '{
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Item '{
                     parent_item.name}' is already at location '{
-                    to_location.name}'", )
+                    to_location.name}'",
+            )
 
         # Store the original location for history
         from_location_id = parent_item.current_location_id
@@ -84,7 +86,8 @@ async def move_item(
         return MessageResponse(
             message=f"Item '{
                 parent_item.name}' moved to location '{
-                to_location.name}' successfully")
+                to_location.name}' successfully"
+        )
 
     except HTTPException:
         # Re-raise validation errors
@@ -97,9 +100,7 @@ async def move_item(
             error_type=type(e).__name__,
             traceback=traceback.format_exc(),
             item_id=str(move_request.item_id) if move_request else None,
-            to_location_id=(
-                str(move_request.to_location_id) if move_request else None
-            ),
+            to_location_id=(str(move_request.to_location_id) if move_request else None),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -115,18 +116,14 @@ async def move_item(
 async def get_move_history(
     skip: int = 0,
     limit: int = 100,
-    item_id: Optional[UUID] = Query(
-        None, description="Filter by parent item ID"
-    ),
+    item_id: Optional[UUID] = Query(None, description="Filter by parent item ID"),
     location_id: Optional[UUID] = Query(
         None, description="Filter by location ID (from or to)"
     ),
     from_date: Optional[datetime] = Query(
         None, description="Filter moves from this date"
     ),
-    to_date: Optional[datetime] = Query(
-        None, description="Filter moves to this date"
-    ),
+    to_date: Optional[datetime] = Query(None, description="Filter moves to this date"),
     db: Session = Depends(get_db),
 ):
     """Get move history with optional filtering."""
@@ -185,17 +182,12 @@ async def get_item_move_history(
     dependencies=[Depends(require_location_read)],
 )
 async def get_recent_moves(
-    limit: int = Query(
-        50, le=100, description="Number of recent moves to return"
-    ),
+    limit: int = Query(50, le=100, description="Number of recent moves to return"),
     db: Session = Depends(get_db),
 ):
     """Get recent item movements."""
     moves = (
-        db.query(MoveHistory)
-        .order_by(MoveHistory.moved_at.desc())
-        .limit(limit)
-        .all()
+        db.query(MoveHistory).order_by(MoveHistory.moved_at.desc()).limit(limit).all()
     )
 
     return moves

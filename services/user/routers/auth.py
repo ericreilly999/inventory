@@ -26,18 +26,12 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     user = (
         db.query(User)
         .options(joinedload(User.role))
-        .filter(
-            User.username == user_credentials.username, User.active is True
-        )
+        .filter(User.username == user_credentials.username, User.active is True)
         .first()
     )
 
-    if not user or not verify_password(
-        user_credentials.password, user.password_hash
-    ):
-        logger.warning(
-            "Failed login attempt", username=user_credentials.username
-        )
+    if not user or not verify_password(user_credentials.password, user.password_hash):
+        logger.warning("Failed login attempt", username=user_credentials.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",

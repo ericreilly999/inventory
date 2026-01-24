@@ -93,7 +93,8 @@ async def move_parent_item(
     return MessageResponse(
         message=f"Item '{
             parent_item.name}' moved to '{
-            to_location.name}' successfully")
+            to_location.name}' successfully"
+    )
 
 
 @router.get(
@@ -133,18 +134,12 @@ async def get_all_move_history(
     location_id: Optional[UUID] = Query(
         None, description="Filter by location (from or to)"
     ),
-    item_id: Optional[UUID] = Query(
-        None, description="Filter by parent item ID"
-    ),
-    item_type_id: Optional[UUID] = Query(
-        None, description="Filter by item type"
-    ),
+    item_id: Optional[UUID] = Query(None, description="Filter by parent item ID"),
+    item_type_id: Optional[UUID] = Query(None, description="Filter by item type"),
     start_date: Optional[datetime] = Query(
         None, description="Filter moves from this date"
     ),
-    end_date: Optional[datetime] = Query(
-        None, description="Filter moves to this date"
-    ),
+    end_date: Optional[datetime] = Query(None, description="Filter moves to this date"),
     db: Session = Depends(get_db),
 ):
     """Get move history with comprehensive filtering options."""
@@ -157,9 +152,7 @@ async def get_all_move_history(
 
     # Filter by item type
     if item_type_id:
-        query = query.join(ParentItem).filter(
-            ParentItem.item_type_id == item_type_id
-        )
+        query = query.join(ParentItem).filter(ParentItem.item_type_id == item_type_id)
 
     # Filter by location (either from or to)
     if location_id:
@@ -179,10 +172,7 @@ async def get_all_move_history(
 
     # Order by most recent first and apply pagination
     move_history = (
-        query.order_by(desc(MoveHistory.moved_at))
-        .offset(skip)
-        .limit(limit)
-        .all()
+        query.order_by(desc(MoveHistory.moved_at)).offset(skip).limit(limit).all()
     )
 
     return [MoveHistoryResponse.from_orm(move) for move in move_history]
@@ -201,9 +191,7 @@ async def get_items_at_location(
     """Get all items currently at a specific location."""
 
     parent_items = (
-        db.query(ParentItem)
-        .filter(ParentItem.current_location_id == location_id)
-        .all()
+        db.query(ParentItem).filter(ParentItem.current_location_id == location_id).all()
     )
 
     # Count total child items
@@ -224,9 +212,7 @@ async def get_items_at_location(
 async def get_all_assignment_history(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    child_item_id: Optional[UUID] = Query(
-        None, description="Filter by child item ID"
-    ),
+    child_item_id: Optional[UUID] = Query(None, description="Filter by child item ID"),
     parent_item_id: Optional[UUID] = Query(
         None, description="Filter by parent item ID (from or to)"
     ),

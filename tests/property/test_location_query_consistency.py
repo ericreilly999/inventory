@@ -99,9 +99,7 @@ def create_test_data(session):
 
 
 @given(
-    parent_names=st.lists(
-        st.text(min_size=1, max_size=50), min_size=1, max_size=5
-    ),
+    parent_names=st.lists(st.text(min_size=1, max_size=50), min_size=1, max_size=5),
     child_counts=st.lists(
         st.integers(min_value=0, max_value=3), min_size=1, max_size=5
     ),
@@ -121,17 +119,13 @@ def test_location_query_consistency_property(parent_names, child_counts):
         session = SessionLocal()
 
         # Create test data
-        user, location, parent_item_type, child_item_type = create_test_data(
-            session
-        )
+        user, location, parent_item_type, child_item_type = create_test_data(session)
 
         # Create parent items and their child items
         parent_items = []
         all_child_items = []
 
-        for i, (parent_name, child_count) in enumerate(
-            zip(parent_names, child_counts)
-        ):
+        for i, (parent_name, child_count) in enumerate(zip(parent_names, child_counts)):
             # Create parent item
             parent_item = ParentItem(
                 id=uuid.uuid4(),
@@ -213,7 +207,5 @@ def test_location_query_consistency_property(parent_names, child_counts):
 
 if __name__ == "__main__":
     # Run a simple test to verify the property works
-    test_location_query_consistency_property(
-        ["TestParent1", "TestParent2"], [2, 1]
-    )
+    test_location_query_consistency_property(["TestParent1", "TestParent2"], [2, 1])
     print("Property test passed!")

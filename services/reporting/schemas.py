@@ -117,12 +117,8 @@ class InventoryCountReport(BaseModel):
 class ReportDateRange(BaseModel):
     """Date range for reports."""
 
-    start_date: Optional[datetime] = Field(
-        None, description="Start date for filtering"
-    )
-    end_date: Optional[datetime] = Field(
-        None, description="End date for filtering"
-    )
+    start_date: Optional[datetime] = Field(None, description="Start date for filtering")
+    end_date: Optional[datetime] = Field(None, description="End date for filtering")
 
 
 class InventoryStatusRequest(BaseModel):
@@ -145,9 +141,7 @@ class MovementHistoryRequest(ReportDateRange):
     item_type_ids: Optional[List[UUID]] = Field(
         None, description="Filter by specific item types"
     )
-    user_ids: Optional[List[UUID]] = Field(
-        None, description="Filter by specific users"
-    )
+    user_ids: Optional[List[UUID]] = Field(None, description="Filter by specific users")
 
 
 class InventoryCountRequest(BaseModel):
