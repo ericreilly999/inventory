@@ -455,8 +455,7 @@ class TestLoadTesting:
                 time_increase_ratio = last_third_avg / first_third_avg
                 assert (
                     time_increase_ratio < 2.5
-                ), f"Response time increased {
-                    time_increase_ratio:.1f}x - possible memory leak"
+                ), f"Response time increased {time_increase_ratio:.1f}x - possible memory leak"
 
 
 class TestConcurrencyHandling:
