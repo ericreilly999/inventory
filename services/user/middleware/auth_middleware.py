@@ -13,9 +13,7 @@ logger = get_logger(__name__)
 class AuthMiddleware(BaseHTTPMiddleware):
     """Middleware for authentication and request logging."""
 
-    async def dispatch(
-        self, request: Request, call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request and add authentication context."""
 
         # Log incoming request

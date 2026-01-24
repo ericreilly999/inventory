@@ -126,9 +126,7 @@ def test_report_date_filtering_property(
         session = SessionLocal()
 
         # Create test data
-        user, location1, location2, parent_item_type = create_test_data(
-            session
-        )
+        user, location1, location2, parent_item_type = create_test_data(session)
         locations = [location1, location2]
 
         # Base time for generating movements
@@ -149,9 +147,7 @@ def test_report_date_filtering_property(
         movements_created = []
         expected_filtered_movements = []
 
-        for i, (days_offset, hour, location_idx) in enumerate(
-            movement_configs
-        ):
+        for i, (days_offset, hour, location_idx) in enumerate(movement_configs):
             # Create parent item
             parent_item = ParentItem(
                 id=uuid.uuid4(),
@@ -257,9 +253,7 @@ def test_report_date_filtering_property(
         # Test with no date filters (should return all movements in
         # chronological order)
         all_movements_ordered = (
-            session.query(MoveHistory)
-            .order_by(MoveHistory.moved_at.desc())
-            .all()
+            session.query(MoveHistory).order_by(MoveHistory.moved_at.desc()).all()
         )
 
         # Verify chronological ordering for all movements

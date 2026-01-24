@@ -97,9 +97,7 @@ def create_test_data(session):
 
 @given(
     parent_name=st.text(min_size=1, max_size=50),
-    child_names=st.lists(
-        st.text(min_size=1, max_size=50), min_size=1, max_size=5
-    ),
+    child_names=st.lists(st.text(min_size=1, max_size=50), min_size=1, max_size=5),
 )
 def test_cascading_item_movement_property(parent_name, child_names):
     """
@@ -116,9 +114,7 @@ def test_cascading_item_movement_property(parent_name, child_names):
         session = SessionLocal()
 
         # Create test data
-        user, location1, location2, parent_item_type = create_test_data(
-            session
-        )
+        user, location1, location2, parent_item_type = create_test_data(session)
 
         # Create child item type
         child_item_type = ItemType(

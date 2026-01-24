@@ -125,19 +125,14 @@ class TestLocationRetrieval:
         location_id = uuid.uuid4()
         mock_db = Mock(spec=Session)
 
-        mock_db.query.return_value.filter.return_value.first.return_value = (
-            None
-        )
+        mock_db.query.return_value.filter.return_value.first.return_value = None
 
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
             await get_location_by_id(location_id, mock_db)
 
         assert exc_info.value.status_code == 404
-        assert (
-            f"Location with id {location_id} not found"
-            in exc_info.value.detail
-        )
+        assert f"Location with id {location_id} not found" in exc_info.value.detail
 
     @pytest.mark.asyncio
     async def test_get_location_type_by_id_existing_type(self):
@@ -167,9 +162,7 @@ class TestLocationRetrieval:
         location_type_id = uuid.uuid4()
         mock_db = Mock(spec=Session)
 
-        mock_db.query.return_value.filter.return_value.first.return_value = (
-            None
-        )
+        mock_db.query.return_value.filter.return_value.first.return_value = None
 
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
@@ -220,9 +213,7 @@ class TestLocationCreation:
         # Assert
         assert location.name == "Minimal Location"
         assert location.description is None
-        assert (
-            location.location_metadata is None
-        )  # SQLAlchemy default behavior
+        assert location.location_metadata is None  # SQLAlchemy default behavior
         assert location.location_type_id == location_type_id
 
     def test_location_type_creation_with_valid_data(self):
@@ -294,9 +285,7 @@ class TestLocationModification:
     def test_location_type_update_description(self):
         """Test updating a location type's description."""
         # Arrange
-        location_type = LocationType(
-            name="Warehouse", description="Old description"
-        )
+        location_type = LocationType(name="Warehouse", description="Old description")
 
         # Act
         location_type.description = "Updated warehouse description"
@@ -356,9 +345,7 @@ class TestLocationEdgeCases:
         # upstream
 
         # Arrange & Act
-        location = Location(
-            name="", location_type_id=uuid.uuid4()
-        )  # Empty name
+        location = Location(name="", location_type_id=uuid.uuid4())  # Empty name
 
         # Assert - model accepts it but API validation should catch this
         assert location.name == ""

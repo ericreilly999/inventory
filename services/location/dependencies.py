@@ -58,9 +58,7 @@ async def get_current_user_token(
     return TokenData(
         user_id=UUID(user_id),
         username=payload.get("username"),
-        role_id=(
-            UUID(payload.get("role_id")) if payload.get("role_id") else None
-        ),
+        role_id=(UUID(payload.get("role_id")) if payload.get("role_id") else None),
         permissions=payload.get("permissions", {}),
     )
 
@@ -98,8 +96,7 @@ def require_permission(permission: str):
         logger = get_logger(__name__)
 
         logger.info(
-            f"Checking permission '{permission}' for user "
-            f"{token_data.username}"
+            f"Checking permission '{permission}' for user " f"{token_data.username}"
         )
         logger.info(f"User permissions: {token_data.permissions}")
 
@@ -150,9 +147,7 @@ async def get_location_type_by_id(
 ) -> LocationType:
     """Get location type by ID or raise 404."""
     location_type = (
-        db.query(LocationType)
-        .filter(LocationType.id == location_type_id)
-        .first()
+        db.query(LocationType).filter(LocationType.id == location_type_id).first()
     )
     if not location_type:
         raise HTTPException(
@@ -194,15 +189,11 @@ def validate_location_deletion(location: Location, db: Session) -> None:
         )
 
 
-def validate_location_type_deletion(
-    location_type: LocationType, db: Session
-) -> None:
+def validate_location_type_deletion(location_type: LocationType, db: Session) -> None:
     """Validate that a location type can be deleted (no locations using it)."""
     # Check if any locations are using this location type
     locations_count = (
-        db.query(Location)
-        .filter(Location.location_type_id == location_type.id)
-        .count()
+        db.query(Location).filter(Location.location_type_id == location_type.id).count()
     )
 
     if locations_count > 0:

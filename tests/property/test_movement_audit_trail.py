@@ -358,9 +358,7 @@ def test_move_history_filtering_by_date_range(test_db_session, data):
         notes="Recent move 2",
     )
 
-    test_db_session.add_all(
-        [old_move, future_move, recent_move1, recent_move2]
-    )
+    test_db_session.add_all([old_move, future_move, recent_move1, recent_move2])
     test_db_session.commit()
 
     # Define filter range (last 3 hours)

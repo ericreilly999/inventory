@@ -95,9 +95,7 @@ class ParentItem(Base, UUIDMixin, TimestampMixin):
     )
 
     def __repr__(self) -> str:
-        location_name = (
-            self.current_location.name if self.current_location else None
-        )
+        location_name = self.current_location.name if self.current_location else None
         return (
             f"<ParentItem(id={self.id}, name='{self.name}', "
             f"location='{location_name}')>"
@@ -149,6 +147,5 @@ class ChildItem(Base, UUIDMixin, TimestampMixin):
     def __repr__(self) -> str:
         parent_name = self.parent_item.name if self.parent_item else None
         return (
-            f"<ChildItem(id={self.id}, name='{self.name}', "
-            f"parent='{parent_name}')>"
+            f"<ChildItem(id={self.id}, name='{self.name}', " f"parent='{parent_name}')>"
         )

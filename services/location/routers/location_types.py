@@ -39,9 +39,7 @@ async def list_location_types(
     from shared.logging.config import get_logger
 
     logger = get_logger(__name__)
-    logger.info(
-        f"INSIDE list_location_types handler - skip={skip}, limit={limit}"
-    )
+    logger.info(f"INSIDE list_location_types handler - skip={skip}, limit={limit}")
 
     try:
         location_types = db.query(LocationType).offset(skip).limit(limit).all()
@@ -118,10 +116,7 @@ async def update_location_type(
     """Update a location type."""
     try:
         # Check for name conflicts if name is being updated
-        if (
-            location_type_data.name
-            and location_type_data.name != location_type.name
-        ):
+        if location_type_data.name and location_type_data.name != location_type.name:
             existing = (
                 db.query(LocationType)
                 .filter(

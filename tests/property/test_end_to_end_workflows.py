@@ -41,9 +41,7 @@ def valid_name(draw):
     """Generate valid names for entities."""
     return draw(
         st.text(
-            alphabet=st.characters(
-                whitelist_categories=("Lu", "Ll", "Nd", "Pc", "Pd")
-            ),
+            alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd", "Pc", "Pd")),
             min_size=1,
             max_size=50,
         ).filter(lambda x: x.strip() and not x.isspace())
@@ -106,9 +104,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
 
         # Track system state for invariants
         self.item_locations: Dict[str, str] = {}  # item_id -> location_id
-        self.child_assignments: Dict[str, Optional[str]] = (
-            {}
-        )  # child_id -> parent_id
+        self.child_assignments: Dict[str, Optional[str]] = {}  # child_id -> parent_id
         self.location_item_counts: Dict[str, int] = {}  # location_id -> count
 
     # Bundles for managing entity references
@@ -132,9 +128,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
         self.roles[admin_role.id] = admin_role
 
         # Create warehouse location type
-        warehouse_type = LocationType(
-            name="Warehouse", description="Storage warehouse"
-        )
+        warehouse_type = LocationType(name="Warehouse", description="Storage warehouse")
         self.location_types[warehouse_type.id] = warehouse_type
 
         # Create basic item types
@@ -164,9 +158,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
         self.roles[role.id] = role
         return role.id
 
-    @rule(
-        target=users, role_id=roles, username=valid_name(), email=valid_email()
-    )
+    @rule(target=users, role_id=roles, username=valid_name(), email=valid_email())
     def create_user(self, role_id, username, email):
         """Create a new user."""
         assume(role_id in self.roles)
@@ -226,9 +218,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
         """Create a new item type."""
         assume(name not in [it.name for it in self.item_types.values()])
 
-        item_type = ItemType(
-            name=name, description=description, category=category
-        )
+        item_type = ItemType(name=name, description=description, category=category)
         self.item_types[item_type.id] = item_type
         return item_type.id
 
@@ -246,9 +236,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
 
         # Find a parent item type
         parent_item_types = [
-            it
-            for it in self.item_types.values()
-            if it.category == ItemCategory.PARENT
+            it for it in self.item_types.values() if it.category == ItemCategory.PARENT
         ]
         assume(len(parent_item_types) > 0)
         item_type_id = random.choice(parent_item_types).id
@@ -277,9 +265,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
 
         # Find a child item type
         child_item_types = [
-            it
-            for it in self.item_types.values()
-            if it.category == ItemCategory.CHILD
+            it for it in self.item_types.values() if it.category == ItemCategory.CHILD
         ]
         assume(len(child_item_types) > 0)
         item_type_id = random.choice(child_item_types).id
@@ -294,9 +280,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
         self.child_assignments[child_item.id] = None
         return child_item.id
 
-    @rule(
-        parent_item_id=parent_items, new_location_id=locations, user_id=users
-    )
+    @rule(parent_item_id=parent_items, new_location_id=locations, user_id=users)
     def move_parent_item(self, parent_item_id, new_location_id, user_id):
         """Move a parent item to a new location."""
         assume(parent_item_id in self.parent_items)
@@ -333,9 +317,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
                 # Child items move with their parent
                 pass  # Location is implicit through parent
 
-    @rule(
-        child_item_id=child_items, parent_item_id=parent_items, user_id=users
-    )
+    @rule(child_item_id=child_items, parent_item_id=parent_items, user_id=users)
     def assign_child_to_parent(self, child_item_id, parent_item_id, user_id):
         """Assign a child item to a parent item."""
         assume(child_item_id in self.child_items)
@@ -450,14 +432,10 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
         for item_id, moves in item_moves.items():
             if item_id in self.parent_items:
                 # Sort moves by timestamp (using order added as proxy)
-                sorted_moves = sorted(
-                    moves, key=lambda m: self.move_history.index(m)
-                )
+                sorted_moves = sorted(moves, key=lambda m: self.move_history.index(m))
                 if sorted_moves:
                     last_move = sorted_moves[-1]
-                    current_location = self.parent_items[
-                        item_id
-                    ].current_location_id
+                    current_location = self.parent_items[item_id].current_location_id
                     assert last_move.to_location_id == current_location, (
                         f"Item {item_id} move history inconsistent: "
                         f"last move to {last_move.to_location_id}, "
@@ -472,9 +450,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
         for assignment in self.assignment_history:
             if assignment.child_item_id not in child_assignments_history:
                 child_assignments_history[assignment.child_item_id] = []
-            child_assignments_history[assignment.child_item_id].append(
-                assignment
-            )
+            child_assignments_history[assignment.child_item_id].append(assignment)
 
         # Check that final assignment matches current assignment
         for child_id, assignments in child_assignments_history.items():
@@ -566,9 +542,7 @@ class TestEndToEndWorkflows:
         num_moves=st.integers(min_value=1, max_value=20),
     )
     @settings(max_examples=20)
-    def test_item_movement_consistency(
-        self, num_locations, num_items, num_moves
-    ):
+    def test_item_movement_consistency(self, num_locations, num_items, num_moves):
         """
         Test that item movements maintain location consistency.
 
@@ -741,16 +715,13 @@ class TestEndToEndWorkflows:
                 child_assignments.sort(key=lambda a: a["timestamp"])
                 last_assignment = child_assignments[-1]
                 assert (
-                    child_data["current_parent"]
-                    == last_assignment["to_parent"]
+                    child_data["current_parent"] == last_assignment["to_parent"]
                 ), f"Child {child_id} assignment history inconsistency"
 
     @given(
         operations=st.lists(
             st.one_of(
-                st.tuples(
-                    st.just("create_item"), valid_name(), valid_uuid_string()
-                ),
+                st.tuples(st.just("create_item"), valid_name(), valid_uuid_string()),
                 st.tuples(
                     st.just("move_item"),
                     st.integers(min_value=0, max_value=9),
@@ -799,9 +770,7 @@ class TestEndToEndWorkflows:
                 elif op_type == "create_item":
                     item_name = operation[1]
                     location_id = (
-                        operation[2]
-                        if operation[2] in locations
-                        else locations[0]
+                        operation[2] if operation[2] in locations else locations[0]
                     )
                     item_id = str(uuid.uuid4())
 
@@ -814,9 +783,7 @@ class TestEndToEndWorkflows:
                 elif op_type == "move_item" and items:
                     item_index = operation[1] % len(items)
                     new_location = (
-                        operation[2]
-                        if operation[2] in locations
-                        else locations[0]
+                        operation[2] if operation[2] in locations else locations[0]
                     )
                     item_id = list(items.keys())[item_index]
 
@@ -836,9 +803,7 @@ class TestEndToEndWorkflows:
                         if parent_id != child_id:
                             # Create child if not exists
                             if child_id not in children:
-                                children[child_id] = {
-                                    "name": f"child-{child_id[:8]}"
-                                }
+                                children[child_id] = {"name": f"child-{child_id[:8]}"}
 
                             # Assign child to parent
                             assignments[child_id] = parent_id

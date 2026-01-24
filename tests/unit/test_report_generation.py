@@ -774,9 +774,7 @@ class TestReportErrorHandling:
         )
 
         # Add base entities
-        test_db_session.add_all(
-            [role, user, location_type, location, item_type]
-        )
+        test_db_session.add_all([role, user, location_type, location, item_type])
         test_db_session.commit()
 
         # Create multiple items (simulating larger dataset)

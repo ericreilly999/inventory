@@ -94,11 +94,7 @@ def create_test_data(session):
     return user, location1, location2, item_type
 
 
-@given(
-    item_names=st.lists(
-        st.text(min_size=1, max_size=50), min_size=1, max_size=3
-    )
-)
+@given(item_names=st.lists(st.text(min_size=1, max_size=50), min_size=1, max_size=3))
 def test_real_time_location_updates_property(item_names):
     """
     Property 2: Real-time Location Updates
