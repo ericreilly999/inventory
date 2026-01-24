@@ -70,9 +70,9 @@ resource "aws_vpc_endpoint" "secretsmanager" {
 
 # Security Group for VPC Endpoints
 resource "aws_security_group" "vpc_endpoints" {
-  name_description = "${var.environment}-vpc-endpoints-sg"
-  description      = "Security group for VPC endpoints"
-  vpc_id           = aws_vpc.main.id
+  name        = "${var.environment}-vpc-endpoints-sg"
+  description = "Security group for VPC endpoints"
+  vpc_id      = aws_vpc.main.id
 
   ingress {
     description = "HTTPS from VPC"
