@@ -1,8 +1,8 @@
 """Test configuration and fixtures."""
 
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 
 # Import Base first
@@ -22,30 +22,55 @@ from shared.database.config import get_db
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
 
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+@pytest.fixture(scope="session")
+def engine():
+    """Create a test database engine for the entire test session."""
+    test_engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        echo=False  # Set to True for SQL debugging
+    )
+    
+    # Enable foreign keys for SQLite
+    @event.listens_for(test_engine, "connect")
+    def set_sqlite_pragma(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+    
+    # Create all tables once for the session
+    Base.metadata.create_all(bind=test_engine)
+    
+    yield test_engine
+    
+    # Drop all tables at the end of the session
+    Base.metadata.drop_all(bind=test_engine)
+    test_engine.dispose()
 
 
 @pytest.fixture(scope="function")
-def test_db_session():
-    """Create a test database session."""
-    # Create all tables
-    Base.metadata.create_all(bind=engine)
+def test_db_session(engine):
+    """Create a test database session with transaction rollback for each test."""
+    # Create a connection
+    connection = engine.connect()
     
-    # Create session
+    # Begin a transaction
+    transaction = connection.begin()
+    
+    # Create session bound to the connection
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
     session = TestingSessionLocal()
     
     try:
         yield session
     finally:
         session.close()
-        # Drop all tables after test
-        Base.metadata.drop_all(bind=engine)
+        # Rollback transaction to clean up test data
+        transaction.rollback()
+        # Close connection
+        connection.close()
 
 
 @pytest.fixture(scope="function")
