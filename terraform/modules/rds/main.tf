@@ -7,8 +7,9 @@ resource "random_password" "db_password" {
 
 # Local value to handle password
 locals {
+  # Use nonsensitive() to unwrap the marked value from random_password
   db_password = var.db_password != null ? var.db_password : (
-    length(random_password.db_password) > 0 ? random_password.db_password[0].result : ""
+    length(random_password.db_password) > 0 ? nonsensitive(random_password.db_password[0].result) : ""
   )
 }
 
