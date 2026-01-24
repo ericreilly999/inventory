@@ -66,6 +66,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(data: Dict[str, Any]) -> str:
     """Create a JWT access token."""
     to_encode = data.copy()
+    
+    # Ensure subject is always a string (handle None case)
+    if "sub" in to_encode and to_encode["sub"] is not None:
+        to_encode["sub"] = str(to_encode["sub"])
+    
     expire = datetime.now(timezone.utc) + timedelta(
         hours=settings.auth.jwt_expiration_hours
     )

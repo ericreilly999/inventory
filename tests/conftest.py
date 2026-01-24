@@ -10,6 +10,17 @@ from shared.models.base import Base
 
 # Force import all models at module level to ensure they are registered
 # Import in dependency order to avoid foreign key issues
+from shared.models import (  # noqa: F401
+    AssignmentHistory,
+    ChildItem,
+    ItemType,
+    Location,
+    LocationType,
+    MoveHistory,
+    ParentItem,
+    Role,
+    User,
+)
 
 
 @pytest.fixture(scope="function")
