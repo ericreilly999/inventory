@@ -1,0 +1,26 @@
+[run]
+source = services,shared
+omit =
+    */main.py
+    */middleware/*
+    */__init__.py
+    */schemas.py
+    tests/*
+    .venv/*
+    venv/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+    @abc.abstractmethod
+    class .*\bProtocol\):
+    @overload
+
+[html]
+directory = htmlcov
