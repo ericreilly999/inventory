@@ -39,17 +39,17 @@ def test_db_session():
         cursor.close()
 
     # Ensure all models are imported and registered
-    # This forces the metadata to be populated
-    from shared.models import (  # noqa: F401
-        AssignmentHistory,
+    # Import directly from modules to avoid circular imports
+    from shared.models.user import Role, User  # noqa: F401
+    from shared.models.location import Location, LocationType  # noqa: F401
+    from shared.models.item import (  # noqa: F401
         ChildItem,
         ItemType,
-        Location,
-        LocationType,
-        MoveHistory,
         ParentItem,
-        Role,
-        User,
+    )
+    from shared.models.move_history import MoveHistory  # noqa: F401
+    from shared.models.assignment_history import (  # noqa: F401
+        AssignmentHistory,
     )
 
     # Create all tables

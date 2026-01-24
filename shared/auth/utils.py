@@ -68,8 +68,14 @@ def create_access_token(data: Dict[str, Any]) -> str:
     to_encode = data.copy()
     
     # Ensure subject is always a string (handle None case)
-    if "sub" in to_encode and to_encode["sub"] is not None:
-        to_encode["sub"] = str(to_encode["sub"])
+    # JWT spec requires 'sub' to be a string, so we skip encoding if it's None
+    if "sub" in to_encode:
+        if to_encode["sub"] is None:
+            # Remove None subject - JWT library will reject it
+            del to_encode["sub"]
+        else:
+            # Ensure it's a string
+            to_encode["sub"] = str(to_encode["sub"])
     
     expire = datetime.now(timezone.utc) + timedelta(
         hours=settings.auth.jwt_expiration_hours
