@@ -288,7 +288,7 @@ async def test_login(db: Session = Depends(get_db)) -> Dict[str, Any]:
         user = (
             db.query(User)
             .options(joinedload(User.role))
-            .filter(User.username == "admin", User.active == True)
+            .filter(User.username == "admin", User.active is True)
             .first()
         )
 

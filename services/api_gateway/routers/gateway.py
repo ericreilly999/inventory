@@ -1,7 +1,6 @@
 """Main gateway router for request routing to microservices."""
 
 import time
-from typing import Any, Dict
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -10,7 +9,6 @@ from fastapi.responses import JSONResponse
 from shared.logging.config import get_logger
 
 from ..dependencies import get_service_client
-from ..schemas import ErrorResponse
 
 logger = get_logger(__name__)
 

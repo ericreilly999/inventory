@@ -1,6 +1,5 @@
 """Dependencies for Inventory Service."""
 
-from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -68,7 +67,7 @@ async def get_current_user(
     """Get current user from database."""
     user = (
         db.query(User)
-        .filter(User.id == token_data.user_id, User.active == True)
+        .filter(User.id == token_data.user_id, User.active is True)
         .first()
     )
 

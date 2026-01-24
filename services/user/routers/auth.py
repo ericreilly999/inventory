@@ -1,8 +1,5 @@
 """Authentication router for User Service."""
 
-from datetime import timedelta
-from typing import Any, Dict
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -30,7 +27,7 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
         db.query(User)
         .options(joinedload(User.role))
         .filter(
-            User.username == user_credentials.username, User.active == True
+            User.username == user_credentials.username, User.active is True
         )
         .first()
     )

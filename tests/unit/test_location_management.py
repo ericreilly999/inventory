@@ -5,11 +5,10 @@ Requirements: 4.1, 4.2, 4.3
 """
 
 import uuid
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 from fastapi import HTTPException
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from services.location.dependencies import (
@@ -18,9 +17,7 @@ from services.location.dependencies import (
     validate_location_deletion,
     validate_location_type_deletion,
 )
-from shared.models.item import ItemCategory, ItemType, ParentItem
 from shared.models.location import Location, LocationType
-from shared.models.user import Role, User
 
 
 class TestLocationValidation:

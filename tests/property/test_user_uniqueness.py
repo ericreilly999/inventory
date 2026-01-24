@@ -4,9 +4,6 @@ Feature: inventory-management, Property 13: User Uniqueness and Role Management
 Validates: Requirements 6.1, 6.4
 """
 
-from uuid import uuid4
-
-import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from sqlalchemy import create_engine

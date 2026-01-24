@@ -7,30 +7,25 @@ from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import and_, func
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from shared.database.config import get_db
 from shared.models.item import ChildItem, ItemType, ParentItem
-from shared.models.location import Location, LocationType
+from shared.models.location import Location
 from shared.models.move_history import MoveHistory
-from shared.models.user import User
 
-from ..dependencies import get_current_user, require_reports_read
+from ..dependencies import require_reports_read
 from ..schemas import (
     InventoryCountByLocationAndType,
     InventoryCountByType,
     InventoryCountReport,
-    InventoryCountRequest,
     InventoryStatusByLocation,
     InventoryStatusReport,
-    InventoryStatusRequest,
     ItemTypeSummary,
     LocationSummary,
     MovementHistoryReport,
-    MovementHistoryRequest,
     MovementRecord,
-    ReportError,
     UserSummary,
 )
 

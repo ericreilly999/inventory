@@ -4,9 +4,6 @@ Feature: inventory-management, Property 12: User Authentication and Authorizatio
 Validates: Requirements 6.2, 6.3
 """
 
-from uuid import uuid4
-
-import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from sqlalchemy import create_engine
@@ -224,7 +221,7 @@ class TestUserAuthenticationProperties:
             )
 
             # But user should be marked as inactive
-            assert user.active == False
+            assert user.active is False
 
             # Authentication logic should check active status
             # (This would be handled in the authentication endpoint)

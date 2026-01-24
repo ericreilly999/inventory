@@ -114,7 +114,7 @@ async def list_users(
 
     # Filter by active status
     if active_only:
-        query = query.filter(User.active == True)
+        query = query.filter(User.active is True)
 
     # Search filter
     if search:

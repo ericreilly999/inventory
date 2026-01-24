@@ -1,7 +1,7 @@
 """Pydantic schemas for Location Service."""
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -28,8 +28,6 @@ class LocationBase(BaseModel):
 class LocationTypeCreate(LocationTypeBase):
     """Schema for creating a location type."""
 
-    pass
-
 
 class LocationTypeUpdate(BaseModel):
     """Schema for updating a location type."""
@@ -40,8 +38,6 @@ class LocationTypeUpdate(BaseModel):
 
 class LocationCreate(LocationBase):
     """Schema for creating a location."""
-
-    pass
 
 
 class LocationUpdate(BaseModel):

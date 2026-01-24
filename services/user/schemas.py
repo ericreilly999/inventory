@@ -50,8 +50,6 @@ class UserLogin(BaseModel):
 class RoleCreate(RoleBase):
     """Schema for creating a role."""
 
-    pass
-
 
 class RoleUpdate(BaseModel):
     """Schema for updating a role."""

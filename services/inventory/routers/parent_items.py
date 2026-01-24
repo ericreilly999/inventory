@@ -3,14 +3,13 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from shared.database.config import get_db
 from shared.logging.config import get_logger
-from shared.models.item import ItemCategory, ItemType, ParentItem
-from shared.models.location import Location
+from shared.models.item import ParentItem
 from shared.models.user import User
 
 from ..dependencies import (
@@ -52,7 +51,7 @@ async def create_parent_item(
     await validate_item_type_category(item_type, "parent")
 
     # Validate location exists
-    location = await get_location_or_404(item_data.current_location_id, db)
+    await get_location_or_404(item_data.current_location_id, db)
 
     # Create new parent item
     parent_item = ParentItem(

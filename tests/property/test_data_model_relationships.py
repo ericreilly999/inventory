@@ -5,7 +5,6 @@ Validates: Requirements 2.2, 9.3
 """
 
 import uuid
-from datetime import datetime
 
 from hypothesis import given
 from hypothesis import strategies as st

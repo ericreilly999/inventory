@@ -4,10 +4,8 @@ Feature: inventory-management, Property 16: Comprehensive Audit Logging
 Validates: Requirements 7.5, 5.3
 """
 
-import time
 from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -424,7 +422,7 @@ class TestComprehensiveAuditLoggingProperties:
             with patch(
                 "services.api_gateway.middleware.auth_middleware.logger"
             ) as mock_logger:
-                response = self.client.get(endpoint)
+                self.client.get(endpoint)
 
                 # Should log request received for public endpoints
                 request_logged = False

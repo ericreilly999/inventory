@@ -5,8 +5,7 @@ Tests API integration and error handling for the UI service.
 Requirements: 10.3
 """
 
-import json
-from typing import Any, Dict
+from typing import Dict
 
 import pytest
 import requests

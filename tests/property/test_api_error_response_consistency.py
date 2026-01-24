@@ -4,10 +4,8 @@ Feature: inventory-management, Property 15: API Error Response Consistency
 Validates: Requirements 7.4
 """
 
-import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 from fastapi.testclient import TestClient
 from hypothesis import given, settings
 from hypothesis import strategies as st

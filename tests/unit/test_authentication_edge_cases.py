@@ -5,9 +5,7 @@ Requirements: 6.1, 6.2, 6.4
 """
 
 from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
 
-import pytest
 from jose import JWTError, jwt
 
 from shared.auth.utils import (
@@ -40,7 +38,7 @@ class TestAuthenticationEdgeCases:
         # by converting to string, so no TypeError is raised
         try:
             result = verify_password(None, hashed)
-            assert result == False
+            assert result is False
         except (TypeError, AttributeError):
             # If TypeError is raised, that's also acceptable
             pass
@@ -51,7 +49,7 @@ class TestAuthenticationEdgeCases:
         # Test with None hash - functions handle None gracefully
         try:
             result = verify_password(password, None)
-            assert result == False
+            assert result is False
         except (TypeError, AttributeError):
             # If TypeError is raised, that's also acceptable
             pass
@@ -148,7 +146,7 @@ class TestAuthenticationEdgeCases:
         assert payload is not None
 
         # But extract_user_id should handle missing sub gracefully
-        user_id = extract_user_id(token_without_sub)
+        extract_user_id(token_without_sub)
         # This depends on implementation - might be None or raise exception
 
     def test_extract_user_id_edge_cases(self):

@@ -5,7 +5,6 @@ Validates: Requirements 3.1, 3.3
 """
 
 import uuid
-from datetime import datetime, timezone
 
 from hypothesis import given
 from hypothesis import strategies as st

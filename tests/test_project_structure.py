@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 
 def test_project_structure():
     """Test that all required directories exist."""

@@ -2,9 +2,8 @@
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any
 
-from sqlalchemy import CHAR, Column, DateTime, String, TypeDecorator
+from sqlalchemy import CHAR, Column, DateTime, TypeDecorator
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase

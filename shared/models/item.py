@@ -5,7 +5,7 @@ import enum
 from sqlalchemy import Column, Enum, ForeignKey, String, Text
 from sqlalchemy.orm import relationship
 
-from .base import GUID, AuditMixin, Base, TimestampMixin, UUIDMixin
+from .base import GUID, Base, TimestampMixin, UUIDMixin
 
 
 class ItemCategory(enum.Enum):

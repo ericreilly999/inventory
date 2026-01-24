@@ -10,10 +10,8 @@ Feature: inventory-management
 
 import random
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
-import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 from hypothesis.stateful import (
@@ -23,7 +21,6 @@ from hypothesis.stateful import (
     invariant,
     rule,
 )
-from sqlalchemy.orm import Session
 
 from shared.models.assignment_history import AssignmentHistory
 from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
@@ -409,7 +406,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
         """Child items should be at the same location as their parent."""
         for child_id, child_item in self.child_items.items():
             if child_item.parent_item_id is not None:
-                parent_item = self.parent_items[child_item.parent_item_id]
+                self.parent_items[child_item.parent_item_id]
                 # Child items implicitly follow parent location
                 assert (
                     child_item.parent_item_id in self.parent_items
@@ -786,7 +783,7 @@ class TestEndToEndWorkflows:
 
             try:
                 if op_type == "create_location":
-                    location_name = operation[1]
+                    operation[1]
                     location_id = str(uuid.uuid4())
                     locations.append(location_id)
 

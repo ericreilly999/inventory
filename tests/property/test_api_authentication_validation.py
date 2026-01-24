@@ -4,10 +4,8 @@ Feature: inventory-management, Property 14: API Authentication and Validation
 Validates: Requirements 7.1, 7.2
 """
 
-import time
 from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 from hypothesis import given, settings
 from hypothesis import strategies as st

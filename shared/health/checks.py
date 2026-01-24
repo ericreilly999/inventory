@@ -5,9 +5,8 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from sqlalchemy import text
-from sqlalchemy.orm import Session
 
-from shared.database.config import SessionLocal, engine
+from shared.database.config import SessionLocal
 from shared.database.redis_config import get_redis
 from shared.logging.config import get_logger
 

@@ -14,7 +14,6 @@ from sqlalchemy.orm import sessionmaker
 
 from shared.models import (
     Base,
-    ChildItem,
     ItemCategory,
     ItemType,
     Location,

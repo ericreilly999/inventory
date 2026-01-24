@@ -5,7 +5,6 @@ Validates: Requirements 2.4, 2.5
 """
 
 import uuid
-from datetime import datetime
 
 from hypothesis import given
 from hypothesis import strategies as st
@@ -14,7 +13,6 @@ from sqlalchemy.orm import sessionmaker
 
 from shared.models import (
     Base,
-    ChildItem,
     ItemCategory,
     ItemType,
     Location,

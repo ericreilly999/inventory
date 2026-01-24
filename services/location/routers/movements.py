@@ -5,17 +5,12 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from shared.database.config import get_db
-from shared.models.item import ParentItem
-from shared.models.location import Location
 from shared.models.move_history import MoveHistory
-from shared.models.user import User
 
 from ..dependencies import (
-    get_current_user,
     get_location_by_id,
     get_parent_item_by_id,
     require_location_read,

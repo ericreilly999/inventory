@@ -1,6 +1,6 @@
 """Dependencies for User Service."""
 
-from typing import Any, Dict, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from shared.auth.utils import verify_token
 from shared.database.config import get_db
-from shared.models.user import Role, User
+from shared.models.user import User
 
 from .schemas import TokenData
 
@@ -56,7 +56,7 @@ async def get_current_user(
     """Get current user from database."""
     user = (
         db.query(User)
-        .filter(User.id == token_data.user_id, User.active == True)
+        .filter(User.id == token_data.user_id, User.active is True)
         .first()
     )
 

@@ -9,11 +9,10 @@ from sqlalchemy.orm import Session, joinedload
 
 from shared.database.config import get_db
 from shared.models.item import ParentItem
-from shared.models.location import Location, LocationType
+from shared.models.location import Location
 from shared.models.user import User
 
 from ..dependencies import (
-    get_current_user,
     get_location_by_id,
     get_location_type_by_id,
     require_location_admin,
@@ -27,7 +26,6 @@ from ..schemas import (
     LocationUpdate,
     LocationWithItemsResponse,
     MessageResponse,
-    ValidationErrorResponse,
 )
 
 router = APIRouter()

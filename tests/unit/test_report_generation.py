@@ -5,10 +5,7 @@ Tests various report types and error conditions.
 """
 
 from datetime import datetime, timedelta, timezone
-from unittest.mock import Mock, patch
 from uuid import uuid4
-
-import pytest
 
 from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
 from shared.models.location import Location, LocationType

@@ -1,7 +1,6 @@
 """Location types router for Location Service."""
 
 from typing import List
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -12,7 +11,6 @@ from shared.models.location import LocationType
 from shared.models.user import User
 
 from ..dependencies import (
-    get_current_user,
     get_location_type_by_id,
     require_location_admin,
     require_location_read,
@@ -24,7 +22,6 @@ from ..schemas import (
     LocationTypeResponse,
     LocationTypeUpdate,
     MessageResponse,
-    ValidationErrorResponse,
 )
 
 router = APIRouter()

@@ -48,8 +48,6 @@ class MoveItemBase(BaseModel):
 class ItemTypeCreate(ItemTypeBase):
     """Schema for creating an item type."""
 
-    pass
-
 
 class ItemTypeUpdate(BaseModel):
     """Schema for updating an item type."""
@@ -61,8 +59,6 @@ class ItemTypeUpdate(BaseModel):
 
 class ParentItemCreate(ParentItemBase):
     """Schema for creating a parent item."""
-
-    pass
 
 
 class ParentItemUpdate(BaseModel):
@@ -76,8 +72,6 @@ class ParentItemUpdate(BaseModel):
 class ChildItemCreate(ChildItemBase):
     """Schema for creating a child item."""
 
-    pass
-
 
 class ChildItemUpdate(BaseModel):
     """Schema for updating a child item."""
@@ -90,8 +84,6 @@ class ChildItemUpdate(BaseModel):
 
 class MoveItemRequest(MoveItemBase):
     """Schema for moving an item."""
-
-    pass
 
 
 # Response schemas

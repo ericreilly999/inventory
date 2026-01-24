@@ -6,9 +6,8 @@ database transaction boundaries, and event-driven communication flows.
 Requirements: 10.3, 10.5
 """
 
-import asyncio
 import uuid
-from typing import Any, Dict, List
+from typing import Any, Dict
 from unittest.mock import AsyncMock, patch
 
 import httpx

@@ -4,14 +4,14 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import and_, or_
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from shared.database.config import get_db
 from shared.logging.config import get_logger
 from shared.models.assignment_history import AssignmentHistory
-from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
+from shared.models.item import ChildItem
 from shared.models.user import User
 
 from ..dependencies import (
@@ -53,7 +53,7 @@ async def create_child_item(
     await validate_item_type_category(item_type, "child")
 
     # Validate parent item exists
-    parent_item = await get_parent_item_or_404(item_data.parent_item_id, db)
+    await get_parent_item_or_404(item_data.parent_item_id, db)
 
     # Create new child item
     child_item = ChildItem(
@@ -174,7 +174,7 @@ async def update_child_item(
     # Update parent item assignment if provided
     if item_data.parent_item_id is not None:
         # Validate new parent item exists
-        new_parent = await get_parent_item_or_404(item_data.parent_item_id, db)
+        await get_parent_item_or_404(item_data.parent_item_id, db)
 
         old_parent_id = child_item.parent_item_id
         child_item.parent_item_id = item_data.parent_item_id
@@ -281,7 +281,7 @@ async def reassign_child_item(
     """Reassign child item to a different parent item."""
 
     # Validate new parent item exists
-    new_parent = await get_parent_item_or_404(new_parent_id, db)
+    await get_parent_item_or_404(new_parent_id, db)
 
     old_parent_id = child_item.parent_item_id
     child_item.parent_item_id = new_parent_id

@@ -7,8 +7,6 @@ Tests history recording, querying, and filtering capabilities.
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-import pytest
-
 from shared.models.assignment_history import AssignmentHistory
 from shared.models.item import ItemCategory, ItemType, ParentItem
 from shared.models.location import Location, LocationType

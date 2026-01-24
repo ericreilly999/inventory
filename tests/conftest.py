@@ -2,21 +2,14 @@
 
 import pytest
 from sqlalchemy import create_engine, event
-from sqlalchemy.orm import Session, scoped_session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-
-from shared.database.config import get_db
-from shared.models.assignment_history import AssignmentHistory
 
 # Import Base first
 from shared.models.base import Base
-from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
-from shared.models.location import Location, LocationType
-from shared.models.move_history import MoveHistory
 
 # Force import all models at module level to ensure they are registered
 # Import in dependency order to avoid foreign key issues
-from shared.models.user import Role, User
 
 # Create in-memory SQLite database for testing with a shared connection
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
