@@ -126,22 +126,22 @@ const Inventory: React.FC = () => {
   };
 
   const handleSaveItem = async () => {
-    try {
-      const endpoint = tabValue === 0 ? '/api/v1/items/parent' : '/api/v1/items/child';
-      const data = tabValue === 0 
-        ? {
-            name: formData.name,
-            description: formData.description,
-            item_type_id: formData.item_type_id,
-            current_location_id: formData.current_location_id,
-          }
-        : {
-            name: formData.name,
-            description: formData.description,
-            item_type_id: formData.item_type_id,
-            parent_item_id: formData.parent_item_id,
-          };
+    const endpoint = tabValue === 0 ? '/api/v1/items/parent' : '/api/v1/items/child';
+    const data = tabValue === 0 
+      ? {
+          name: formData.name,
+          description: formData.description,
+          item_type_id: formData.item_type_id,
+          current_location_id: formData.current_location_id,
+        }
+      : {
+          name: formData.name,
+          description: formData.description,
+          item_type_id: formData.item_type_id,
+          parent_item_id: formData.parent_item_id,
+        };
 
+    try {
       if (editingItem) {
         await apiService.put(`${endpoint}/${editingItem.id}`, data);
       } else {
