@@ -130,13 +130,13 @@ class TestUserAuthenticationProperties:
             # Test password verification (authentication)
             assert (
                 verify_password(user_data["password"], user.password_hash)
-                == True
+                is True
             )
             assert (
                 verify_password(
                     user_data["password"] + "wrong", user.password_hash
                 )
-                == False
+                is False
             )
 
             # Test token creation and verification (session establishment)
@@ -217,7 +217,7 @@ class TestUserAuthenticationProperties:
             # Password verification should still work (for password correctness)
             assert (
                 verify_password(user_data["password"], user.password_hash)
-                == True
+                is True
             )
 
             # But user should be marked as inactive
@@ -280,11 +280,11 @@ class TestUserAuthenticationProperties:
             # Correct password should work
             assert (
                 verify_password(user_data["password"], user.password_hash)
-                == True
+                is True
             )
 
             # Wrong password should fail
-            assert verify_password(wrong_password, user.password_hash) == False
+            assert verify_password(wrong_password, user.password_hash) is False
 
         except Exception as e:
             db.rollback()
