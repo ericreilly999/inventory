@@ -46,7 +46,8 @@ jobs:
       run: poetry run mypy services/ shared/ --junit-xml=mypy-report.xml
 
     - name: Upload quality reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: quality-reports
         path: |
@@ -121,7 +122,7 @@ jobs:
           tests/
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
@@ -129,7 +130,7 @@ jobs:
         fail_ci_if_error: true
 
     - name: Upload test reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-reports
@@ -220,7 +221,8 @@ jobs:
         ab -n 1000 -c 10 http://localhost:8004/health > ab-reporting.txt
 
     - name: Upload performance reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: performance-reports
         path: |
@@ -258,7 +260,8 @@ jobs:
         echo "API documentation generation would go here"
 
     - name: Upload documentation artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: documentation
         path: |
@@ -297,7 +300,8 @@ jobs:
         fi
 
     - name: Upload quality gate report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: quality-gate-report
         path: quality-gate.md
