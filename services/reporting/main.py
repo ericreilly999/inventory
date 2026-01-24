@@ -5,8 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from shared.config.settings import settings
 from shared.logging.config import configure_logging
-from .routers import reports
+
 from .middleware import auth_middleware
+from .routers import reports
 
 # Setup logging
 configure_logging()
@@ -17,7 +18,7 @@ app = FastAPI(
     description="Reporting and analytics service for inventory management",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # Add CORS middleware
@@ -50,4 +51,5 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8004)

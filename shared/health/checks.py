@@ -1,8 +1,8 @@
 """Health check utilities for microservices."""
 
-from typing import Dict, Any, List
-from datetime import datetime
 import asyncio
+from datetime import datetime
+from typing import Any, Dict, List
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -16,44 +16,52 @@ logger = get_logger(__name__)
 
 class HealthCheck:
     """Health check utility class."""
-    
+
     def __init__(self, service_name: str):
         self.service_name = service_name
         self.checks: List[callable] = []
-    
+
     def add_check(self, check_func: callable) -> None:
         """Add a health check function."""
         self.checks.append(check_func)
-    
+
     async def run_checks(self) -> Dict[str, Any]:
         """Run all health checks."""
         results = {
             "service": self.service_name,
             "status": "healthy",
             "timestamp": datetime.utcnow().isoformat(),
-            "checks": {}
+            "checks": {},
         }
-        
+
         for check in self.checks:
             try:
                 check_name = check.__name__
-                check_result = await check() if asyncio.iscoroutinefunction(check) else check()
+                check_result = (
+                    await check()
+                    if asyncio.iscoroutinefunction(check)
+                    else check()
+                )
                 results["checks"][check_name] = {
                     "status": "healthy" if check_result else "unhealthy",
-                    "details": check_result if isinstance(check_result, dict) else {}
+                    "details": (
+                        check_result if isinstance(check_result, dict) else {}
+                    ),
                 }
-                
+
                 if not check_result:
                     results["status"] = "unhealthy"
-                    
+
             except Exception as e:
-                logger.error(f"Health check {check.__name__} failed", error=str(e))
+                logger.error(
+                    f"Health check {check.__name__} failed", error=str(e)
+                )
                 results["checks"][check.__name__] = {
                     "status": "unhealthy",
-                    "error": str(e)
+                    "error": str(e),
                 }
                 results["status"] = "unhealthy"
-        
+
         return results
 
 
@@ -84,8 +92,4 @@ def check_redis() -> bool:
 
 def check_basic() -> Dict[str, Any]:
     """Basic service health check."""
-    return {
-        "status": "healthy",
-        "uptime": "running",
-        "version": "1.0.0"
-    }
+    return {"status": "healthy", "uptime": "running", "version": "1.0.0"}

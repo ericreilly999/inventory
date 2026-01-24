@@ -1,7 +1,8 @@
 """Redis configuration and connection management."""
 
-import redis
 from typing import Optional
+
+import redis
 
 from shared.config.settings import settings
 from shared.logging.config import get_logger
@@ -15,7 +16,7 @@ _redis_pool: Optional[redis.ConnectionPool] = None
 def get_redis_pool() -> redis.ConnectionPool:
     """Get or create Redis connection pool."""
     global _redis_pool
-    
+
     if _redis_pool is None:
         _redis_pool = redis.ConnectionPool.from_url(
             settings.redis.url,
@@ -26,7 +27,7 @@ def get_redis_pool() -> redis.ConnectionPool:
             health_check_interval=30,
         )
         logger.info("Redis connection pool created", url=settings.redis.url)
-    
+
     return _redis_pool
 
 
@@ -49,10 +50,10 @@ def test_redis_connection() -> bool:
 
 class RedisCache:
     """Redis cache utility class."""
-    
+
     def __init__(self):
         self.client = get_redis()
-    
+
     async def get(self, key: str) -> Optional[str]:
         """Get value from cache."""
         try:
@@ -60,12 +61,9 @@ class RedisCache:
         except Exception as e:
             logger.error("Redis get failed", key=key, error=str(e))
             return None
-    
+
     async def set(
-        self,
-        key: str,
-        value: str,
-        expire: Optional[int] = None
+        self, key: str, value: str, expire: Optional[int] = None
     ) -> bool:
         """Set value in cache."""
         try:
@@ -73,7 +71,7 @@ class RedisCache:
         except Exception as e:
             logger.error("Redis set failed", key=key, error=str(e))
             return False
-    
+
     async def delete(self, key: str) -> bool:
         """Delete key from cache."""
         try:
@@ -81,7 +79,7 @@ class RedisCache:
         except Exception as e:
             logger.error("Redis delete failed", key=key, error=str(e))
             return False
-    
+
     async def exists(self, key: str) -> bool:
         """Check if key exists in cache."""
         try:

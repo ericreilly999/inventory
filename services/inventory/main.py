@@ -5,8 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from shared.config.settings import settings
 from shared.logging.config import configure_logging
-from .routers import parent_items, child_items, item_types, movements
+
 from .middleware import auth_middleware
+from .routers import child_items, item_types, movements, parent_items
 
 # Setup logging
 configure_logging()
@@ -17,7 +18,7 @@ app = FastAPI(
     description="Inventory management service for parent items, child items, and movements",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # Add CORS middleware
@@ -33,10 +34,18 @@ app.add_middleware(
 app.add_middleware(auth_middleware.AuthMiddleware)
 
 # Include routers
-app.include_router(parent_items.router, prefix="/api/v1/items/parent", tags=["parent-items"])
-app.include_router(child_items.router, prefix="/api/v1/items/child", tags=["child-items"])
-app.include_router(item_types.router, prefix="/api/v1/items/types", tags=["item-types"])
-app.include_router(movements.router, prefix="/api/v1/movements", tags=["movements"])
+app.include_router(
+    parent_items.router, prefix="/api/v1/items/parent", tags=["parent-items"]
+)
+app.include_router(
+    child_items.router, prefix="/api/v1/items/child", tags=["child-items"]
+)
+app.include_router(
+    item_types.router, prefix="/api/v1/items/types", tags=["item-types"]
+)
+app.include_router(
+    movements.router, prefix="/api/v1/movements", tags=["movements"]
+)
 
 
 @app.get("/health")
@@ -53,4 +62,5 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8003)

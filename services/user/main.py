@@ -5,8 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from shared.config.settings import settings
 from shared.logging.config import configure_logging
-from .routers import auth, users, roles, admin
+
 from .middleware import auth_middleware
+from .routers import admin, auth, roles, users
 
 # Setup logging
 configure_logging()
@@ -17,7 +18,7 @@ app = FastAPI(
     description="User authentication and management service",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # Add CORS middleware
@@ -53,4 +54,5 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8001)

@@ -1,15 +1,16 @@
 """Database configuration and connection management."""
 
 import os
-from sqlalchemy import create_engine, MetaData
+
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 
 # Get database URL directly from environment variable
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "postgresql://inventory_user:inventory_password@localhost:5432/inventory_management"
+    "DATABASE_URL",
+    "postgresql://inventory_user:inventory_password@localhost:5432/inventory_management",
 )
 
 print(f"Using DATABASE_URL: {DATABASE_URL}")  # Debug print
@@ -28,14 +29,20 @@ engine = create_engine(
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Create base class for models
-from shared.models.base import Base
-
 # Import all models to ensure they're registered with SQLAlchemy
 from shared.models import (  # noqa: F401
-    User, Role, Location, LocationType, 
-    ParentItem, ChildItem, ItemType, MoveHistory
+    ChildItem,
+    ItemType,
+    Location,
+    LocationType,
+    MoveHistory,
+    ParentItem,
+    Role,
+    User,
 )
+
+# Create base class for models
+from shared.models.base import Base
 
 # Metadata for migrations
 metadata = MetaData(
@@ -44,7 +51,7 @@ metadata = MetaData(
         "uq": "uq_%(table_name)s_%(column_0_name)s",
         "ck": "ck_%(table_name)s_%(constraint_name)s",
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-        "pk": "pk_%(table_name)s"
+        "pk": "pk_%(table_name)s",
     }
 )
 

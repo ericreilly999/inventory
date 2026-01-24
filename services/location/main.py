@@ -1,15 +1,16 @@
 """Location Service FastAPI application."""
 
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 
 from shared.config.settings import settings
 from shared.logging.config import configure_logging, get_logger
-from .routers import locations, location_types, movements
+
 from .middleware import auth_middleware
+from .routers import location_types, locations, movements
 
 # Setup logging
 configure_logging()
@@ -22,28 +23,32 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    debug=True  # Enable debug mode
+    debug=True,  # Enable debug mode
 )
+
 
 # Add custom exception handler for validation errors
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+):
     """Log and return detailed validation errors."""
     logger.error(
         "Validation error",
         path=request.url.path,
         method=request.method,
         errors=exc.errors(),
-        body=exc.body
+        body=exc.body,
     )
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
             "detail": exc.errors(),
             "body": str(exc.body) if exc.body else None,
-            "path": request.url.path
-        }
+            "path": request.url.path,
+        },
     )
+
 
 # Add CORS middleware
 app.add_middleware(
@@ -57,6 +62,7 @@ app.add_middleware(
 # Add authentication middleware
 app.add_middleware(auth_middleware.AuthMiddleware)
 
+
 # Add request logging middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -66,21 +72,34 @@ async def log_requests(request: Request, call_next):
         method=request.method,
         path=request.url.path,
         query_params=dict(request.query_params),
-        headers={k: v for k, v in request.headers.items() if k.lower() not in ['authorization', 'cookie']}
+        headers={
+            k: v
+            for k, v in request.headers.items()
+            if k.lower() not in ["authorization", "cookie"]
+        },
     )
     response = await call_next(request)
     logger.info(
         f"Location Service - Response {response.status_code}",
         method=request.method,
         path=request.url.path,
-        status_code=response.status_code
+        status_code=response.status_code,
     )
     return response
 
+
 # Include routers - structured like inventory service to avoid route conflicts
-app.include_router(locations.router, prefix="/api/v1/locations/locations", tags=["locations"])
-app.include_router(location_types.router, prefix="/api/v1/locations/types", tags=["location-types"])
-app.include_router(movements.router, prefix="/api/v1/movements", tags=["movements"])
+app.include_router(
+    locations.router, prefix="/api/v1/locations/locations", tags=["locations"]
+)
+app.include_router(
+    location_types.router,
+    prefix="/api/v1/locations/types",
+    tags=["location-types"],
+)
+app.include_router(
+    movements.router, prefix="/api/v1/movements", tags=["movements"]
+)
 
 
 @app.get("/health")
@@ -97,4 +116,5 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8002)

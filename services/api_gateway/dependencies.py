@@ -1,7 +1,8 @@
 """Dependencies for API Gateway service."""
 
-import httpx
 from typing import AsyncGenerator
+
+import httpx
 
 from shared.logging.config import get_logger
 

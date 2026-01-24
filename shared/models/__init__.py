@@ -1,16 +1,16 @@
 """Database models for the inventory management system."""
 
-from .base import Base
-from .user import User, Role
-from .location import Location, LocationType
-from .item import ParentItem, ChildItem, ItemType, ItemCategory
-from .move_history import MoveHistory
 from .assignment_history import AssignmentHistory
+from .base import Base
+from .item import ChildItem, ItemCategory, ItemType, ParentItem
+from .location import Location, LocationType
+from .move_history import MoveHistory
+from .user import Role, User
 
 __all__ = [
     "Base",
     "User",
-    "Role", 
+    "Role",
     "Location",
     "LocationType",
     "ParentItem",
