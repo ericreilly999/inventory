@@ -53,8 +53,11 @@ def test_log_request():
 @pytest.mark.asyncio
 async def test_check_database_success(test_db_session):
     """Test database health check success."""
-    result = check_database()
-    assert result is True
+    with patch("shared.health.checks.SessionLocal") as mock_session_local:
+        # Mock SessionLocal to return our test session
+        mock_session_local.return_value = test_db_session
+        result = check_database()
+        assert result is True
 
 
 @pytest.mark.asyncio
