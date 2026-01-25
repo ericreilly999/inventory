@@ -40,8 +40,13 @@ def test_db_session():
         transaction = connection.begin()
 
         # Create session bound to the transaction
-        SessionLocal = sessionmaker(bind=connection, autoflush=False, autocommit=False)
+        SessionLocal = sessionmaker(bind=connection)
         session = SessionLocal()
+
+        # Override commit to use flush instead - prevents actual commits
+        # This ensures transaction rollback will undo all changes
+        session.commit = session.flush
+        session.rollback = lambda: None  # Prevent rollback errors in tests
 
         try:
             yield session
@@ -77,6 +82,10 @@ def test_db_session():
 
         # Bind session to the transaction
         session = SessionLocal(bind=connection)
+
+        # Override commit for SQLite too
+        session.commit = session.flush
+        session.rollback = lambda: None
 
         try:
             yield session
