@@ -94,7 +94,7 @@ def test_development_files_exist():
         ".pre-commit-config.yaml",
         "docker-compose.yml",
     ]
-    
+
     # Just check if they exist, don't fail if they don't
     for file_name in optional_files:
         file_path = base_path / file_name

@@ -21,7 +21,7 @@ def hash_password(password: str) -> str:
     try:
         # Ensure password is a string
         password_str = str(password)
-        
+
         # Truncate to 72 bytes for bcrypt compatibility
         password_bytes = password_str.encode("utf-8")
         if len(password_bytes) > 72:

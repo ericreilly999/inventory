@@ -1,7 +1,5 @@
 """Test configuration and fixtures."""
 
-import os
-
 import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
@@ -22,7 +20,7 @@ from shared.models.user import Role, User  # noqa: F401
 @pytest.fixture(scope="function")
 def test_db_session():
     """Provide an isolated database session for each test.
-    
+
     Each test gets a fresh in-memory SQLite database to ensure complete isolation.
     This prevents test interference and state leakage between tests.
     """
