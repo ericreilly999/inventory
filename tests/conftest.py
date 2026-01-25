@@ -1,5 +1,7 @@
 """Test configuration and fixtures."""
 
+import os
+
 import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
@@ -24,19 +26,27 @@ from shared.models.assignment_history import AssignmentHistory  # noqa: F401
 @pytest.fixture(scope="function")
 def test_db_session():
     """Provide a transactional database session for tests."""
-    # Create in-memory database for this test
-    test_engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
+    # Use PostgreSQL if DATABASE_URL is set (CI environment)
+    # Otherwise use in-memory SQLite (local development)
+    database_url = os.getenv("DATABASE_URL")
+    
+    if database_url:
+        # Use PostgreSQL from environment
+        test_engine = create_engine(database_url, echo=False)
+    else:
+        # Use in-memory SQLite for local testing
+        test_engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
 
-    # Enable foreign keys for SQLite
-    @event.listens_for(test_engine, "connect")
-    def set_sqlite_pragma(dbapi_conn, connection_record):
-        cursor = dbapi_conn.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
+        # Enable foreign keys for SQLite
+        @event.listens_for(test_engine, "connect")
+        def set_sqlite_pragma(dbapi_conn, connection_record):
+            cursor = dbapi_conn.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
 
     # Ensure all models are imported and registered
     # Import directly from modules to avoid circular imports
@@ -61,10 +71,14 @@ def test_db_session():
 
     try:
         yield session
+        # Rollback any uncommitted changes
+        session.rollback()
     finally:
         session.close()
-        # Drop all tables to ensure clean state
-        Base.metadata.drop_all(bind=test_engine)
+        # For PostgreSQL, drop all tables after test
+        # For SQLite, this happens automatically when engine is disposed
+        if database_url:
+            Base.metadata.drop_all(bind=test_engine)
         test_engine.dispose()
 
 
