@@ -110,3 +110,57 @@ def override_get_db(test_db_session):
             pass
 
     return _override_get_db
+
+
+@pytest.fixture
+def test_user_for_auth(test_db_session):
+    """Create a test user with actual commit for auth tests.
+    
+    This fixture is specifically for tests that need to query the user
+    from the database (like get_current_user tests). It temporarily
+    restores the real commit function to ensure data is visible.
+    """
+    from uuid import uuid4
+
+    from shared.auth.utils import hash_password
+    from shared.models.user import Role, User
+
+    # Save the original commit function
+    original_commit = test_db_session.commit
+
+    # Temporarily restore real commit behavior
+    def real_commit():
+        test_db_session.flush()
+        test_db_session.expire_all()
+
+    test_db_session.commit = real_commit
+
+    # Create role and user
+    role = Role(
+        id=uuid4(),
+        name=f"test_role_{uuid4().hex[:8]}",
+        description="Test Role",
+        permissions={"inventory": ["read", "write"], "location": ["read"]},
+    )
+    test_db_session.add(role)
+    test_db_session.commit()
+
+    user = User(
+        id=uuid4(),
+        username=f"testuser_{uuid4().hex[:8]}",
+        email=f"test_{uuid4().hex[:8]}@example.com",
+        password_hash=hash_password("testpass"),
+        role_id=role.id,
+        active=True,
+    )
+    test_db_session.add(user)
+    test_db_session.commit()
+
+    # Restore the flush-based commit
+    test_db_session.commit = original_commit
+
+    # Refresh to ensure relationships are loaded
+    test_db_session.refresh(user)
+    test_db_session.refresh(role)
+
+    return user

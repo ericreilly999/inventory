@@ -26,30 +26,9 @@ from shared.models.user import Role, User
 
 
 @pytest.fixture
-def test_user(test_db_session):
-    """Create a test user with role."""
-    role = Role(
-        id=uuid4(),
-        name="test_role",
-        description="Test Role",
-        permissions={"inventory": ["read", "write"], "location": ["read"]},
-    )
-    test_db_session.add(role)
-    test_db_session.flush()  # Make role visible in transaction
-
-    user = User(
-        id=uuid4(),
-        username="testuser",
-        email="test@example.com",
-        password_hash=hash_password("testpass"),
-        role_id=role.id,
-        active=True,
-    )
-    test_db_session.add(user)
-    test_db_session.flush()  # Make user visible in transaction
-    test_db_session.refresh(user)  # Refresh to load relationships
-    test_db_session.refresh(role)  # Refresh role too
-    return user
+def test_user(test_user_for_auth):
+    """Create a test user with role - uses test_user_for_auth fixture."""
+    return test_user_for_auth
 
 
 def test_create_access_token():
@@ -93,27 +72,20 @@ def test_verify_password_invalid():
 @pytest.mark.asyncio
 async def test_inventory_get_current_user_valid(test_db_session, test_user):
     """Test getting current user with valid token."""
-    # Query the user from the database to ensure it's in the session
-    from sqlalchemy import select
-
-    user = test_db_session.execute(
-        select(User).where(User.id == test_user.id)
-    ).scalar_one()
-
     # Create TokenData object directly since we're testing the function,
     # not the endpoint
     from services.inventory.dependencies import TokenData
 
     token_data = TokenData(
-        user_id=user.id,
-        username=user.username,
-        role_id=user.role_id,
-        permissions=user.role.permissions,
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions=test_user.role.permissions,
     )
 
     result = await inventory_get_current_user(token_data, test_db_session)
-    assert result.id == user.id
-    assert result.username == user.username
+    assert result.id == test_user.id
+    assert result.username == test_user.username
 
 
 @pytest.mark.asyncio
@@ -138,8 +110,22 @@ async def test_inventory_get_current_user_expired_token(test_db_session, test_us
     # This test is about token expiry, which is handled by
     # get_current_user_token. For get_current_user, we test with
     # inactive user instead
+    
+    # Save the original commit function
+    original_commit = test_db_session.commit
+
+    # Temporarily restore real commit behavior
+    def real_commit():
+        test_db_session.flush()
+        test_db_session.expire_all()
+
+    test_db_session.commit = real_commit
+    
     test_user.active = False
     test_db_session.commit()
+    
+    # Restore the flush-based commit
+    test_db_session.commit = original_commit
 
     from services.inventory.dependencies import TokenData
 
@@ -173,70 +159,49 @@ async def test_inventory_get_current_user_nonexistent(test_db_session):
 @pytest.mark.asyncio
 async def test_location_get_current_user_valid(test_db_session, test_user):
     """Test location service get current user."""
-    # Query the user from the database to ensure it's in the session
-    from sqlalchemy import select
-
-    user = test_db_session.execute(
-        select(User).where(User.id == test_user.id)
-    ).scalar_one()
-
     from services.location.dependencies import TokenData
 
     token_data = TokenData(
-        user_id=user.id,
-        username=user.username,
-        role_id=user.role_id,
-        permissions=user.role.permissions,
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions=test_user.role.permissions,
     )
 
     result = await location_get_current_user(token_data, test_db_session)
-    assert result.id == user.id
+    assert result.id == test_user.id
 
 
 @pytest.mark.asyncio
 async def test_user_get_current_user_valid(test_db_session, test_user):
     """Test user service get current user."""
-    # Query the user from the database to ensure it's in the session
-    from sqlalchemy import select
-
-    user = test_db_session.execute(
-        select(User).where(User.id == test_user.id)
-    ).scalar_one()
-
     from services.user.dependencies import TokenData
 
     token_data = TokenData(
-        user_id=user.id,
-        username=user.username,
-        role_id=user.role_id,
-        permissions=user.role.permissions,
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions=test_user.role.permissions,
     )
 
     result = await user_get_current_user(token_data, test_db_session)
-    assert result.id == user.id
+    assert result.id == test_user.id
 
 
 @pytest.mark.asyncio
 async def test_reporting_get_current_user_valid(test_db_session, test_user):
     """Test reporting service get current user."""
-    # Query the user from the database to ensure it's in the session
-    from sqlalchemy import select
-
-    user = test_db_session.execute(
-        select(User).where(User.id == test_user.id)
-    ).scalar_one()
-
     from services.reporting.dependencies import TokenData
 
     token_data = TokenData(
-        user_id=user.id,
-        username=user.username,
-        role_id=user.role_id,
-        permissions=user.role.permissions,
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions=test_user.role.permissions,
     )
 
     result = await reporting_get_current_user(token_data, test_db_session)
-    assert result.id == user.id
+    assert result.id == test_user.id
 
 
 @pytest.mark.asyncio
@@ -363,25 +328,38 @@ def test_settings_jwt_expiry():
 
 def test_inactive_user_authentication(test_db_session):
     """Test authentication with inactive user."""
+    # Save the original commit function
+    original_commit = test_db_session.commit
+
+    # Temporarily restore real commit behavior
+    def real_commit():
+        test_db_session.flush()
+        test_db_session.expire_all()
+
+    test_db_session.commit = real_commit
+
     role = Role(
         id=uuid4(),
-        name="inactive_role",
+        name=f"inactive_role_{uuid4().hex[:8]}",
         description="Inactive Role",
         permissions={},
     )
     test_db_session.add(role)
-    test_db_session.flush()
+    test_db_session.commit()
 
     inactive_user = User(
         id=uuid4(),
-        username="inactive",
-        email="inactive@example.com",
+        username=f"inactive_{uuid4().hex[:8]}",
+        email=f"inactive_{uuid4().hex[:8]}@example.com",
         password_hash=hash_password("password"),
         role_id=role.id,
         active=False,
     )
     test_db_session.add(inactive_user)
-    test_db_session.flush()
+    test_db_session.commit()
+
+    # Restore the flush-based commit
+    test_db_session.commit = original_commit
 
     from services.inventory.dependencies import TokenData
 
