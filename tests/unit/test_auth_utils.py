@@ -44,9 +44,7 @@ def test_create_access_token():
     username = "testuser"
     role = "admin"
 
-    token = create_access_token(
-        user_id=str(user_id), username=username, role=role
-    )
+    token = create_access_token(user_id=str(user_id), username=username, role=role)
 
     assert token is not None
     assert isinstance(token, str)
@@ -59,9 +57,7 @@ def test_verify_token_valid():
     username = "testuser"
     role = "admin"
 
-    token = create_access_token(
-        user_id=str(user_id), username=username, role=role
-    )
+    token = create_access_token(user_id=str(user_id), username=username, role=role)
 
     payload = verify_token(token)
 

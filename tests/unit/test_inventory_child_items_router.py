@@ -114,12 +114,8 @@ def test_list_child_items(test_db_session):
     )
     test_db_session.add(location)
 
-    parent_type = ItemType(
-        id=uuid4(), name="Equipment", category=ItemCategory.PARENT
-    )
-    child_type = ItemType(
-        id=uuid4(), name="Component", category=ItemCategory.CHILD
-    )
+    parent_type = ItemType(id=uuid4(), name="Equipment", category=ItemCategory.PARENT)
+    child_type = ItemType(id=uuid4(), name="Component", category=ItemCategory.CHILD)
     test_db_session.add_all([parent_type, child_type])
 
     parent = ParentItem(
@@ -175,12 +171,8 @@ def test_update_child_item(test_db_session):
     )
     test_db_session.add(location)
 
-    parent_type = ItemType(
-        id=uuid4(), name="Equipment", category=ItemCategory.PARENT
-    )
-    child_type = ItemType(
-        id=uuid4(), name="Component", category=ItemCategory.CHILD
-    )
+    parent_type = ItemType(id=uuid4(), name="Equipment", category=ItemCategory.PARENT)
+    child_type = ItemType(id=uuid4(), name="Component", category=ItemCategory.CHILD)
     test_db_session.add_all([parent_type, child_type])
 
     parent = ParentItem(
@@ -239,12 +231,8 @@ def test_delete_child_item(test_db_session):
     )
     test_db_session.add(location)
 
-    parent_type = ItemType(
-        id=uuid4(), name="Equipment", category=ItemCategory.PARENT
-    )
-    child_type = ItemType(
-        id=uuid4(), name="Component", category=ItemCategory.CHILD
-    )
+    parent_type = ItemType(id=uuid4(), name="Equipment", category=ItemCategory.PARENT)
+    child_type = ItemType(id=uuid4(), name="Component", category=ItemCategory.CHILD)
     test_db_session.add_all([parent_type, child_type])
 
     parent = ParentItem(

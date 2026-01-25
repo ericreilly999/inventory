@@ -84,9 +84,7 @@ async def list_locations_with_item_counts(
             .count()
         )
 
-        location_dict = (
-            LocationWithItemsResponse.model_validate(location).model_dump()
-        )
+        location_dict = LocationWithItemsResponse.model_validate(location).model_dump()
         location_dict["item_count"] = item_count
         result.append(LocationWithItemsResponse(**location_dict))
 
