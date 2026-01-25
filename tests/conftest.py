@@ -29,7 +29,7 @@ def test_db_session():
     # Use PostgreSQL if DATABASE_URL is set (CI environment)
     # Otherwise use in-memory SQLite (local development)
     database_url = os.getenv("DATABASE_URL")
-    
+
     if database_url:
         # Use PostgreSQL from environment
         test_engine = create_engine(database_url, echo=False)
@@ -65,19 +65,28 @@ def test_db_session():
     # Create all tables
     Base.metadata.create_all(bind=test_engine)
 
-    # Create session
-    SessionLocal = sessionmaker(bind=test_engine)
+    # Create session with autoflush=False for better control
+    SessionLocal = sessionmaker(bind=test_engine, autoflush=False)
     session = SessionLocal()
+
+    # Start a transaction
+    connection = test_engine.connect()
+    transaction = connection.begin()
+
+    # Bind session to the transaction
+    session = SessionLocal(bind=connection)
 
     try:
         yield session
-        # Rollback any uncommitted changes
-        session.rollback()
     finally:
         session.close()
-        # For PostgreSQL, drop all tables after test
-        # For SQLite, this happens automatically when engine is disposed
-        if database_url:
+        # Rollback the transaction to undo all changes
+        transaction.rollback()
+        connection.close()
+        # For PostgreSQL, we don't drop tables between tests
+        # They're cleaned by the rollback
+        if not database_url:
+            # For SQLite, drop tables
             Base.metadata.drop_all(bind=test_engine)
         test_engine.dispose()
 
