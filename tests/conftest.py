@@ -28,9 +28,7 @@ def test_db_session():
 
     if database_url:
         # Use PostgreSQL from environment
-        test_engine = create_engine(
-            database_url, echo=False, isolation_level="AUTOCOMMIT"
-        )
+        test_engine = create_engine(database_url, echo=False)
 
         # Create all tables once
         Base.metadata.create_all(bind=test_engine)
