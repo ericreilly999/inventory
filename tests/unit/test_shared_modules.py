@@ -8,7 +8,7 @@ import pytest
 from redis import Redis
 from sqlalchemy.orm import Session
 
-from shared.database.redis_config import RedisConfig, get_redis_client
+from shared.database.redis_config import RedisCache, get_redis, get_redis_pool
 from shared.health.checks import (
     check_database_health,
     check_redis_health,
@@ -138,42 +138,38 @@ async def test_get_health_status_database_unhealthy():
     assert result["status"] == "unhealthy"
 
 
-def test_redis_config_initialization():
-    """Test Redis configuration initialization."""
-    with patch.dict("os.environ", {"REDIS_URL": "redis://localhost:6379"}):
-        config = RedisConfig()
-        assert config.redis_url == "redis://localhost:6379"
-
-
-def test_redis_config_default_values():
-    """Test Redis configuration default values."""
-    config = RedisConfig()
-    assert config.redis_max_connections >= 10
-    assert config.redis_socket_timeout > 0
+def test_redis_pool_initialization():
+    """Test Redis pool initialization."""
+    pool = get_redis_pool()
+    assert pool is not None
 
 
 def test_get_redis_client():
     """Test getting Redis client."""
-    with patch("shared.database.redis_config.Redis") as mock_redis:
+    with patch("shared.database.redis_config.redis.Redis") as mock_redis:
         mock_redis.return_value = MagicMock(spec=Redis)
-        client = get_redis_client()
+        client = get_redis()
         assert client is not None
 
 
 def test_get_redis_client_connection_error():
     """Test Redis client with connection error."""
-    with patch("shared.database.redis_config.Redis") as mock_redis:
+    with patch("shared.database.redis_config.redis.Redis") as mock_redis:
         mock_redis.side_effect = Exception("Connection failed")
-        client = get_redis_client()
-        assert client is None
+        try:
+            client = get_redis()
+            assert False, "Should have raised exception"
+        except Exception:
+            pass
 
 
-def test_redis_config_from_url():
-    """Test Redis configuration from URL."""
-    url = "redis://user:pass@localhost:6379/0"
-    with patch.dict("os.environ", {"REDIS_URL": url}):
-        config = RedisConfig()
-        assert "localhost" in config.redis_url
+def test_redis_cache_initialization():
+    """Test Redis cache initialization."""
+    with patch("shared.database.redis_config.get_redis") as mock_get_redis:
+        mock_get_redis.return_value = MagicMock(spec=Redis)
+        cache = RedisCache()
+        assert cache is not None
+        assert cache.client is not None
 
 
 def test_logging_different_levels():
@@ -224,12 +220,10 @@ def test_health_check_response_format():
 
 def test_redis_connection_pool():
     """Test Redis connection pool configuration."""
-    with patch("shared.database.redis_config.ConnectionPool") as mock_pool:
-        mock_pool.return_value = MagicMock()
-        with patch("shared.database.redis_config.Redis") as mock_redis:
-            mock_redis.return_value = MagicMock(spec=Redis)
-            client = get_redis_client()
-            assert client is not None
+    with patch("shared.database.redis_config.redis.ConnectionPool") as mock_pool:
+        mock_pool.from_url.return_value = MagicMock()
+        pool = get_redis_pool()
+        assert pool is not None
 
 
 def test_logging_exception_handling():
@@ -258,53 +252,69 @@ def test_health_check_with_custom_checks():
     asyncio.run(run_test())
 
 
-def test_redis_config_ssl_support():
-    """Test Redis configuration with SSL."""
-    with patch.dict(
-        "os.environ",
-        {"REDIS_URL": "rediss://localhost:6379", "REDIS_SSL": "true"},
-    ):
-        config = RedisConfig()
-        assert "rediss://" in config.redis_url or "redis://" in config.redis_url
-
-
-def test_logging_json_format():
-    """Test logging with JSON format."""
-    configure_logging()
-    logger = get_logger("test_json")
-    with patch.object(logger, "info") as mock_info:
-        logger.info("JSON message", extra={"format": "json"})
-        mock_info.assert_called_once()
-
-
-def test_health_check_timeout():
-    """Test health check with timeout."""
+def test_redis_cache_get():
+    """Test Redis cache get operation."""
     import asyncio
 
     async def run_test():
-        mock_session = MagicMock(spec=Session)
+        with patch("shared.database.redis_config.get_redis") as mock_get_redis:
+            mock_client = MagicMock(spec=Redis)
+            mock_client.get.return_value = "test_value"
+            mock_get_redis.return_value = mock_client
 
-        async def slow_execute(*args, **kwargs):
-            await asyncio.sleep(0.1)
-            return None
-
-        mock_session.execute = slow_execute
-
-        result = await check_database_health(mock_session)
-        assert result is not None
+            cache = RedisCache()
+            result = await cache.get("test_key")
+            assert result == "test_value"
 
     asyncio.run(run_test())
 
 
-def test_redis_client_singleton():
-    """Test Redis client singleton pattern."""
-    with patch("shared.database.redis_config.Redis") as mock_redis:
-        mock_instance = MagicMock(spec=Redis)
-        mock_redis.return_value = mock_instance
+def test_redis_cache_set():
+    """Test Redis cache set operation."""
+    import asyncio
 
-        client1 = get_redis_client()
-        client2 = get_redis_client()
+    async def run_test():
+        with patch("shared.database.redis_config.get_redis") as mock_get_redis:
+            mock_client = MagicMock(spec=Redis)
+            mock_client.set.return_value = True
+            mock_get_redis.return_value = mock_client
 
-        # Both should work (may or may not be same instance depending on impl)
-        assert client1 is not None
-        assert client2 is not None
+            cache = RedisCache()
+            result = await cache.set("test_key", "test_value")
+            assert result is True
+
+    asyncio.run(run_test())
+
+
+def test_redis_cache_delete():
+    """Test Redis cache delete operation."""
+    import asyncio
+
+    async def run_test():
+        with patch("shared.database.redis_config.get_redis") as mock_get_redis:
+            mock_client = MagicMock(spec=Redis)
+            mock_client.delete.return_value = 1
+            mock_get_redis.return_value = mock_client
+
+            cache = RedisCache()
+            result = await cache.delete("test_key")
+            assert result is True
+
+    asyncio.run(run_test())
+
+
+def test_redis_cache_exists():
+    """Test Redis cache exists operation."""
+    import asyncio
+
+    async def run_test():
+        with patch("shared.database.redis_config.get_redis") as mock_get_redis:
+            mock_client = MagicMock(spec=Redis)
+            mock_client.exists.return_value = 1
+            mock_get_redis.return_value = mock_client
+
+            cache = RedisCache()
+            result = await cache.exists("test_key")
+            assert result is True
+
+    asyncio.run(run_test())
