@@ -26,9 +26,9 @@ from shared.models.user import Role, User
 
 
 @pytest.fixture
-def test_user(test_user_for_auth):
-    """Create a test user with role - uses test_user_for_auth fixture."""
-    return test_user_for_auth
+def test_user(test_user_with_auth):
+    """Create a test user with role - uses test_user_with_auth fixture."""
+    return test_user_with_auth
 
 
 def test_create_access_token():

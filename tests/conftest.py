@@ -113,7 +113,7 @@ def override_get_db(test_db_session):
 
 
 @pytest.fixture
-def test_user_for_auth(test_db_session):
+def test_user_with_auth(test_db_session):
     """Create a test user with actual commit for auth tests.
 
     This fixture is specifically for tests that need to query the user

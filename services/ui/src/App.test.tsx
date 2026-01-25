@@ -14,5 +14,5 @@ test('renders without crashing', () => {
     </BrowserRouter>
   );
   // Basic smoke test - just ensure the app renders
-  expect(container).toBeInTheDocument();
+  expect(container.firstChild).toBeTruthy();
 });
