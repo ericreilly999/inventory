@@ -111,21 +111,14 @@ async def test_inventory_get_current_user_expired_token(test_db_session, test_us
     # get_current_user_token. For get_current_user, we test with
     # inactive user instead
 
-    # Save the original commit function
-    original_commit = test_db_session.commit
-
-    # Temporarily restore real commit behavior
-    def real_commit():
-        test_db_session.flush()
-        test_db_session.expire_all()
-
-    test_db_session.commit = real_commit
+    # Create a savepoint
+    savepoint = test_db_session.begin_nested()
 
     test_user.active = False
-    test_db_session.commit()
+    test_db_session.flush()
 
-    # Restore the flush-based commit
-    test_db_session.commit = original_commit
+    # Commit savepoint to make change visible
+    savepoint.commit()
 
     from services.inventory.dependencies import TokenData
 
@@ -328,15 +321,8 @@ def test_settings_jwt_expiry():
 
 def test_inactive_user_authentication(test_db_session):
     """Test authentication with inactive user."""
-    # Save the original commit function
-    original_commit = test_db_session.commit
-
-    # Temporarily restore real commit behavior
-    def real_commit():
-        test_db_session.flush()
-        test_db_session.expire_all()
-
-    test_db_session.commit = real_commit
+    # Create a savepoint
+    savepoint = test_db_session.begin_nested()
 
     role = Role(
         id=uuid4(),
@@ -345,7 +331,7 @@ def test_inactive_user_authentication(test_db_session):
         permissions={},
     )
     test_db_session.add(role)
-    test_db_session.commit()
+    test_db_session.flush()
 
     inactive_user = User(
         id=uuid4(),
@@ -356,10 +342,10 @@ def test_inactive_user_authentication(test_db_session):
         active=False,
     )
     test_db_session.add(inactive_user)
-    test_db_session.commit()
+    test_db_session.flush()
 
-    # Restore the flush-based commit
-    test_db_session.commit = original_commit
+    # Commit savepoint to make data visible
+    savepoint.commit()
 
     from services.inventory.dependencies import TokenData
 

@@ -117,8 +117,8 @@ def test_user_for_auth(test_db_session):
     """Create a test user with actual commit for auth tests.
 
     This fixture is specifically for tests that need to query the user
-    from the database (like get_current_user tests). It temporarily
-    restores the real commit function to ensure data is visible.
+    from the database (like get_current_user tests). It uses a savepoint
+    to ensure data is visible while still allowing rollback.
     """
     from uuid import uuid4
 
@@ -126,15 +126,8 @@ def test_user_for_auth(test_db_session):
     from shared.models.user import Role as RoleModel
     from shared.models.user import User as UserModel
 
-    # Save the original commit function
-    original_commit = test_db_session.commit
-
-    # Temporarily restore real commit behavior
-    def real_commit():
-        test_db_session.flush()
-        test_db_session.expire_all()
-
-    test_db_session.commit = real_commit
+    # Create a savepoint (nested transaction)
+    savepoint = test_db_session.begin_nested()
 
     # Create role and user
     role = RoleModel(
@@ -144,7 +137,7 @@ def test_user_for_auth(test_db_session):
         permissions={"inventory": ["read", "write"], "location": ["read"]},
     )
     test_db_session.add(role)
-    test_db_session.commit()
+    test_db_session.flush()  # Flush to make visible in current transaction
 
     user = UserModel(
         id=uuid4(),
@@ -155,10 +148,10 @@ def test_user_for_auth(test_db_session):
         active=True,
     )
     test_db_session.add(user)
-    test_db_session.commit()
+    test_db_session.flush()  # Flush to make visible in current transaction
 
-    # Restore the flush-based commit
-    test_db_session.commit = original_commit
+    # Commit the savepoint to make data visible to queries
+    savepoint.commit()
 
     # Refresh to ensure relationships are loaded
     test_db_session.refresh(user)
