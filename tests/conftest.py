@@ -115,7 +115,7 @@ def override_get_db(test_db_session):
 @pytest.fixture
 def test_user_for_auth(test_db_session):
     """Create a test user with actual commit for auth tests.
-    
+
     This fixture is specifically for tests that need to query the user
     from the database (like get_current_user tests). It temporarily
     restores the real commit function to ensure data is visible.
@@ -123,7 +123,8 @@ def test_user_for_auth(test_db_session):
     from uuid import uuid4
 
     from shared.auth.utils import hash_password
-    from shared.models.user import Role, User
+    from shared.models.user import Role as RoleModel
+    from shared.models.user import User as UserModel
 
     # Save the original commit function
     original_commit = test_db_session.commit
@@ -136,7 +137,7 @@ def test_user_for_auth(test_db_session):
     test_db_session.commit = real_commit
 
     # Create role and user
-    role = Role(
+    role = RoleModel(
         id=uuid4(),
         name=f"test_role_{uuid4().hex[:8]}",
         description="Test Role",
@@ -145,7 +146,7 @@ def test_user_for_auth(test_db_session):
     test_db_session.add(role)
     test_db_session.commit()
 
-    user = User(
+    user = UserModel(
         id=uuid4(),
         username=f"testuser_{uuid4().hex[:8]}",
         email=f"test_{uuid4().hex[:8]}@example.com",

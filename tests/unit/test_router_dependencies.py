@@ -110,7 +110,7 @@ async def test_inventory_get_current_user_expired_token(test_db_session, test_us
     # This test is about token expiry, which is handled by
     # get_current_user_token. For get_current_user, we test with
     # inactive user instead
-    
+
     # Save the original commit function
     original_commit = test_db_session.commit
 
@@ -120,10 +120,10 @@ async def test_inventory_get_current_user_expired_token(test_db_session, test_us
         test_db_session.expire_all()
 
     test_db_session.commit = real_commit
-    
+
     test_user.active = False
     test_db_session.commit()
-    
+
     # Restore the flush-based commit
     test_db_session.commit = original_commit
 

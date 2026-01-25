@@ -1,11 +1,12 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import '@testing-library/jest-dom';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 
 test('renders without crashing', () => {
-  render(
+  const { container } = render(
     <BrowserRouter>
       <AuthProvider>
         <App />
@@ -13,5 +14,5 @@ test('renders without crashing', () => {
     </BrowserRouter>
   );
   // Basic smoke test - just ensure the app renders
-  expect(document.body).toBeInTheDocument();
+  expect(container).toBeInTheDocument();
 });
