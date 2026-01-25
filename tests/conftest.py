@@ -42,9 +42,7 @@ def test_db_session():
         transaction = connection.begin()
 
         # Create session bound to the transaction
-        SessionLocal = sessionmaker(
-            bind=connection, autoflush=False, autocommit=False
-        )
+        SessionLocal = sessionmaker(bind=connection, autoflush=False, autocommit=False)
         session = SessionLocal()
 
         try:

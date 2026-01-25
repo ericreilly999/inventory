@@ -128,9 +128,7 @@ async def test_inventory_get_current_user_invalid_token(test_db_session):
 
 
 @pytest.mark.asyncio
-async def test_inventory_get_current_user_expired_token(
-    test_db_session, test_user
-):
+async def test_inventory_get_current_user_expired_token(test_db_session, test_user):
     """Test getting current user with expired token."""
     # This test is about token expiry, which is handled by
     # get_current_user_token. For get_current_user, we test with
