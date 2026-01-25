@@ -6,8 +6,6 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 
-from shared.models.base import Base
-
 # Import all models to ensure they're registered with SQLAlchemy
 from shared.models import (  # noqa: F401
     ChildItem,
@@ -19,6 +17,7 @@ from shared.models import (  # noqa: F401
     Role,
     User,
 )
+from shared.models.base import Base
 
 # Get database URL directly from environment variable
 DATABASE_URL = os.getenv(

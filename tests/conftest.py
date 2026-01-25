@@ -7,20 +7,21 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from shared.models.assignment_history import AssignmentHistory  # noqa: F401
+
 # Import Base first
 from shared.models.base import Base
-
-# Force import all models at module level to ensure they are registered
-# Import in dependency order to avoid foreign key issues
-from shared.models.user import Role, User  # noqa: F401
-from shared.models.location import Location, LocationType  # noqa: F401
 from shared.models.item import (  # noqa: F401
     ChildItem,
     ItemType,
     ParentItem,
 )
+from shared.models.location import Location, LocationType  # noqa: F401
 from shared.models.move_history import MoveHistory  # noqa: F401
-from shared.models.assignment_history import AssignmentHistory  # noqa: F401
+
+# Force import all models at module level to ensure they are registered
+# Import in dependency order to avoid foreign key issues
+from shared.models.user import Role, User  # noqa: F401
 
 
 @pytest.fixture(scope="function")
@@ -50,17 +51,17 @@ def test_db_session():
 
     # Ensure all models are imported and registered
     # Import directly from modules to avoid circular imports
-    from shared.models.user import Role, User  # noqa: F401
-    from shared.models.location import Location, LocationType  # noqa: F401
+    from shared.models.assignment_history import (  # noqa: F401
+        AssignmentHistory,
+    )
     from shared.models.item import (  # noqa: F401
         ChildItem,
         ItemType,
         ParentItem,
     )
+    from shared.models.location import Location, LocationType  # noqa: F401
     from shared.models.move_history import MoveHistory  # noqa: F401
-    from shared.models.assignment_history import (  # noqa: F401
-        AssignmentHistory,
-    )
+    from shared.models.user import Role, User  # noqa: F401
 
     # Create all tables
     Base.metadata.create_all(bind=test_engine)
