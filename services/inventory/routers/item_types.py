@@ -29,7 +29,6 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-
 @router.post(
     "/",
     response_model=ItemTypeResponse,

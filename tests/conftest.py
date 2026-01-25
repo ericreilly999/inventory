@@ -20,7 +20,6 @@ from shared.models.move_history import MoveHistory  # noqa: F401
 from shared.models.user import Role, User  # noqa: F401
 
 
-
 @pytest.fixture(scope="function")
 def test_db_session():
     """Provide a transactional database session for tests."""
