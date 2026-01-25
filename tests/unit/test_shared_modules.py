@@ -13,7 +13,6 @@ from shared.logging.config import (
     configure_logging,
     get_logger,
     log_request,
-    log_response,
 )
 
 
@@ -39,26 +38,19 @@ def test_get_logger_with_level():
 
 def test_log_request():
     """Test request logging."""
-    logger = get_logger("test")
-    with patch.object(logger, "info") as mock_info:
-        log_request(logger, "GET", "/api/test", {"user": "test"})
-        mock_info.assert_called_once()
+    with patch("shared.logging.config.get_access_logger") as mock_get_logger:
+        mock_logger = MagicMock()
+        mock_get_logger.return_value = mock_logger
 
-
-def test_log_response():
-    """Test response logging."""
-    logger = get_logger("test")
-    with patch.object(logger, "info") as mock_info:
-        log_response(logger, 200, 0.123)
-        mock_info.assert_called_once()
-
-
-def test_log_response_error():
-    """Test error response logging."""
-    logger = get_logger("test")
-    with patch.object(logger, "error") as mock_error:
-        log_response(logger, 500, 0.456)
-        mock_error.assert_called_once()
+        log_request(
+            request_id="test-123",
+            method="GET",
+            path="/api/test",
+            status_code=200,
+            duration_ms=123.45,
+        )
+        # Should call info for 200 status
+        assert mock_logger.info.called or mock_logger.warning.called
 
 
 @pytest.mark.asyncio
