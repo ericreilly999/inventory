@@ -62,11 +62,9 @@ disallow_untyped_defs = false
 ignore_errors = true
 
 [tool.pytest.ini_options]
-asyncio_mode = "strict"
+asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "--cov=services --cov=shared --cov-report=html --cov-report=term-missing"
-# Exclude property tests from asyncio mode to avoid conflicts with hypothesis
-asyncio_default_fixture_loop_scope = "function"
