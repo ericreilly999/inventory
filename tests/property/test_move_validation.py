@@ -104,7 +104,6 @@ def test_move_validation_and_error_handling_property(item_names):
     session, engine = get_test_session()
 
     try:
-
         # Create test data
         user, valid_location, item_type = create_test_data(session)
 

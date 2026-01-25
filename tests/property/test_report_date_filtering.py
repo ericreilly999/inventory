@@ -126,7 +126,6 @@ def test_report_date_filtering_property(
     session, engine = get_test_session()
 
     try:
-
         # Create test data
         user, location1, location2, parent_item_type = create_test_data(session)
         locations = [location1, location2]

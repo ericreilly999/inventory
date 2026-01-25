@@ -123,7 +123,6 @@ def test_referential_integrity_validation_property(location_name, item_name):
     session, engine = get_test_session()
 
     try:
-
         # Create test data
         (
             user,

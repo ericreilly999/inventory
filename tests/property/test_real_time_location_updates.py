@@ -110,7 +110,6 @@ def test_real_time_location_updates_property(item_names):
     session, engine = get_test_session()
 
     try:
-
         # Create test data
         user, location1, location2, item_type = create_test_data(session)
 

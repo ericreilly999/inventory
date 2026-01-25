@@ -143,7 +143,6 @@ def test_constraint_enforcement_property(
     session, engine = get_test_session()
 
     try:
-
         # Create test data
         (
             user,
@@ -285,7 +284,6 @@ def test_location_deletion_with_items_constraint(location_name):
     session, engine = get_test_session()
 
     try:
-
         # Create test data
         (
             user,
@@ -336,7 +334,6 @@ def test_item_type_deletion_with_items_constraint(item_type_name):
     session, engine = get_test_session()
 
     try:
-
         # Create test data
         (
             user,

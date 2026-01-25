@@ -126,7 +126,6 @@ def test_report_data_accuracy_property(location_configs):
     session, engine = get_test_session()
 
     try:
-
         # Create test data
         (
             user,

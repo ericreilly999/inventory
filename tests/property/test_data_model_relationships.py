@@ -114,7 +114,6 @@ def test_cascading_item_movement_property(parent_name, child_names):
     session, engine = get_test_session()
 
     try:
-
         # Create test data
         user, location1, location2, parent_item_type = create_test_data(session)
 

@@ -119,7 +119,6 @@ def test_location_query_consistency_property(parent_names, child_counts):
     session, engine = get_test_session()
 
     try:
-
         # Create test data
         user, location, parent_item_type, child_item_type = create_test_data(session)
 
