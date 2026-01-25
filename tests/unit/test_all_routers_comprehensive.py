@@ -4,14 +4,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
-from services.inventory.routers import child_items, item_types, movements, parent_items
-from services.location.routers import location_types, locations
-from services.location.routers import movements as location_movements
-from services.reporting.routers import reports
-from services.user.routers import admin, auth, roles, users
 from shared.auth.utils import create_access_token, hash_password
 from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
 from shared.models.location import Location, LocationType

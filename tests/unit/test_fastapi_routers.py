@@ -1,11 +1,9 @@
 """FastAPI router endpoint tests to increase coverage to 80%."""
 
-from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
 from services.inventory.main import app as inventory_app
 from services.location.main import app as location_app
@@ -14,7 +12,6 @@ from services.user.main import app as user_app
 from shared.auth.utils import create_access_token, hash_password
 from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
 from shared.models.location import Location, LocationType
-from shared.models.move_history import MoveHistory
 from shared.models.user import Role, User
 
 

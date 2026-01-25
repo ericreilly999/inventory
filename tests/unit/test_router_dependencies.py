@@ -6,7 +6,6 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 from jose import jwt
-from sqlalchemy.orm import Session
 
 from services.inventory.dependencies import (
     get_current_user as inventory_get_current_user,
