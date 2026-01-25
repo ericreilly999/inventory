@@ -225,3 +225,4 @@ jobs:
       env:
         TF_VAR_environment: dev
         TF_VAR_aws_region: us-east-1
+        TF_VAR_db_password: dummy-password-for-validation
