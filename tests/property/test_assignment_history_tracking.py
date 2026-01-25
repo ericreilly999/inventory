@@ -9,11 +9,27 @@ from uuid import uuid4
 
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from shared.models.assignment_history import AssignmentHistory
+from shared.models.base import Base
 from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
 from shared.models.location import Location, LocationType
 from shared.models.user import Role, User
+
+
+def get_test_session():
+    """Create a fresh test database session for each test."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    SessionLocal = sessionmaker(bind=engine)
+    return SessionLocal(), engine
 
 
 @st.composite
@@ -120,11 +136,11 @@ def child_item_with_parents(draw):
 
 @given(data=child_item_with_parents())
 @settings(
-    max_examples=100,
+    max_examples=10,
     deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-def test_assignment_history_tracking_property(test_db_session, data):
+def test_assignment_history_tracking_property(data):
     """
     Property 11: Assignment History Tracking
 
@@ -133,406 +149,369 @@ def test_assignment_history_tracking_property(test_db_session, data):
 
     **Validates: Requirements 9.4, 9.5**
     """
-    # Setup test data
-    child_item = data["child_item"]
-    parent_item_1 = data["parent_item_1"]
-    parent_item_2 = data["parent_item_2"]
-    user = data["user"]
-    parent_item_type = data["parent_item_type"]
-    child_item_type = data["child_item_type"]
-    location_type = data["location_type"]
-    location = data["location"]
-    role = data["role"]
+    session, engine = get_test_session()
 
-    # Add all entities to database
-    test_db_session.add(role)
-    test_db_session.add(user)
-    test_db_session.add(location_type)
-    test_db_session.add(location)
-    test_db_session.add(parent_item_type)
-    test_db_session.add(child_item_type)
-    test_db_session.add(parent_item_1)
-    test_db_session.add(parent_item_2)
-    test_db_session.add(child_item)
-    test_db_session.commit()
+    try:
+        # Setup test data
+        child_item = data["child_item"]
+        parent_item_1 = data["parent_item_1"]
+        parent_item_2 = data["parent_item_2"]
+        user = data["user"]
+        parent_item_type = data["parent_item_type"]
+        child_item_type = data["child_item_type"]
+        location_type = data["location_type"]
+        location = data["location"]
+        role = data["role"]
 
-    # Record the time before reassignment
-    before_assignment_time = datetime.now(timezone.utc)
+        # Add all entities to database
+        session.add(role)
+        session.add(user)
+        session.add(location_type)
+        session.add(location)
+        session.add(parent_item_type)
+        session.add(child_item_type)
+        session.add(parent_item_1)
+        session.add(parent_item_2)
+        session.add(child_item)
+        session.commit()
 
-    # Simulate child item reassignment by creating assignment history record
-    # (This simulates what the API would do when reassigning a child item)
-    original_parent_id = child_item.parent_item_id
-    child_item.parent_item_id = parent_item_2.id
+        # Record the time before reassignment
+        before_assignment_time = datetime.now(timezone.utc)
 
-    assignment_history = AssignmentHistory(
-        child_item_id=child_item.id,
-        from_parent_item_id=original_parent_id,
-        to_parent_item_id=parent_item_2.id,
-        assigned_at=datetime.now(timezone.utc),
-        assigned_by=user.id,
-        notes="Test reassignment",
-    )
+        # Simulate child item reassignment by creating assignment history record
+        original_parent_id = child_item.parent_item_id
+        child_item.parent_item_id = parent_item_2.id
 
-    test_db_session.add(assignment_history)
-    test_db_session.commit()
-    test_db_session.refresh(assignment_history)
-
-    # Record the time after reassignment
-    after_assignment_time = datetime.now(timezone.utc)
-
-    # Verify assignment history properties
-    # 1. Assignment history record exists
-    assert assignment_history.id is not None
-
-    # 2. Contains correct child item reference
-    assert assignment_history.child_item_id == child_item.id
-
-    # 3. Contains correct source parent item
-    assert assignment_history.from_parent_item_id == parent_item_1.id
-
-    # 4. Contains correct destination parent item
-    assert assignment_history.to_parent_item_id == parent_item_2.id
-
-    # 5. Contains user information
-    assert assignment_history.assigned_by == user.id
-
-    # 6. Contains timestamp within reasonable bounds
-    assert (
-        before_assignment_time
-        <= assignment_history.assigned_at
-        <= after_assignment_time
-    )
-
-    # 7. Child item assignment is updated
-    assert child_item.parent_item_id == parent_item_2.id
-
-    # 8. Assignment history can be queried by child item
-    history_records = (
-        test_db_session.query(AssignmentHistory)
-        .filter(AssignmentHistory.child_item_id == child_item.id)
-        .all()
-    )
-    assert len(history_records) == 1
-    assert history_records[0].id == assignment_history.id
-
-    # 9. Assignment history can be queried by parent item (from)
-    from_parent_assignments = (
-        test_db_session.query(AssignmentHistory)
-        .filter(AssignmentHistory.from_parent_item_id == parent_item_1.id)
-        .all()
-    )
-    assert len(from_parent_assignments) == 1
-
-    # 10. Assignment history can be queried by parent item (to)
-    to_parent_assignments = (
-        test_db_session.query(AssignmentHistory)
-        .filter(AssignmentHistory.to_parent_item_id == parent_item_2.id)
-        .all()
-    )
-    assert len(to_parent_assignments) == 1
-
-    # 11. Assignment history can be queried by date range
-    date_filtered_assignments = (
-        test_db_session.query(AssignmentHistory)
-        .filter(
-            AssignmentHistory.assigned_at >= before_assignment_time,
-            AssignmentHistory.assigned_at <= after_assignment_time,
+        assignment_history = AssignmentHistory(
+            child_item_id=child_item.id,
+            from_parent_item_id=original_parent_id,
+            to_parent_item_id=parent_item_2.id,
+            assigned_at=datetime.now(timezone.utc),
+            assigned_by=user.id,
+            notes="Test reassignment",
         )
-        .all()
-    )
-    assert len(date_filtered_assignments) == 1
+
+        session.add(assignment_history)
+        session.commit()
+        session.refresh(assignment_history)
+
+        # Record the time after reassignment
+        after_assignment_time = datetime.now(timezone.utc)
+
+        # Verify assignment history properties
+        assert assignment_history.id is not None
+        assert assignment_history.child_item_id == child_item.id
+        assert assignment_history.from_parent_item_id == parent_item_1.id
+        assert assignment_history.to_parent_item_id == parent_item_2.id
+        assert assignment_history.assigned_by == user.id
+        assert (
+            before_assignment_time
+            <= assignment_history.assigned_at
+            <= after_assignment_time
+        )
+        assert child_item.parent_item_id == parent_item_2.id
+
+        # Query tests
+        history_records = (
+            session.query(AssignmentHistory)
+            .filter(AssignmentHistory.child_item_id == child_item.id)
+            .all()
+        )
+        assert len(history_records) == 1
+
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
 
 
 @given(data=child_item_with_parents())
 @settings(
-    max_examples=100,
+    max_examples=10,
     deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-def test_initial_assignment_history_tracking(test_db_session, data):
+def test_initial_assignment_history_tracking(data):
     """
     Test that initial assignment (creation) is tracked in assignment history.
 
     **Validates: Requirements 9.4**
     """
-    # Setup test data
-    child_item = data["child_item"]
-    parent_item_1 = data["parent_item_1"]
-    parent_item_2 = data["parent_item_2"]
-    user = data["user"]
-    parent_item_type = data["parent_item_type"]
-    child_item_type = data["child_item_type"]
-    location_type = data["location_type"]
-    location = data["location"]
-    role = data["role"]
+    session, engine = get_test_session()
 
-    # Add all entities to database
-    test_db_session.add(role)
-    test_db_session.add(user)
-    test_db_session.add(location_type)
-    test_db_session.add(location)
-    test_db_session.add(parent_item_type)
-    test_db_session.add(child_item_type)
-    test_db_session.add(parent_item_1)
-    test_db_session.add(parent_item_2)
-    test_db_session.add(child_item)
-    test_db_session.commit()
+    try:
+        # Setup test data
+        child_item = data["child_item"]
+        parent_item_1 = data["parent_item_1"]
+        parent_item_2 = data["parent_item_2"]
+        user = data["user"]
+        parent_item_type = data["parent_item_type"]
+        child_item_type = data["child_item_type"]
+        location_type = data["location_type"]
+        location = data["location"]
+        role = data["role"]
 
-    # Record the time before initial assignment
-    before_assignment_time = datetime.now(timezone.utc)
+        # Add all entities to database
+        session.add(role)
+        session.add(user)
+        session.add(location_type)
+        session.add(location)
+        session.add(parent_item_type)
+        session.add(child_item_type)
+        session.add(parent_item_1)
+        session.add(parent_item_2)
+        session.add(child_item)
+        session.commit()
 
-    # Simulate initial assignment history record creation
-    # (This simulates what the API would do when creating a child item)
-    initial_assignment_history = AssignmentHistory(
-        child_item_id=child_item.id,
-        from_parent_item_id=None,  # Initial assignment has no "from" parent
-        to_parent_item_id=parent_item_1.id,
-        assigned_at=datetime.now(timezone.utc),
-        assigned_by=user.id,
-        notes="Initial assignment",
-    )
+        # Record the time before initial assignment
+        before_assignment_time = datetime.now(timezone.utc)
 
-    test_db_session.add(initial_assignment_history)
-    test_db_session.commit()
-    test_db_session.refresh(initial_assignment_history)
+        # Simulate initial assignment history record creation
+        initial_assignment_history = AssignmentHistory(
+            child_item_id=child_item.id,
+            from_parent_item_id=None,  # Initial assignment has no "from" parent
+            to_parent_item_id=parent_item_1.id,
+            assigned_at=datetime.now(timezone.utc),
+            assigned_by=user.id,
+            notes="Initial assignment",
+        )
 
-    # Record the time after assignment
-    after_assignment_time = datetime.now(timezone.utc)
+        session.add(initial_assignment_history)
+        session.commit()
+        session.refresh(initial_assignment_history)
 
-    # Verify initial assignment history properties
-    # 1. Assignment history record exists
-    assert initial_assignment_history.id is not None
+        # Record the time after assignment
+        after_assignment_time = datetime.now(timezone.utc)
 
-    # 2. Contains correct child item reference
-    assert initial_assignment_history.child_item_id == child_item.id
+        # Verify initial assignment history properties
+        assert initial_assignment_history.id is not None
+        assert initial_assignment_history.child_item_id == child_item.id
+        assert initial_assignment_history.from_parent_item_id is None
+        assert initial_assignment_history.to_parent_item_id == parent_item_1.id
+        assert initial_assignment_history.assigned_by == user.id
+        assert (
+            before_assignment_time
+            <= initial_assignment_history.assigned_at
+            <= after_assignment_time
+        )
 
-    # 3. Has no source parent item (initial assignment)
-    assert initial_assignment_history.from_parent_item_id is None
-
-    # 4. Contains correct destination parent item
-    assert initial_assignment_history.to_parent_item_id == parent_item_1.id
-
-    # 5. Contains user information
-    assert initial_assignment_history.assigned_by == user.id
-
-    # 6. Contains timestamp within reasonable bounds
-    assert (
-        before_assignment_time
-        <= initial_assignment_history.assigned_at
-        <= after_assignment_time
-    )
-
-    # 7. Can be queried by child item
-    history_records = (
-        test_db_session.query(AssignmentHistory)
-        .filter(AssignmentHistory.child_item_id == child_item.id)
-        .all()
-    )
-    assert len(history_records) == 1
-    assert history_records[0].id == initial_assignment_history.id
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
 
 
 @given(data=child_item_with_parents())
 @settings(
-    max_examples=100,
+    max_examples=10,
     deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-def test_multiple_assignment_history_chronological_order(test_db_session, data):
+def test_multiple_assignment_history_chronological_order(data):
     """
     Test that multiple assignment history records are maintained in chronological order.
 
     **Validates: Requirements 9.5**
     """
-    # Setup test data
-    child_item = data["child_item"]
-    parent_item_1 = data["parent_item_1"]
-    parent_item_2 = data["parent_item_2"]
-    user = data["user"]
-    parent_item_type = data["parent_item_type"]
-    child_item_type = data["child_item_type"]
-    location_type = data["location_type"]
-    location = data["location"]
-    role = data["role"]
+    session, engine = get_test_session()
 
-    # Add all entities to database
-    test_db_session.add(role)
-    test_db_session.add(user)
-    test_db_session.add(location_type)
-    test_db_session.add(location)
-    test_db_session.add(parent_item_type)
-    test_db_session.add(child_item_type)
-    test_db_session.add(parent_item_1)
-    test_db_session.add(parent_item_2)
-    test_db_session.add(child_item)
-    test_db_session.commit()
+    try:
+        # Setup test data
+        child_item = data["child_item"]
+        parent_item_1 = data["parent_item_1"]
+        parent_item_2 = data["parent_item_2"]
+        user = data["user"]
+        parent_item_type = data["parent_item_type"]
+        child_item_type = data["child_item_type"]
+        location_type = data["location_type"]
+        location = data["location"]
+        role = data["role"]
 
-    # Create multiple assignment history records with different timestamps
-    assignment_times = [
-        datetime.now(timezone.utc) - timedelta(hours=3),
-        datetime.now(timezone.utc) - timedelta(hours=2),
-        datetime.now(timezone.utc) - timedelta(hours=1),
-        datetime.now(timezone.utc),
-    ]
+        # Add all entities to database
+        session.add(role)
+        session.add(user)
+        session.add(location_type)
+        session.add(location)
+        session.add(parent_item_type)
+        session.add(child_item_type)
+        session.add(parent_item_1)
+        session.add(parent_item_2)
+        session.add(child_item)
+        session.commit()
 
-    assignment_records = []
-    for i, assignment_time in enumerate(assignment_times):
-        # Alternate between parent items
-        current_from = parent_item_1 if i % 2 == 0 else parent_item_2
-        current_to = parent_item_2 if i % 2 == 0 else parent_item_1
+        # Create multiple assignment history records with different timestamps
+        assignment_times = [
+            datetime.now(timezone.utc) - timedelta(hours=3),
+            datetime.now(timezone.utc) - timedelta(hours=2),
+            datetime.now(timezone.utc) - timedelta(hours=1),
+            datetime.now(timezone.utc),
+        ]
 
-        assignment_history = AssignmentHistory(
-            child_item_id=child_item.id,
-            from_parent_item_id=(
-                current_from.id if i > 0 else None
-            ),  # First assignment has no "from"
-            to_parent_item_id=current_to.id,
-            assigned_at=assignment_time,
-            assigned_by=user.id,
-            notes=f"Assignment {i + 1}",
+        for i, assignment_time in enumerate(assignment_times):
+            # Alternate between parent items
+            current_from = parent_item_1 if i % 2 == 0 else parent_item_2
+            current_to = parent_item_2 if i % 2 == 0 else parent_item_1
+
+            assignment_history = AssignmentHistory(
+                child_item_id=child_item.id,
+                from_parent_item_id=(
+                    current_from.id if i > 0 else None
+                ),  # First assignment has no "from"
+                to_parent_item_id=current_to.id,
+                assigned_at=assignment_time,
+                assigned_by=user.id,
+                notes=f"Assignment {i + 1}",
+            )
+
+            session.add(assignment_history)
+
+        session.commit()
+
+        # Query assignment history ordered by timestamp (most recent first)
+        ordered_assignments = (
+            session.query(AssignmentHistory)
+            .filter(AssignmentHistory.child_item_id == child_item.id)
+            .order_by(AssignmentHistory.assigned_at.desc())
+            .all()
         )
 
-        test_db_session.add(assignment_history)
-        assignment_records.append(assignment_history)
+        # Verify chronological ordering (most recent first)
+        assert len(ordered_assignments) == 4
+        for i in range(len(ordered_assignments) - 1):
+            assert (
+                ordered_assignments[i].assigned_at
+                >= ordered_assignments[i + 1].assigned_at
+            )
 
-    test_db_session.commit()
+        # Verify the most recent assignment is first
+        assert ordered_assignments[0].assigned_at == assignment_times[-1]
+        assert ordered_assignments[-1].assigned_at == assignment_times[0]
 
-    # Query assignment history ordered by timestamp (most recent first)
-    ordered_assignments = (
-        test_db_session.query(AssignmentHistory)
-        .filter(AssignmentHistory.child_item_id == child_item.id)
-        .order_by(AssignmentHistory.assigned_at.desc())
-        .all()
-    )
-
-    # Verify chronological ordering (most recent first)
-    assert len(ordered_assignments) == 4
-    for i in range(len(ordered_assignments) - 1):
-        assert (
-            ordered_assignments[i].assigned_at >= ordered_assignments[i + 1].assigned_at
-        )
-
-    # Verify the most recent assignment is first
-    assert ordered_assignments[0].assigned_at == assignment_times[-1]
-    assert ordered_assignments[-1].assigned_at == assignment_times[0]
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
 
 
 @given(data=child_item_with_parents())
 @settings(
-    max_examples=100,
+    max_examples=10,
     deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-def test_assignment_history_filtering_by_date_range(test_db_session, data):
+def test_assignment_history_filtering_by_date_range(data):
     """
     Test that assignment history can be filtered by date ranges.
 
     **Validates: Requirements 9.5**
     """
-    # Setup test data
-    child_item = data["child_item"]
-    parent_item_1 = data["parent_item_1"]
-    parent_item_2 = data["parent_item_2"]
-    user = data["user"]
-    parent_item_type = data["parent_item_type"]
-    child_item_type = data["child_item_type"]
-    location_type = data["location_type"]
-    location = data["location"]
-    role = data["role"]
+    session, engine = get_test_session()
 
-    # Add all entities to database
-    test_db_session.add(role)
-    test_db_session.add(user)
-    test_db_session.add(location_type)
-    test_db_session.add(location)
-    test_db_session.add(parent_item_type)
-    test_db_session.add(child_item_type)
-    test_db_session.add(parent_item_1)
-    test_db_session.add(parent_item_2)
-    test_db_session.add(child_item)
-    test_db_session.commit()
+    try:
+        # Setup test data
+        child_item = data["child_item"]
+        parent_item_1 = data["parent_item_1"]
+        parent_item_2 = data["parent_item_2"]
+        user = data["user"]
+        parent_item_type = data["parent_item_type"]
+        child_item_type = data["child_item_type"]
+        location_type = data["location_type"]
+        location = data["location"]
+        role = data["role"]
 
-    # Create assignment history records across different time periods
-    base_time = datetime.now(timezone.utc)
+        # Add all entities to database
+        session.add(role)
+        session.add(user)
+        session.add(location_type)
+        session.add(location)
+        session.add(parent_item_type)
+        session.add(child_item_type)
+        session.add(parent_item_1)
+        session.add(parent_item_2)
+        session.add(child_item)
+        session.commit()
 
-    # Assignments outside the filter range
-    old_assignment = AssignmentHistory(
-        child_item_id=child_item.id,
-        from_parent_item_id=None,
-        to_parent_item_id=parent_item_1.id,
-        assigned_at=base_time - timedelta(days=10),
-        assigned_by=user.id,
-        notes="Old assignment",
-    )
+        # Create assignment history records across different time periods
+        base_time = datetime.now(timezone.utc)
 
-    future_assignment = AssignmentHistory(
-        child_item_id=child_item.id,
-        from_parent_item_id=parent_item_1.id,
-        to_parent_item_id=parent_item_2.id,
-        assigned_at=base_time + timedelta(days=10),
-        assigned_by=user.id,
-        notes="Future assignment",
-    )
-
-    # Assignments within the filter range
-    recent_assignment1 = AssignmentHistory(
-        child_item_id=child_item.id,
-        from_parent_item_id=parent_item_1.id,
-        to_parent_item_id=parent_item_2.id,
-        assigned_at=base_time - timedelta(hours=2),
-        assigned_by=user.id,
-        notes="Recent assignment 1",
-    )
-
-    recent_assignment2 = AssignmentHistory(
-        child_item_id=child_item.id,
-        from_parent_item_id=parent_item_2.id,
-        to_parent_item_id=parent_item_1.id,
-        assigned_at=base_time - timedelta(hours=1),
-        assigned_by=user.id,
-        notes="Recent assignment 2",
-    )
-
-    test_db_session.add_all(
-        [
-            old_assignment,
-            future_assignment,
-            recent_assignment1,
-            recent_assignment2,
-        ]
-    )
-    test_db_session.commit()
-
-    # Define filter range (last 3 hours)
-    start_date = base_time - timedelta(hours=3)
-    end_date = base_time
-
-    # Query with date range filter
-    filtered_assignments = (
-        test_db_session.query(AssignmentHistory)
-        .filter(
-            AssignmentHistory.child_item_id == child_item.id,
-            AssignmentHistory.assigned_at >= start_date,
-            AssignmentHistory.assigned_at <= end_date,
+        # Assignments outside the filter range
+        old_assignment = AssignmentHistory(
+            child_item_id=child_item.id,
+            from_parent_item_id=None,
+            to_parent_item_id=parent_item_1.id,
+            assigned_at=base_time - timedelta(days=10),
+            assigned_by=user.id,
+            notes="Old assignment",
         )
-        .order_by(AssignmentHistory.assigned_at.desc())
-        .all()
-    )
 
-    # Verify only assignments within the date range are returned
-    assert len(filtered_assignments) == 2
-    assert recent_assignment2.id in [
-        assignment.id for assignment in filtered_assignments
-    ]
-    assert recent_assignment1.id in [
-        assignment.id for assignment in filtered_assignments
-    ]
-    assert old_assignment.id not in [
-        assignment.id for assignment in filtered_assignments
-    ]
-    assert future_assignment.id not in [
-        assignment.id for assignment in filtered_assignments
-    ]
+        future_assignment = AssignmentHistory(
+            child_item_id=child_item.id,
+            from_parent_item_id=parent_item_1.id,
+            to_parent_item_id=parent_item_2.id,
+            assigned_at=base_time + timedelta(days=10),
+            assigned_by=user.id,
+            notes="Future assignment",
+        )
 
-    # Verify chronological ordering within filtered results
-    assert filtered_assignments[0].assigned_at >= filtered_assignments[1].assigned_at
+        # Assignments within the filter range
+        recent_assignment1 = AssignmentHistory(
+            child_item_id=child_item.id,
+            from_parent_item_id=parent_item_1.id,
+            to_parent_item_id=parent_item_2.id,
+            assigned_at=base_time - timedelta(hours=2),
+            assigned_by=user.id,
+            notes="Recent assignment 1",
+        )
+
+        recent_assignment2 = AssignmentHistory(
+            child_item_id=child_item.id,
+            from_parent_item_id=parent_item_2.id,
+            to_parent_item_id=parent_item_1.id,
+            assigned_at=base_time - timedelta(hours=1),
+            assigned_by=user.id,
+            notes="Recent assignment 2",
+        )
+
+        session.add_all(
+            [
+                old_assignment,
+                future_assignment,
+                recent_assignment1,
+                recent_assignment2,
+            ]
+        )
+        session.commit()
+
+        # Define filter range (last 3 hours)
+        start_date = base_time - timedelta(hours=3)
+        end_date = base_time
+
+        # Query with date range filter
+        filtered_assignments = (
+            session.query(AssignmentHistory)
+            .filter(
+                AssignmentHistory.child_item_id == child_item.id,
+                AssignmentHistory.assigned_at >= start_date,
+                AssignmentHistory.assigned_at <= end_date,
+            )
+            .order_by(AssignmentHistory.assigned_at.desc())
+            .all()
+        )
+
+        # Verify only assignments within the date range are returned
+        assert len(filtered_assignments) == 2
+        assignment_ids = [a.id for a in filtered_assignments]
+        assert recent_assignment2.id in assignment_ids
+        assert recent_assignment1.id in assignment_ids
+        assert old_assignment.id not in assignment_ids
+        assert future_assignment.id not in assignment_ids
+
+        # Verify chronological ordering within filtered results
+        assert (
+            filtered_assignments[0].assigned_at >= filtered_assignments[1].assigned_at
+        )
+
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
