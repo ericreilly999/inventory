@@ -6,7 +6,6 @@ from uuid import uuid4
 
 import pytest
 from redis import Redis
-from sqlalchemy.orm import Session
 
 from shared.database.redis_config import RedisCache, get_redis, get_redis_pool
 from shared.health.checks import HealthCheck, check_basic, check_database, check_redis
