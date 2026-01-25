@@ -132,9 +132,7 @@ def child_item(test_db_session, child_item_type, parent_item, admin_user):
 # Test Location Types
 def test_location_type_creation(test_db_session):
     """Test creating a location type."""
-    loc_type = LocationType(
-        id=uuid4(), name="Office", description="Office space"
-    )
+    loc_type = LocationType(id=uuid4(), name="Office", description="Office space")
     test_db_session.add(loc_type)
     test_db_session.commit()
 
@@ -144,11 +142,7 @@ def test_location_type_creation(test_db_session):
 
 def test_location_type_query(test_db_session, location_type):
     """Test querying location types."""
-    result = (
-        test_db_session.query(LocationType)
-        .filter_by(name="Warehouse")
-        .first()
-    )
+    result = test_db_session.query(LocationType).filter_by(name="Warehouse").first()
     assert result is not None
     assert result.id == location_type.id
 
@@ -158,11 +152,7 @@ def test_location_type_update(test_db_session, location_type):
     location_type.description = "Updated description"
     test_db_session.commit()
 
-    updated = (
-        test_db_session.query(LocationType)
-        .filter_by(id=location_type.id)
-        .first()
-    )
+    updated = test_db_session.query(LocationType).filter_by(id=location_type.id).first()
     assert updated.description == "Updated description"
 
 
@@ -176,9 +166,7 @@ def test_location_type_delete(test_db_session):
     test_db_session.delete(loc_type)
     test_db_session.commit()
 
-    deleted = (
-        test_db_session.query(LocationType).filter_by(id=loc_type_id).first()
-    )
+    deleted = test_db_session.query(LocationType).filter_by(id=loc_type_id).first()
     assert deleted is None
 
 
@@ -219,9 +207,7 @@ def test_location_update(test_db_session, location):
     location.description = "Updated warehouse"
     test_db_session.commit()
 
-    updated = (
-        test_db_session.query(Location).filter_by(id=location.id).first()
-    )
+    updated = test_db_session.query(Location).filter_by(id=location.id).first()
     assert updated.description == "Updated warehouse"
 
 
@@ -255,9 +241,7 @@ def test_item_type_child_creation(test_db_session):
 
 
 # Test Parent Items
-def test_parent_item_creation(
-    test_db_session, parent_item_type, location, admin_user
-):
+def test_parent_item_creation(test_db_session, parent_item_type, location, admin_user):
     """Test creating a parent item."""
     item = ParentItem(
         id=uuid4(),
@@ -273,9 +257,7 @@ def test_parent_item_creation(
     assert item.name == "Desk"
 
 
-def test_parent_item_with_children(
-    test_db_session, parent_item, child_item
-):
+def test_parent_item_with_children(test_db_session, parent_item, child_item):
     """Test parent item with children."""
     # Refresh to load relationships
     test_db_session.refresh(parent_item)
@@ -284,9 +266,7 @@ def test_parent_item_with_children(
     assert parent_item.child_items[0].id == child_item.id
 
 
-def test_parent_item_location_change(
-    test_db_session, parent_item, location_type
-):
+def test_parent_item_location_change(test_db_session, parent_item, location_type):
     """Test changing parent item location."""
     new_location = Location(
         id=uuid4(),
@@ -300,18 +280,12 @@ def test_parent_item_location_change(
     parent_item.current_location_id = new_location.id
     test_db_session.commit()
 
-    updated = (
-        test_db_session.query(ParentItem)
-        .filter_by(id=parent_item.id)
-        .first()
-    )
+    updated = test_db_session.query(ParentItem).filter_by(id=parent_item.id).first()
     assert updated.current_location_id == new_location.id
 
 
 # Test Child Items
-def test_child_item_parent_relationship(
-    test_db_session, child_item, parent_item
-):
+def test_child_item_parent_relationship(test_db_session, child_item, parent_item):
     """Test child item parent relationship."""
     assert child_item.parent_item_id == parent_item.id
 
@@ -321,9 +295,7 @@ def test_child_item_update(test_db_session, child_item):
     child_item.description = "Updated power supply"
     test_db_session.commit()
 
-    updated = (
-        test_db_session.query(ChildItem).filter_by(id=child_item.id).first()
-    )
+    updated = test_db_session.query(ChildItem).filter_by(id=child_item.id).first()
     assert updated.description == "Updated power supply"
 
 
@@ -470,9 +442,7 @@ def test_query_locations_by_type(test_db_session, location_type, location):
     assert location.id in [loc.id for loc in locations]
 
 
-def test_query_items_by_location(
-    test_db_session, location, parent_item
-):
+def test_query_items_by_location(test_db_session, location, parent_item):
     """Test querying items by location."""
     items = (
         test_db_session.query(ParentItem)
@@ -483,14 +453,10 @@ def test_query_items_by_location(
     assert parent_item.id in [item.id for item in items]
 
 
-def test_query_child_items_by_parent(
-    test_db_session, parent_item, child_item
-):
+def test_query_child_items_by_parent(test_db_session, parent_item, child_item):
     """Test querying child items by parent."""
     children = (
-        test_db_session.query(ChildItem)
-        .filter_by(parent_item_id=parent_item.id)
-        .all()
+        test_db_session.query(ChildItem).filter_by(parent_item_id=parent_item.id).all()
     )
     assert len(children) >= 1
     assert child_item.id in [c.id for c in children]

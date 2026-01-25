@@ -1,6 +1,6 @@
 """Location Service FastAPI application."""
 
-from typing import Any, Callable, Dict
+from typing import Callable, Dict
 
 from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
