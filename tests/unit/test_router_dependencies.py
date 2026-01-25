@@ -95,7 +95,8 @@ def test_verify_password_invalid():
 @pytest.mark.asyncio
 async def test_inventory_get_current_user_valid(test_db_session, test_user):
     """Test getting current user with valid token."""
-    # Create TokenData object directly since we're testing the function, not the endpoint
+    # Create TokenData object directly since we're testing the function,
+    # not the endpoint
     from services.inventory.dependencies import TokenData
 
     token_data = TokenData(
