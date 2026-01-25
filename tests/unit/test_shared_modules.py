@@ -9,11 +9,7 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from shared.database.redis_config import RedisCache, get_redis, get_redis_pool
-from shared.health.checks import (
-    check_database_health,
-    check_redis_health,
-    get_health_status,
-)
+from shared.health.checks import HealthCheck, check_basic, check_database, check_redis
 from shared.logging.config import (
     configure_logging,
     get_logger,
@@ -67,75 +63,111 @@ def test_log_response_error():
 
 
 @pytest.mark.asyncio
-async def test_check_database_health_success(test_db_session):
+async def test_check_database_success(test_db_session):
     """Test database health check success."""
-    result = await check_database_health(test_db_session)
-    assert result["status"] == "healthy"
-    assert result["database"] == "connected"
+    result = check_database()
+    assert result is True
 
 
 @pytest.mark.asyncio
-async def test_check_database_health_failure():
+async def test_check_database_failure():
     """Test database health check failure."""
-    mock_session = MagicMock(spec=Session)
-    mock_session.execute.side_effect = Exception("Database error")
-
-    result = await check_database_health(mock_session)
-    assert result["status"] == "unhealthy"
-    assert "error" in result
+    with patch("shared.health.checks.SessionLocal") as mock_session:
+        mock_session.return_value.execute.side_effect = Exception("Database error")
+        result = check_database()
+        assert result is False
 
 
 @pytest.mark.asyncio
-async def test_check_redis_health_success():
+async def test_check_redis_success():
     """Test Redis health check success."""
-    mock_redis = MagicMock(spec=Redis)
-    mock_redis.ping.return_value = True
+    with patch("shared.health.checks.get_redis") as mock_get_redis:
+        mock_redis = MagicMock(spec=Redis)
+        mock_redis.ping.return_value = True
+        mock_get_redis.return_value = mock_redis
 
-    result = await check_redis_health(mock_redis)
-    assert result["status"] == "healthy"
-    assert result["redis"] == "connected"
+        result = check_redis()
+        assert result is True
 
 
 @pytest.mark.asyncio
-async def test_check_redis_health_failure():
+async def test_check_redis_failure():
     """Test Redis health check failure."""
-    mock_redis = MagicMock(spec=Redis)
-    mock_redis.ping.side_effect = Exception("Redis error")
+    with patch("shared.health.checks.get_redis") as mock_get_redis:
+        mock_redis = MagicMock(spec=Redis)
+        mock_redis.ping.side_effect = Exception("Redis error")
+        mock_get_redis.return_value = mock_redis
 
-    result = await check_redis_health(mock_redis)
-    assert result["status"] == "unhealthy"
-    assert "error" in result
+        result = check_redis()
+        assert result is False
 
 
 @pytest.mark.asyncio
-async def test_check_redis_health_none():
-    """Test Redis health check with None client."""
-    result = await check_redis_health(None)
+async def test_check_basic():
+    """Test basic health check."""
+    result = check_basic()
     assert result["status"] == "healthy"
-    assert result["redis"] == "not configured"
+    assert "uptime" in result
+    assert "version" in result
 
 
 @pytest.mark.asyncio
-async def test_get_health_status_all_healthy(test_db_session):
-    """Test overall health status when all services healthy."""
-    mock_redis = MagicMock(spec=Redis)
-    mock_redis.ping.return_value = True
+async def test_health_check_class():
+    """Test HealthCheck class."""
+    health = HealthCheck("test-service")
+    assert health.service_name == "test-service"
 
-    result = await get_health_status(test_db_session, mock_redis)
-    assert result["status"] == "healthy"
-    assert "database" in result
-    assert "redis" in result
-    assert "timestamp" in result
+    def test_check():
+        return True
+
+    health.add_check(test_check)
+    assert len(health.checks) == 1
 
 
 @pytest.mark.asyncio
-async def test_get_health_status_database_unhealthy():
-    """Test overall health status when database unhealthy."""
-    mock_session = MagicMock(spec=Session)
-    mock_session.execute.side_effect = Exception("DB error")
+async def test_health_check_run_checks():
+    """Test running health checks."""
+    health = HealthCheck("test-service")
 
-    result = await get_health_status(mock_session, None)
-    assert result["status"] == "unhealthy"
+    def passing_check():
+        return True
+
+    health.add_check(passing_check)
+    results = await health.run_checks()
+
+    assert results["service"] == "test-service"
+    assert results["status"] == "healthy"
+    assert "timestamp" in results
+    assert "checks" in results
+
+
+@pytest.mark.asyncio
+async def test_health_check_failing_check():
+    """Test health check with failing check."""
+    health = HealthCheck("test-service")
+
+    def failing_check():
+        return False
+
+    health.add_check(failing_check)
+    results = await health.run_checks()
+
+    assert results["status"] == "unhealthy"
+
+
+@pytest.mark.asyncio
+async def test_health_check_exception():
+    """Test health check with exception."""
+    health = HealthCheck("test-service")
+
+    def error_check():
+        raise Exception("Test error")
+
+    health.add_check(error_check)
+    results = await health.run_checks()
+
+    assert results["status"] == "unhealthy"
+    assert "error" in results["checks"]["error_check"]
 
 
 def test_redis_pool_initialization():
@@ -157,7 +189,7 @@ def test_get_redis_client_connection_error():
     with patch("shared.database.redis_config.redis.Redis") as mock_redis:
         mock_redis.side_effect = Exception("Connection failed")
         try:
-            client = get_redis()
+            get_redis()
             assert False, "Should have raised exception"
         except Exception:
             pass
@@ -206,13 +238,17 @@ def test_health_check_response_format():
     import asyncio
 
     async def run_test():
-        mock_session = MagicMock(spec=Session)
-        mock_session.execute.return_value = None
-        result = await get_health_status(mock_session, None)
+        health = HealthCheck("test-service")
+
+        def test_check():
+            return True
+
+        health.add_check(test_check)
+        result = await health.run_checks()
 
         assert "status" in result
         assert "timestamp" in result
-        assert "database" in result
+        assert "service" in result
         assert isinstance(result["timestamp"], str)
 
     asyncio.run(run_test())
@@ -242,10 +278,13 @@ def test_health_check_with_custom_checks():
     import asyncio
 
     async def run_test():
-        mock_session = MagicMock(spec=Session)
-        mock_session.execute.return_value = None
+        health = HealthCheck("custom-service")
 
-        result = await get_health_status(mock_session, None)
+        async def async_check():
+            return True
+
+        health.add_check(async_check)
+        result = await health.run_checks()
         assert result is not None
         assert "status" in result
 
