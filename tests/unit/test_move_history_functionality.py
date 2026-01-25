@@ -800,10 +800,25 @@ class TestAssignmentHistoryIntegration:
         )
         test_db_session.commit()
 
+        # Create a child item for the assignment history
+        child_item = ChildItem(
+            id=uuid4(),
+            name="Test Child Item",
+            description="Child item for assignment test",
+            item_type_id=child_item_type.id,
+            parent_item_id=parent_item1.id,
+            created_by=user.id,
+            item_type=child_item_type,
+            parent_item=parent_item1,
+            creator=user,
+        )
+        test_db_session.add(child_item)
+        test_db_session.commit()
+
         # Create assignment history record
         assignment_time = datetime.now(timezone.utc)
         assignment_history = AssignmentHistory(
-            child_item_id=uuid4(),  # Simulated child item ID
+            child_item_id=child_item.id,  # Use actual child item ID
             from_parent_item_id=parent_item1.id,
             to_parent_item_id=parent_item2.id,
             assigned_at=assignment_time,
@@ -817,6 +832,7 @@ class TestAssignmentHistoryIntegration:
 
         # Verify assignment history record
         assert assignment_history.id is not None
+        assert assignment_history.child_item_id == child_item.id
         assert assignment_history.from_parent_item_id == parent_item1.id
         assert assignment_history.to_parent_item_id == parent_item2.id
         assert assignment_history.assigned_by == user.id
@@ -862,6 +878,13 @@ class TestAssignmentHistoryIntegration:
             category=ItemCategory.PARENT,
         )
 
+        child_item_type = ItemType(
+            id=uuid4(),
+            name="Component",
+            description="Component items",
+            category=ItemCategory.CHILD,
+        )
+
         parent_item1 = ParentItem(
             id=uuid4(),
             name="Parent Item 1",
@@ -894,17 +917,31 @@ class TestAssignmentHistoryIntegration:
                 location_type,
                 location,
                 parent_item_type,
+                child_item_type,
                 parent_item1,
                 parent_item2,
             ]
         )
         test_db_session.commit()
 
-        # Create assignment history records
-        child_item_id = uuid4()
+        # Create a child item for the assignment history
+        child_item = ChildItem(
+            id=uuid4(),
+            name="Test Child Item",
+            description="Child item for assignment test",
+            item_type_id=child_item_type.id,
+            parent_item_id=parent_item1.id,
+            created_by=user.id,
+            item_type=child_item_type,
+            parent_item=parent_item1,
+            creator=user,
+        )
+        test_db_session.add(child_item)
+        test_db_session.commit()
 
+        # Create assignment history records
         assignment1 = AssignmentHistory(
-            child_item_id=child_item_id,
+            child_item_id=child_item.id,
             from_parent_item_id=None,  # Initial assignment
             to_parent_item_id=parent_item1.id,
             assigned_at=datetime.now(timezone.utc) - timedelta(hours=2),
@@ -913,7 +950,7 @@ class TestAssignmentHistoryIntegration:
         )
 
         assignment2 = AssignmentHistory(
-            child_item_id=child_item_id,
+            child_item_id=child_item.id,
             from_parent_item_id=parent_item1.id,
             to_parent_item_id=parent_item2.id,
             assigned_at=datetime.now(timezone.utc) - timedelta(hours=1),
@@ -927,7 +964,7 @@ class TestAssignmentHistoryIntegration:
         # Query assignment history by child item
         child_assignments = (
             test_db_session.query(AssignmentHistory)
-            .filter(AssignmentHistory.child_item_id == child_item_id)
+            .filter(AssignmentHistory.child_item_id == child_item.id)
             .order_by(AssignmentHistory.assigned_at.desc())
             .all()
         )

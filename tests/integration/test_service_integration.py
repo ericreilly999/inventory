@@ -581,26 +581,38 @@ class TestDatabaseTransactionBoundaries:
         test_db_session.add(parent_item)
         test_db_session.flush()
 
+        # Create a second parent item for reassignment
+        parent_item2 = ParentItem(
+            name="Desktop",
+            description="Dell Desktop",
+            item_type_id=parent_item_type.id,
+            current_location_id=location.id,
+            created_by=user.id,
+        )
+        test_db_session.add(parent_item2)
+        test_db_session.flush()
+
         child_item = ChildItem(
             name="Mouse",
             description="Wireless mouse",
             item_type_id=child_item_type.id,
+            parent_item_id=parent_item.id,  # Must have a parent
             created_by=user.id,
         )
         test_db_session.add(child_item)
         test_db_session.flush()
 
-        # Test assignment transaction
+        # Test assignment transaction - reassign to different parent
         try:
-            # Assign child to parent
+            # Reassign child to different parent
             old_parent_id = child_item.parent_item_id
-            child_item.parent_item_id = parent_item.id
+            child_item.parent_item_id = parent_item2.id
 
             # Create assignment history
             assignment_history = AssignmentHistory(
                 child_item_id=child_item.id,
                 from_parent_item_id=old_parent_id,
-                to_parent_item_id=parent_item.id,
+                to_parent_item_id=parent_item2.id,
                 assigned_by=user.id,
                 notes="Test assignment",
             )
@@ -609,7 +621,7 @@ class TestDatabaseTransactionBoundaries:
             test_db_session.commit()
 
             # Verify assignment
-            assert child_item.parent_item_id == parent_item.id
+            assert child_item.parent_item_id == parent_item2.id
 
             history_record = (
                 test_db_session.query(AssignmentHistory)
@@ -617,7 +629,7 @@ class TestDatabaseTransactionBoundaries:
                 .first()
             )
             assert history_record is not None
-            assert history_record.to_parent_item_id == parent_item.id
+            assert history_record.to_parent_item_id == parent_item2.id
 
         except Exception:
             test_db_session.rollback()
