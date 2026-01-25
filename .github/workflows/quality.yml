@@ -118,7 +118,7 @@ jobs:
           --cov-report=xml \
           --cov-report=html \
           --cov-report=term-missing \
-          --cov-fail-under=17 \
+          --cov-fail-under=80 \
           --junitxml=pytest-report.xml \
           --ignore=tests/property \
           tests/unit/ tests/integration/
