@@ -16,27 +16,47 @@ from shared.models.user import Role, User
 
 
 @pytest.fixture
-def inventory_client():
+def inventory_client(override_get_db):
     """Create test client for inventory service."""
-    return TestClient(inventory_app)
+    from shared.database.config import get_db
+
+    inventory_app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(inventory_app)
+    yield client
+    inventory_app.dependency_overrides.clear()
 
 
 @pytest.fixture
-def location_client():
+def location_client(override_get_db):
     """Create test client for location service."""
-    return TestClient(location_app)
+    from shared.database.config import get_db
+
+    location_app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(location_app)
+    yield client
+    location_app.dependency_overrides.clear()
 
 
 @pytest.fixture
-def user_client():
+def user_client(override_get_db):
     """Create test client for user service."""
-    return TestClient(user_app)
+    from shared.database.config import get_db
+
+    user_app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(user_app)
+    yield client
+    user_app.dependency_overrides.clear()
 
 
 @pytest.fixture
-def reporting_client():
+def reporting_client(override_get_db):
     """Create test client for reporting service."""
-    return TestClient(reporting_app)
+    from shared.database.config import get_db
+
+    reporting_app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(reporting_app)
+    yield client
+    reporting_app.dependency_overrides.clear()
 
 
 @pytest.fixture
