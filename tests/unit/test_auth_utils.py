@@ -93,9 +93,9 @@ def test_verify_token_expired():
     expire = datetime.now(timezone.utc) - timedelta(seconds=1)
     to_encode.update({"exp": expire})
 
-    from shared.config.settings import settings
-
     from jose import jwt
+
+    from shared.config.settings import settings
 
     token = jwt.encode(
         to_encode,
