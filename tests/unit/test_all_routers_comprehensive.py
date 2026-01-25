@@ -150,7 +150,11 @@ def test_list_item_types(test_db_session, parent_item_type_fixture):
 
 def test_get_item_type(test_db_session, parent_item_type_fixture):
     """Test getting a single item type."""
-    result = test_db_session.query(ItemType).filter_by(id=parent_item_type_fixture.id).first()
+    result = (
+        test_db_session.query(ItemType)
+        .filter_by(id=parent_item_type_fixture.id)
+        .first()
+    )
     assert result is not None
     assert result.name == "Equipment"
 
@@ -172,7 +176,11 @@ def test_update_item_type(test_db_session, parent_item_type_fixture):
     """Test updating an item type."""
     parent_item_type_fixture.description = "Updated equipment"
     test_db_session.commit()
-    updated = test_db_session.query(ItemType).filter_by(id=parent_item_type_fixture.id).first()
+    updated = (
+        test_db_session.query(ItemType)
+        .filter_by(id=parent_item_type_fixture.id)
+        .first()
+    )
     assert updated.description == "Updated equipment"
 
 
@@ -198,7 +206,9 @@ def test_list_parent_items(test_db_session, parent_item_fixture):
 
 def test_get_parent_item(test_db_session, parent_item_fixture):
     """Test getting a single parent item."""
-    result = test_db_session.query(ParentItem).filter_by(id=parent_item_fixture.id).first()
+    result = (
+        test_db_session.query(ParentItem).filter_by(id=parent_item_fixture.id).first()
+    )
     assert result is not None
     assert result.name == "Server Rack"
 
@@ -223,7 +233,9 @@ def test_update_parent_item(test_db_session, parent_item_fixture):
     """Test updating a parent item."""
     parent_item_fixture.description = "Updated rack"
     test_db_session.commit()
-    updated = test_db_session.query(ParentItem).filter_by(id=parent_item_fixture.id).first()
+    updated = (
+        test_db_session.query(ParentItem).filter_by(id=parent_item_fixture.id).first()
+    )
     assert updated.description == "Updated rack"
 
 
@@ -257,7 +269,9 @@ def test_list_child_items(test_db_session, child_item_fixture):
 
 def test_get_child_item(test_db_session, child_item_fixture):
     """Test getting a single child item."""
-    result = test_db_session.query(ChildItem).filter_by(id=child_item_fixture.id).first()
+    result = (
+        test_db_session.query(ChildItem).filter_by(id=child_item_fixture.id).first()
+    )
     assert result is not None
     assert result.name == "Power Supply"
 
@@ -282,7 +296,9 @@ def test_update_child_item(test_db_session, child_item_fixture):
     """Test updating a child item."""
     child_item_fixture.description = "Updated power"
     test_db_session.commit()
-    updated = test_db_session.query(ChildItem).filter_by(id=child_item_fixture.id).first()
+    updated = (
+        test_db_session.query(ChildItem).filter_by(id=child_item_fixture.id).first()
+    )
     assert updated.description == "Updated power"
 
 
@@ -316,7 +332,11 @@ def test_list_location_types(test_db_session, location_type_fixture):
 
 def test_get_location_type(test_db_session, location_type_fixture):
     """Test getting a single location type."""
-    result = test_db_session.query(LocationType).filter_by(id=location_type_fixture.id).first()
+    result = (
+        test_db_session.query(LocationType)
+        .filter_by(id=location_type_fixture.id)
+        .first()
+    )
     assert result is not None
     assert result.name == "Warehouse"
 
@@ -333,7 +353,11 @@ def test_update_location_type(test_db_session, location_type_fixture):
     """Test updating a location type."""
     location_type_fixture.description = "Updated warehouse"
     test_db_session.commit()
-    updated = test_db_session.query(LocationType).filter_by(id=location_type_fixture.id).first()
+    updated = (
+        test_db_session.query(LocationType)
+        .filter_by(id=location_type_fixture.id)
+        .first()
+    )
     assert updated.description == "Updated warehouse"
 
 
@@ -404,7 +428,11 @@ def test_delete_location(test_db_session, location_type_fixture):
 
 # Test Move History
 def test_create_move_history(
-    test_db_session, parent_item_fixture, location_fixture, location_type_fixture, admin_user
+    test_db_session,
+    parent_item_fixture,
+    location_fixture,
+    location_type_fixture,
+    admin_user,
 ):
     """Test creating move history."""
     new_location = Location(
@@ -430,7 +458,11 @@ def test_create_move_history(
 
 
 def test_list_move_history(
-    test_db_session, parent_item_fixture, location_fixture, location_type_fixture, admin_user
+    test_db_session,
+    parent_item_fixture,
+    location_fixture,
+    location_type_fixture,
+    admin_user,
 ):
     """Test listing move history."""
     new_location = Location(
@@ -583,19 +615,27 @@ def test_hash_password_operation():
 
 
 # Test Query Operations
-def test_filter_items_by_type(test_db_session, parent_item_type_fixture, parent_item_fixture):
+def test_filter_items_by_type(
+    test_db_session, parent_item_type_fixture, parent_item_fixture
+):
     """Test filtering items by type."""
-    result = test_db_session.query(ParentItem).filter_by(
-        item_type_id=parent_item_type_fixture.id
-    ).all()
+    result = (
+        test_db_session.query(ParentItem)
+        .filter_by(item_type_id=parent_item_type_fixture.id)
+        .all()
+    )
     assert len(result) >= 1
 
 
-def test_filter_locations_by_type(test_db_session, location_type_fixture, location_fixture):
+def test_filter_locations_by_type(
+    test_db_session, location_type_fixture, location_fixture
+):
     """Test filtering locations by type."""
-    result = test_db_session.query(Location).filter_by(
-        location_type_id=location_type_fixture.id
-    ).all()
+    result = (
+        test_db_session.query(Location)
+        .filter_by(location_type_id=location_type_fixture.id)
+        .all()
+    )
     assert len(result) >= 1
 
 
@@ -644,7 +684,9 @@ def test_order_by_created_at(test_db_session, admin_user):
 
 
 # Test Complex Queries
-def test_join_operations(test_db_session, parent_item_fixture, parent_item_type_fixture):
+def test_join_operations(
+    test_db_session, parent_item_fixture, parent_item_type_fixture
+):
     """Test join operations."""
     result = (
         test_db_session.query(ParentItem)
