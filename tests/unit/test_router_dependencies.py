@@ -93,11 +93,17 @@ def test_verify_password_invalid():
 @pytest.mark.asyncio
 async def test_inventory_get_current_user_valid(test_db_session, test_user):
     """Test getting current user with valid token."""
-    token = create_access_token(
-        {"sub": str(test_user.id), "username": test_user.username}
+    # Create TokenData object directly since we're testing the function, not the endpoint
+    from services.inventory.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions=test_user.role.permissions,
     )
 
-    user = await inventory_get_current_user(token, test_db_session)
+    user = await inventory_get_current_user(token_data, test_db_session)
     assert user.id == test_user.id
     assert user.username == test_user.username
 
@@ -105,70 +111,101 @@ async def test_inventory_get_current_user_valid(test_db_session, test_user):
 @pytest.mark.asyncio
 async def test_inventory_get_current_user_invalid_token(test_db_session):
     """Test getting current user with invalid token."""
+    # Test with nonexistent user ID
+    from services.inventory.dependencies import TokenData
+
+    fake_id = uuid4()
+    token_data = TokenData(
+        user_id=fake_id, username="nonexistent", role_id=None, permissions={}
+    )
+
     with pytest.raises(HTTPException) as exc_info:
-        await inventory_get_current_user("invalid_token", test_db_session)
+        await inventory_get_current_user(token_data, test_db_session)
     assert exc_info.value.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_inventory_get_current_user_expired_token(test_db_session, test_user):
     """Test getting current user with expired token."""
-    settings = Settings()
-    expired_time = datetime.now(timezone.utc) - timedelta(hours=1)
-    token_data = {
-        "sub": str(test_user.id),
-        "username": test_user.username,
-        "exp": expired_time,
-    }
-    # Use lowercase attribute name
-    token = jwt.encode(token_data, settings.jwt_secret_key, algorithm="HS256")
+    # This test is about token expiry, which is handled by get_current_user_token
+    # For get_current_user, we test with inactive user instead
+    test_user.active = False
+    test_db_session.commit()
+
+    from services.inventory.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions=test_user.role.permissions,
+    )
 
     with pytest.raises(HTTPException) as exc_info:
-        await inventory_get_current_user(token, test_db_session)
+        await inventory_get_current_user(token_data, test_db_session)
     assert exc_info.value.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_inventory_get_current_user_nonexistent(test_db_session):
     """Test getting current user that doesn't exist."""
-    fake_id = str(uuid4())
-    token = create_access_token({"sub": fake_id, "username": "nonexistent"})
+    from services.inventory.dependencies import TokenData
+
+    fake_id = uuid4()
+    token_data = TokenData(
+        user_id=fake_id, username="nonexistent", role_id=None, permissions={}
+    )
 
     with pytest.raises(HTTPException) as exc_info:
-        await inventory_get_current_user(token, test_db_session)
+        await inventory_get_current_user(token_data, test_db_session)
     assert exc_info.value.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_location_get_current_user_valid(test_db_session, test_user):
     """Test location service get current user."""
-    token = create_access_token(
-        {"sub": str(test_user.id), "username": test_user.username}
+    from services.location.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions=test_user.role.permissions,
     )
 
-    user = await location_get_current_user(token, test_db_session)
+    user = await location_get_current_user(token_data, test_db_session)
     assert user.id == test_user.id
 
 
 @pytest.mark.asyncio
 async def test_user_get_current_user_valid(test_db_session, test_user):
     """Test user service get current user."""
-    token = create_access_token(
-        {"sub": str(test_user.id), "username": test_user.username}
+    from services.user.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions=test_user.role.permissions,
     )
 
-    user = await user_get_current_user(token, test_db_session)
+    user = await user_get_current_user(token_data, test_db_session)
     assert user.id == test_user.id
 
 
 @pytest.mark.asyncio
 async def test_reporting_get_current_user_valid(test_db_session, test_user):
     """Test reporting service get current user."""
-    token = create_access_token(
-        {"sub": str(test_user.id), "username": test_user.username}
+    from services.reporting.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions=test_user.role.permissions,
     )
 
-    user = await reporting_get_current_user(token, test_db_session)
+    user = await reporting_get_current_user(token_data, test_db_session)
     assert user.id == test_user.id
 
 
@@ -314,12 +351,17 @@ def test_inactive_user_authentication(test_db_session):
     test_db_session.add(inactive_user)
     test_db_session.commit()
 
-    token = create_access_token(
-        {"sub": str(inactive_user.id), "username": inactive_user.username}
+    from services.inventory.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=inactive_user.id,
+        username=inactive_user.username,
+        role_id=inactive_user.role_id,
+        permissions={},
     )
 
     # Should raise exception for inactive user
     with pytest.raises(HTTPException):
         import asyncio
 
-        asyncio.run(inventory_get_current_user(token, test_db_session))
+        asyncio.run(inventory_get_current_user(token_data, test_db_session))

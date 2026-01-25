@@ -28,7 +28,28 @@ def test_db_session():
 
     if database_url:
         # Use PostgreSQL from environment
-        test_engine = create_engine(database_url, echo=False)
+        test_engine = create_engine(database_url, echo=False, isolation_level="AUTOCOMMIT")
+        
+        # Create all tables once
+        Base.metadata.create_all(bind=test_engine)
+        
+        # Create a connection for this test
+        connection = test_engine.connect()
+        
+        # Begin a transaction
+        transaction = connection.begin()
+        
+        # Create session bound to the transaction
+        SessionLocal = sessionmaker(bind=connection, autoflush=False, autocommit=False)
+        session = SessionLocal()
+        
+        try:
+            yield session
+        finally:
+            session.close()
+            # Rollback the transaction to undo all changes
+            transaction.rollback()
+            connection.close()
     else:
         # Use in-memory SQLite for local testing
         test_engine = create_engine(
@@ -44,35 +65,29 @@ def test_db_session():
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.close()
 
-    # Ensure all models are imported and registered
-    # Models are already imported at module level
+        # Create all tables
+        Base.metadata.create_all(bind=test_engine)
 
-    # Create all tables
-    Base.metadata.create_all(bind=test_engine)
+        # Create session with autoflush=False for better control
+        SessionLocal = sessionmaker(bind=test_engine, autoflush=False)
 
-    # Create session with autoflush=False for better control
-    SessionLocal = sessionmaker(bind=test_engine, autoflush=False)
+        # Start a transaction
+        connection = test_engine.connect()
+        transaction = connection.begin()
 
-    # Start a transaction
-    connection = test_engine.connect()
-    transaction = connection.begin()
+        # Bind session to the transaction
+        session = SessionLocal(bind=connection)
 
-    # Bind session to the transaction
-    session = SessionLocal(bind=connection)
-
-    try:
-        yield session
-    finally:
-        session.close()
-        # Rollback the transaction to undo all changes
-        transaction.rollback()
-        connection.close()
-        # For PostgreSQL, we don't drop tables between tests
-        # They're cleaned by the rollback
-        if not database_url:
+        try:
+            yield session
+        finally:
+            session.close()
+            # Rollback the transaction to undo all changes
+            transaction.rollback()
+            connection.close()
             # For SQLite, drop tables
             Base.metadata.drop_all(bind=test_engine)
-        test_engine.dispose()
+            test_engine.dispose()
 
 
 @pytest.fixture(scope="function")
