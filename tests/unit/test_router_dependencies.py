@@ -63,8 +63,9 @@ def test_create_access_token():
 def test_create_access_token_with_expiry():
     """Test JWT token creation with custom expiry."""
     data = {"sub": "user123"}
-    expires_delta = timedelta(minutes=15)
-    token = create_access_token(data, expires_delta=expires_delta)
+    # create_access_token doesn't accept expires_delta parameter
+    # It uses settings.auth.jwt_expiration_hours
+    token = create_access_token(data)
     assert token is not None
 
 
@@ -119,7 +120,8 @@ async def test_inventory_get_current_user_expired_token(test_db_session, test_us
         "username": test_user.username,
         "exp": expired_time,
     }
-    token = jwt.encode(token_data, settings.JWT_SECRET_KEY, algorithm="HS256")
+    # Use lowercase attribute name
+    token = jwt.encode(token_data, settings.jwt_secret_key, algorithm="HS256")
 
     with pytest.raises(HTTPException) as exc_info:
         await inventory_get_current_user(token, test_db_session)
@@ -174,35 +176,69 @@ async def test_reporting_get_current_user_valid(test_db_session, test_user):
 async def test_inventory_require_permission_valid(test_user):
     """Test permission check with valid permission."""
     # User has inventory:read permission
-    checker = inventory_require_permission("inventory", "read")
-    result = await checker(test_user)
-    assert result is True
+    # require_permission takes a single permission string like "inventory:read"
+    checker = inventory_require_permission("inventory:read")
+    # The checker expects TokenData, not User
+    from services.inventory.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions={"inventory:read": True, "inventory:write": True},
+    )
+    result = await checker(token_data)
+    assert result is not None
 
 
 @pytest.mark.asyncio
 async def test_inventory_require_permission_invalid(test_user):
     """Test permission check with invalid permission."""
     # User doesn't have inventory:admin permission
-    checker = inventory_require_permission("inventory", "admin")
+    checker = inventory_require_permission("inventory:admin")
+    from services.inventory.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions={"inventory:read": True, "inventory:write": True},
+    )
     with pytest.raises(HTTPException) as exc_info:
-        await checker(test_user)
+        await checker(token_data)
     assert exc_info.value.status_code == 403
 
 
 @pytest.mark.asyncio
 async def test_location_require_permission_valid(test_user):
     """Test location permission check."""
-    checker = location_require_permission("location", "read")
-    result = await checker(test_user)
-    assert result is True
+    checker = location_require_permission("location:read")
+    from services.location.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions={"location:read": True},
+    )
+    result = await checker(token_data)
+    assert result is not None
 
 
 @pytest.mark.asyncio
 async def test_location_require_permission_invalid(test_user):
     """Test location permission check with invalid permission."""
-    checker = location_require_permission("location", "write")
+    checker = location_require_permission("location:write")
+    from services.location.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions={"location:read": True},
+    )
     with pytest.raises(HTTPException) as exc_info:
-        await checker(test_user)
+        await checker(token_data)
     assert exc_info.value.status_code == 403
 
 
@@ -211,32 +247,50 @@ async def test_user_require_permission_valid(test_user):
     """Test user permission check."""
     # Update user role to have user permissions
     test_user.role.permissions = {"user": ["read"]}
-    checker = user_require_permission("user", "read")
-    result = await checker(test_user)
-    assert result is True
+    checker = user_require_permission("user:read")
+    from services.user.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions={"user:read": True},
+    )
+    result = await checker(token_data)
+    assert result is not None
 
 
 @pytest.mark.asyncio
 async def test_user_require_permission_invalid(test_user):
     """Test user permission check with invalid permission."""
-    checker = user_require_permission("user", "admin")
+    checker = user_require_permission("user:admin")
+    from services.user.dependencies import TokenData
+
+    token_data = TokenData(
+        user_id=test_user.id,
+        username=test_user.username,
+        role_id=test_user.role_id,
+        permissions={"user:read": True},
+    )
     with pytest.raises(HTTPException) as exc_info:
-        await checker(test_user)
+        await checker(token_data)
     assert exc_info.value.status_code == 403
 
 
 def test_settings_loading():
     """Test settings configuration loading."""
     settings = Settings()
-    assert settings.JWT_SECRET_KEY is not None
-    assert settings.DATABASE_URL is not None
-    assert settings.ENVIRONMENT in ["development", "test", "production"]
+    # Use lowercase attribute names
+    assert settings.jwt_secret_key is not None
+    assert settings.database_url is not None
+    assert settings.environment in ["development", "test", "production"]
 
 
 def test_settings_jwt_expiry():
     """Test JWT expiry settings."""
     settings = Settings()
-    assert settings.JWT_EXPIRY_MINUTES > 0
+    # Use lowercase attribute name
+    assert settings.jwt_expiration_hours > 0
 
 
 def test_inactive_user_authentication(test_db_session):

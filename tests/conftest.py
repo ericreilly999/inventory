@@ -52,7 +52,6 @@ def test_db_session():
 
     # Create session with autoflush=False for better control
     SessionLocal = sessionmaker(bind=test_engine, autoflush=False)
-    session = SessionLocal()
 
     # Start a transaction
     connection = test_engine.connect()
