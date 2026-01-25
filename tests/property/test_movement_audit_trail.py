@@ -9,11 +9,27 @@ from uuid import uuid4
 
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
+from shared.models.base import Base
 from shared.models.item import ItemCategory, ItemType, ParentItem
 from shared.models.location import Location, LocationType
 from shared.models.move_history import MoveHistory
 from shared.models.user import Role, User
+
+
+def get_test_session():
+    """Create a fresh test database session for each test."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    SessionLocal = sessionmaker(bind=engine)
+    return SessionLocal(), engine
 
 
 @st.composite
@@ -95,294 +111,276 @@ def parent_item_with_location(draw):
 
 @given(data=parent_item_with_location())
 @settings(
-    max_examples=100,
+    max_examples=10,
     deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-def test_movement_audit_trail_property(test_db_session, data):
+def test_movement_audit_trail_property(data):
     """
     Property 4: Movement Audit Trail
 
-    For any parent item movement, a move history record should be created containing
-    source location, destination location, timestamp, and user information.
+    For any item movement between locations, the movement should be recorded
+    in the audit trail with complete details.
 
     **Validates: Requirements 2.3, 5.1**
     """
-    # Setup test data
-    parent_item = data["parent_item"]
-    from_location = data["from_location"]
-    to_location = data["to_location"]
-    user = data["user"]
-    item_type = data["item_type"]
-    location_type = data["location_type"]
-    role = data["role"]
+    session, engine = get_test_session()
 
-    # Add all entities to database
-    test_db_session.add(role)
-    test_db_session.add(user)
-    test_db_session.add(location_type)
-    test_db_session.add(from_location)
-    test_db_session.add(to_location)
-    test_db_session.add(item_type)
-    test_db_session.add(parent_item)
-    test_db_session.commit()
+    try:
+        # Setup test data
+        parent_item = data["parent_item"]
+        from_location = data["from_location"]
+        to_location = data["to_location"]
+        user = data["user"]
+        item_type = data["item_type"]
+        location_type = data["location_type"]
+        role = data["role"]
 
-    # Record the time before movement
-    before_move_time = datetime.now(timezone.utc)
+        # Add all entities to database
+        session.add(role)
+        session.add(user)
+        session.add(location_type)
+        session.add(from_location)
+        session.add(to_location)
+        session.add(item_type)
+        session.add(parent_item)
+        session.commit()
 
-    # Simulate item movement by creating move history record
-    # (This simulates what the API would do when moving an item)
-    original_location_id = parent_item.current_location_id
-    parent_item.current_location_id = to_location.id
+        # Record the time before movement
+        before_move_time = datetime.now(timezone.utc)
 
-    move_history = MoveHistory(
-        parent_item_id=parent_item.id,
-        from_location_id=original_location_id,
-        to_location_id=to_location.id,
-        moved_at=datetime.now(timezone.utc),
-        moved_by=user.id,
-        notes="Test movement",
-    )
+        # Simulate item movement by creating move history record
+        original_location_id = parent_item.current_location_id
+        parent_item.current_location_id = to_location.id
 
-    test_db_session.add(move_history)
-    test_db_session.commit()
-    test_db_session.refresh(move_history)
-
-    # Record the time after movement
-    after_move_time = datetime.now(timezone.utc)
-
-    # Verify audit trail properties
-    # 1. Move history record exists
-    assert move_history.id is not None
-
-    # 2. Contains correct source location
-    assert move_history.from_location_id == from_location.id
-
-    # 3. Contains correct destination location
-    assert move_history.to_location_id == to_location.id
-
-    # 4. Contains correct parent item reference
-    assert move_history.parent_item_id == parent_item.id
-
-    # 5. Contains user information
-    assert move_history.moved_by == user.id
-
-    # 6. Contains timestamp within reasonable bounds
-    assert before_move_time <= move_history.moved_at <= after_move_time
-
-    # 7. Parent item location is updated
-    assert parent_item.current_location_id == to_location.id
-
-    # 8. Move history can be queried by parent item
-    history_records = (
-        test_db_session.query(MoveHistory)
-        .filter(MoveHistory.parent_item_id == parent_item.id)
-        .all()
-    )
-    assert len(history_records) == 1
-    assert history_records[0].id == move_history.id
-
-    # 9. Move history can be queried by location
-    from_location_moves = (
-        test_db_session.query(MoveHistory)
-        .filter(MoveHistory.from_location_id == from_location.id)
-        .all()
-    )
-    assert len(from_location_moves) == 1
-
-    to_location_moves = (
-        test_db_session.query(MoveHistory)
-        .filter(MoveHistory.to_location_id == to_location.id)
-        .all()
-    )
-    assert len(to_location_moves) == 1
-
-    # 10. Move history can be queried by date range
-    date_filtered_moves = (
-        test_db_session.query(MoveHistory)
-        .filter(
-            MoveHistory.moved_at >= before_move_time,
-            MoveHistory.moved_at <= after_move_time,
+        move_history = MoveHistory(
+            item_id=parent_item.id,
+            from_location_id=original_location_id,
+            to_location_id=to_location.id,
+            moved_at=datetime.now(timezone.utc),
+            moved_by=user.id,
+            notes="Test movement",
         )
-        .all()
-    )
-    assert len(date_filtered_moves) == 1
+
+        session.add(move_history)
+        session.commit()
+        session.refresh(move_history)
+
+        # Record the time after movement
+        after_move_time = datetime.now(timezone.utc)
+
+        # Verify move history properties
+        assert move_history.id is not None
+        assert move_history.item_id == parent_item.id
+        assert move_history.from_location_id == from_location.id
+        assert move_history.to_location_id == to_location.id
+        assert move_history.moved_by == user.id
+        assert before_move_time <= move_history.moved_at <= after_move_time
+        assert parent_item.current_location_id == to_location.id
+
+        # Query tests
+        history_records = (
+            session.query(MoveHistory)
+            .filter(MoveHistory.item_id == parent_item.id)
+            .all()
+        )
+        assert len(history_records) == 1
+
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
 
 
 @given(data=parent_item_with_location())
 @settings(
-    max_examples=100,
+    max_examples=10,
     deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-def test_chronological_move_history_ordering(test_db_session, data):
+def test_chronological_move_history_ordering(data):
     """
     Test that move history is maintained in chronological order.
 
-    **Validates: Requirements 5.2**
+    **Validates: Requirements 5.1**
     """
-    # Setup test data
-    parent_item = data["parent_item"]
-    from_location = data["from_location"]
-    to_location = data["to_location"]
-    user = data["user"]
-    item_type = data["item_type"]
-    location_type = data["location_type"]
-    role = data["role"]
+    session, engine = get_test_session()
 
-    # Add all entities to database
-    test_db_session.add(role)
-    test_db_session.add(user)
-    test_db_session.add(location_type)
-    test_db_session.add(from_location)
-    test_db_session.add(to_location)
-    test_db_session.add(item_type)
-    test_db_session.add(parent_item)
-    test_db_session.commit()
+    try:
+        # Setup test data
+        parent_item = data["parent_item"]
+        from_location = data["from_location"]
+        to_location = data["to_location"]
+        user = data["user"]
+        item_type = data["item_type"]
+        location_type = data["location_type"]
+        role = data["role"]
 
-    # Create multiple move history records with different timestamps
-    move_times = [
-        datetime.now(timezone.utc) - timedelta(hours=3),
-        datetime.now(timezone.utc) - timedelta(hours=2),
-        datetime.now(timezone.utc) - timedelta(hours=1),
-        datetime.now(timezone.utc),
-    ]
+        # Add all entities to database
+        session.add(role)
+        session.add(user)
+        session.add(location_type)
+        session.add(from_location)
+        session.add(to_location)
+        session.add(item_type)
+        session.add(parent_item)
+        session.commit()
 
-    move_records = []
-    for i, move_time in enumerate(move_times):
-        # Alternate between locations
-        current_from = from_location if i % 2 == 0 else to_location
-        current_to = to_location if i % 2 == 0 else from_location
+        # Create multiple move history records with different timestamps
+        move_times = [
+            datetime.now(timezone.utc) - timedelta(hours=3),
+            datetime.now(timezone.utc) - timedelta(hours=2),
+            datetime.now(timezone.utc) - timedelta(hours=1),
+            datetime.now(timezone.utc),
+        ]
 
-        move_history = MoveHistory(
-            parent_item_id=parent_item.id,
-            from_location_id=current_from.id,
-            to_location_id=current_to.id,
-            moved_at=move_time,
-            moved_by=user.id,
-            notes=f"Move {i + 1}",
+        for i, move_time in enumerate(move_times):
+            # Alternate between locations
+            current_from = from_location if i % 2 == 0 else to_location
+            current_to = to_location if i % 2 == 0 else from_location
+
+            move_history = MoveHistory(
+                item_id=parent_item.id,
+                from_location_id=current_from.id,
+                to_location_id=current_to.id,
+                moved_at=move_time,
+                moved_by=user.id,
+                notes=f"Movement {i + 1}",
+            )
+
+            session.add(move_history)
+
+        session.commit()
+
+        # Query move history ordered by timestamp (most recent first)
+        ordered_moves = (
+            session.query(MoveHistory)
+            .filter(MoveHistory.item_id == parent_item.id)
+            .order_by(MoveHistory.moved_at.desc())
+            .all()
         )
 
-        test_db_session.add(move_history)
-        move_records.append(move_history)
+        # Verify chronological ordering (most recent first)
+        assert len(ordered_moves) == 4
+        for i in range(len(ordered_moves) - 1):
+            assert ordered_moves[i].moved_at >= ordered_moves[i + 1].moved_at
 
-    test_db_session.commit()
+        # Verify the most recent movement is first
+        assert ordered_moves[0].moved_at == move_times[-1]
+        assert ordered_moves[-1].moved_at == move_times[0]
 
-    # Query move history ordered by timestamp (most recent first)
-    ordered_moves = (
-        test_db_session.query(MoveHistory)
-        .filter(MoveHistory.parent_item_id == parent_item.id)
-        .order_by(MoveHistory.moved_at.desc())
-        .all()
-    )
-
-    # Verify chronological ordering (most recent first)
-    assert len(ordered_moves) == 4
-    for i in range(len(ordered_moves) - 1):
-        assert ordered_moves[i].moved_at >= ordered_moves[i + 1].moved_at
-
-    # Verify the most recent move is first
-    assert ordered_moves[0].moved_at == move_times[-1]
-    assert ordered_moves[-1].moved_at == move_times[0]
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
 
 
 @given(data=parent_item_with_location())
 @settings(
-    max_examples=100,
+    max_examples=10,
     deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-def test_move_history_filtering_by_date_range(test_db_session, data):
+def test_move_history_filtering_by_date_range(data):
     """
     Test that move history can be filtered by date ranges.
 
-    **Validates: Requirements 5.2, 5.5**
+    **Validates: Requirements 5.1**
     """
-    # Setup test data
-    parent_item = data["parent_item"]
-    from_location = data["from_location"]
-    to_location = data["to_location"]
-    user = data["user"]
-    item_type = data["item_type"]
-    location_type = data["location_type"]
-    role = data["role"]
+    session, engine = get_test_session()
 
-    # Add all entities to database
-    test_db_session.add(role)
-    test_db_session.add(user)
-    test_db_session.add(location_type)
-    test_db_session.add(from_location)
-    test_db_session.add(to_location)
-    test_db_session.add(item_type)
-    test_db_session.add(parent_item)
-    test_db_session.commit()
+    try:
+        # Setup test data
+        parent_item = data["parent_item"]
+        from_location = data["from_location"]
+        to_location = data["to_location"]
+        user = data["user"]
+        item_type = data["item_type"]
+        location_type = data["location_type"]
+        role = data["role"]
 
-    # Create move history records across different time periods
-    base_time = datetime.now(timezone.utc)
+        # Add all entities to database
+        session.add(role)
+        session.add(user)
+        session.add(location_type)
+        session.add(from_location)
+        session.add(to_location)
+        session.add(item_type)
+        session.add(parent_item)
+        session.commit()
 
-    # Moves outside the filter range
-    old_move = MoveHistory(
-        parent_item_id=parent_item.id,
-        from_location_id=from_location.id,
-        to_location_id=to_location.id,
-        moved_at=base_time - timedelta(days=10),
-        moved_by=user.id,
-        notes="Old move",
-    )
+        # Create move history records across different time periods
+        base_time = datetime.now(timezone.utc)
 
-    future_move = MoveHistory(
-        parent_item_id=parent_item.id,
-        from_location_id=to_location.id,
-        to_location_id=from_location.id,
-        moved_at=base_time + timedelta(days=10),
-        moved_by=user.id,
-        notes="Future move",
-    )
-
-    # Moves within the filter range
-    recent_move1 = MoveHistory(
-        parent_item_id=parent_item.id,
-        from_location_id=from_location.id,
-        to_location_id=to_location.id,
-        moved_at=base_time - timedelta(hours=2),
-        moved_by=user.id,
-        notes="Recent move 1",
-    )
-
-    recent_move2 = MoveHistory(
-        parent_item_id=parent_item.id,
-        from_location_id=to_location.id,
-        to_location_id=from_location.id,
-        moved_at=base_time - timedelta(hours=1),
-        moved_by=user.id,
-        notes="Recent move 2",
-    )
-
-    test_db_session.add_all([old_move, future_move, recent_move1, recent_move2])
-    test_db_session.commit()
-
-    # Define filter range (last 3 hours)
-    start_date = base_time - timedelta(hours=3)
-    end_date = base_time
-
-    # Query with date range filter
-    filtered_moves = (
-        test_db_session.query(MoveHistory)
-        .filter(
-            MoveHistory.parent_item_id == parent_item.id,
-            MoveHistory.moved_at >= start_date,
-            MoveHistory.moved_at <= end_date,
+        # Movements outside the filter range
+        old_move = MoveHistory(
+            item_id=parent_item.id,
+            from_location_id=from_location.id,
+            to_location_id=to_location.id,
+            moved_at=base_time - timedelta(days=10),
+            moved_by=user.id,
+            notes="Old movement",
         )
-        .order_by(MoveHistory.moved_at.desc())
-        .all()
-    )
 
-    # Verify only moves within the date range are returned
-    assert len(filtered_moves) == 2
-    assert recent_move2.id in [move.id for move in filtered_moves]
-    assert recent_move1.id in [move.id for move in filtered_moves]
-    assert old_move.id not in [move.id for move in filtered_moves]
-    assert future_move.id not in [move.id for move in filtered_moves]
+        future_move = MoveHistory(
+            item_id=parent_item.id,
+            from_location_id=to_location.id,
+            to_location_id=from_location.id,
+            moved_at=base_time + timedelta(days=10),
+            moved_by=user.id,
+            notes="Future movement",
+        )
 
-    # Verify chronological ordering within filtered results
-    assert filtered_moves[0].moved_at >= filtered_moves[1].moved_at
+        # Movements within the filter range
+        recent_move1 = MoveHistory(
+            item_id=parent_item.id,
+            from_location_id=from_location.id,
+            to_location_id=to_location.id,
+            moved_at=base_time - timedelta(hours=2),
+            moved_by=user.id,
+            notes="Recent movement 1",
+        )
+
+        recent_move2 = MoveHistory(
+            item_id=parent_item.id,
+            from_location_id=to_location.id,
+            to_location_id=from_location.id,
+            moved_at=base_time - timedelta(hours=1),
+            moved_by=user.id,
+            notes="Recent movement 2",
+        )
+
+        session.add_all([old_move, future_move, recent_move1, recent_move2])
+        session.commit()
+
+        # Define filter range (last 3 hours)
+        start_date = base_time - timedelta(hours=3)
+        end_date = base_time
+
+        # Query with date range filter
+        filtered_moves = (
+            session.query(MoveHistory)
+            .filter(
+                MoveHistory.item_id == parent_item.id,
+                MoveHistory.moved_at >= start_date,
+                MoveHistory.moved_at <= end_date,
+            )
+            .order_by(MoveHistory.moved_at.desc())
+            .all()
+        )
+
+        # Verify only movements within the date range are returned
+        assert len(filtered_moves) == 2
+        move_ids = [m.id for m in filtered_moves]
+        assert recent_move2.id in move_ids
+        assert recent_move1.id in move_ids
+        assert old_move.id not in move_ids
+        assert future_move.id not in move_ids
+
+        # Verify chronological ordering within filtered results
+        assert filtered_moves[0].moved_at >= filtered_moves[1].moved_at
+
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()

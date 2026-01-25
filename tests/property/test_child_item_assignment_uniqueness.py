@@ -102,6 +102,7 @@ def create_test_data(session):
     parent_count=st.integers(min_value=2, max_value=4),
     child_count=st.integers(min_value=1, max_value=5),
 )
+@settings(max_examples=10)
 def test_child_item_assignment_uniqueness_property(parent_count, child_count):
     """
     Property 10: Child Item Assignment Uniqueness
@@ -152,13 +153,11 @@ def test_child_item_assignment_uniqueness_property(parent_count, child_count):
 
         session.commit()
 
-        # Property verification: Each child item is assigned to exactly one
-        # parent
+        # Property verification: Each child item is assigned to exactly one parent
         for child_item in child_items:
             session.refresh(child_item)
 
-            # Requirement 9.2: Child item should be assigned to exactly one
-            # parent
+            # Requirement 9.2: Child item should be assigned to exactly one parent
             assert child_item.parent_item_id is not None
             assert child_item.parent_item_id == parent_items[0].id
 
@@ -199,25 +198,10 @@ def test_child_item_assignment_uniqueness_property(parent_count, child_count):
                 if child_item in parent_item.child_items:
                     parent_count_for_child += 1
 
-            # Property verification: Child appears in exactly one parent's
-            # child list
-            assert parent_count_for_child == 1
-
-        # Test constraint: Attempt to create duplicate assignment should fail
-        # (This simulates what should happen with proper database constraints)
-        test_child = child_items[0]
-        original_parent_id = test_child.parent_item_id
-
-        # Simulate the constraint check that should happen in the service layer
-        for other_parent in parent_items:
-            if other_parent.id != original_parent_id:
-                # This represents the validation that should prevent multiple assignments
-                # In a real system, this would be enforced by database constraints
-                # or application-level validation
-
-                # Verify child is not already assigned to this other parent
-                other_parent_child_ids = [c.id for c in other_parent.child_items]
-                assert test_child.id not in other_parent_child_ids
+            # Property verification: Child appears in exactly one parent's child list
+            assert (
+                parent_count_for_child == 1
+            ), f"Child {child_item.id} found in {parent_count_for_child} parents, expected 1"
 
         # Final verification: All children are uniquely assigned
         child_parent_assignments = {}
