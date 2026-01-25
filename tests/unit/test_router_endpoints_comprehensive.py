@@ -42,9 +42,14 @@ def reporting_client():
 @pytest.fixture
 def admin_user_with_token(test_db_session):
     """Create admin user and return user with token."""
+    # Use unique names to avoid conflicts
+    import uuid
+
+    unique_id = uuid.uuid4().hex[:8]
+
     role = Role(
         id=uuid4(),
-        name="admin",
+        name=f"admin_{unique_id}",
         description="Administrator",
         permissions={
             "*": ["read", "write", "admin"],
@@ -55,21 +60,21 @@ def admin_user_with_token(test_db_session):
         },
     )
     test_db_session.add(role)
-    test_db_session.commit()
+    test_db_session.flush()
 
     user = User(
         id=uuid4(),
-        username="admin",
-        email="admin@test.com",
+        username=f"admin_{unique_id}",
+        email=f"admin_{unique_id}@test.com",
         password_hash=hash_password("admin123"),
         role_id=role.id,
         active=True,
     )
     test_db_session.add(user)
-    test_db_session.commit()
+    test_db_session.flush()
 
     token = create_access_token(
-        data={"sub": str(user.id), "username": user.username, "role": "admin"}
+        data={"sub": str(user.id), "username": user.username, "role": role.name}
     )
     return {"user": user, "token": token, "role": role}
 
@@ -79,28 +84,39 @@ def test_data(test_db_session, admin_user_with_token):
     """Create comprehensive test data."""
     user = admin_user_with_token["user"]
 
+    # Use unique names to avoid conflicts
+    import uuid
+
+    unique_id = uuid.uuid4().hex[:8]
+
     # Location type
-    loc_type = LocationType(id=uuid4(), name="Warehouse", description="Storage")
+    loc_type = LocationType(
+        id=uuid4(), name=f"Warehouse_{unique_id}", description="Storage"
+    )
     test_db_session.add(loc_type)
 
     # Location
     location = Location(
         id=uuid4(),
-        name="Main Warehouse",
+        name=f"Main Warehouse_{unique_id}",
         location_type_id=loc_type.id,
         location_metadata={"capacity": 1000},
     )
     test_db_session.add(location)
 
     # Item types
-    parent_type = ItemType(id=uuid4(), name="Equipment", category=ItemCategory.PARENT)
-    child_type = ItemType(id=uuid4(), name="Component", category=ItemCategory.CHILD)
+    parent_type = ItemType(
+        id=uuid4(), name=f"Equipment_{unique_id}", category=ItemCategory.PARENT
+    )
+    child_type = ItemType(
+        id=uuid4(), name=f"Component_{unique_id}", category=ItemCategory.CHILD
+    )
     test_db_session.add_all([parent_type, child_type])
 
     # Parent item
     parent_item = ParentItem(
         id=uuid4(),
-        name="Server",
+        name=f"Server_{unique_id}",
         item_type_id=parent_type.id,
         current_location_id=location.id,
         created_by=user.id,
@@ -110,14 +126,14 @@ def test_data(test_db_session, admin_user_with_token):
     # Child item
     child_item = ChildItem(
         id=uuid4(),
-        name="Power Supply",
+        name=f"Power Supply_{unique_id}",
         item_type_id=child_type.id,
         parent_item_id=parent_item.id,
         created_by=user.id,
     )
     test_db_session.add(child_item)
 
-    test_db_session.commit()
+    test_db_session.flush()
 
     return {
         "location_type": loc_type,

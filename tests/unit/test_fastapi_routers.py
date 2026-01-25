@@ -42,28 +42,33 @@ def reporting_client():
 @pytest.fixture
 def admin_token(test_db_session):
     """Create admin user and return JWT token."""
+    # Use unique role name to avoid conflicts
+    import uuid
+
+    role_name = f"admin_{uuid.uuid4().hex[:8]}"
+
     role = Role(
         id=uuid4(),
-        name="admin",
+        name=role_name,
         description="Administrator",
         permissions={"*": ["read", "write", "admin"]},
     )
     test_db_session.add(role)
-    test_db_session.commit()
+    test_db_session.flush()
 
     user = User(
         id=uuid4(),
-        username="admin",
-        email="admin@test.com",
+        username=f"admin_{uuid.uuid4().hex[:8]}",
+        email=f"admin_{uuid.uuid4().hex[:8]}@test.com",
         password_hash=hash_password("admin123"),
         role_id=role.id,
         active=True,
     )
     test_db_session.add(user)
-    test_db_session.commit()
+    test_db_session.flush()
 
     token = create_access_token(
-        data={"sub": str(user.id), "username": user.username, "role": "admin"}
+        data={"sub": str(user.id), "username": user.username, "role": role_name}
     )
     return token
 
@@ -77,10 +82,15 @@ def auth_headers(admin_token):
 @pytest.fixture
 def setup_test_data(test_db_session):
     """Setup test data for router tests."""
+    # Use unique names to avoid conflicts
+    import uuid
+
+    unique_id = uuid.uuid4().hex[:8]
+
     # Create role
     role = Role(
         id=uuid4(),
-        name="admin",
+        name=f"admin_{unique_id}",
         description="Admin",
         permissions={"*": ["read", "write", "admin"]},
     )
@@ -89,8 +99,8 @@ def setup_test_data(test_db_session):
     # Create user
     user = User(
         id=uuid4(),
-        username="testuser",
-        email="test@test.com",
+        username=f"testuser_{unique_id}",
+        email=f"test_{unique_id}@test.com",
         password_hash=hash_password("password"),
         role_id=role.id,
         active=True,
@@ -98,27 +108,33 @@ def setup_test_data(test_db_session):
     test_db_session.add(user)
 
     # Create location type
-    loc_type = LocationType(id=uuid4(), name="Warehouse", description="Storage")
+    loc_type = LocationType(
+        id=uuid4(), name=f"Warehouse_{unique_id}", description="Storage"
+    )
     test_db_session.add(loc_type)
 
     # Create location
     location = Location(
         id=uuid4(),
-        name="Main Warehouse",
+        name=f"Main Warehouse_{unique_id}",
         location_type_id=loc_type.id,
         location_metadata={},
     )
     test_db_session.add(location)
 
     # Create item types
-    parent_type = ItemType(id=uuid4(), name="Equipment", category=ItemCategory.PARENT)
-    child_type = ItemType(id=uuid4(), name="Component", category=ItemCategory.CHILD)
+    parent_type = ItemType(
+        id=uuid4(), name=f"Equipment_{unique_id}", category=ItemCategory.PARENT
+    )
+    child_type = ItemType(
+        id=uuid4(), name=f"Component_{unique_id}", category=ItemCategory.CHILD
+    )
     test_db_session.add_all([parent_type, child_type])
 
     # Create parent item
     parent_item = ParentItem(
         id=uuid4(),
-        name="Server",
+        name=f"Server_{unique_id}",
         item_type_id=parent_type.id,
         current_location_id=location.id,
         created_by=user.id,
@@ -128,14 +144,14 @@ def setup_test_data(test_db_session):
     # Create child item
     child_item = ChildItem(
         id=uuid4(),
-        name="Power Supply",
+        name=f"Power Supply_{unique_id}",
         item_type_id=child_type.id,
         parent_item_id=parent_item.id,
         created_by=user.id,
     )
     test_db_session.add(child_item)
 
-    test_db_session.commit()
+    test_db_session.flush()
 
     return {
         "role": role,
