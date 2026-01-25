@@ -177,7 +177,7 @@ def test_reporting_health(reporting_client):
 # Test Inventory Item Types
 def test_list_item_types_endpoint(inventory_client, setup_test_data, auth_headers):
     """Test listing item types via API."""
-    response = inventory_client.get("/api/v1/item-types", headers=auth_headers)
+    response = inventory_client.get("/api/v1/items/types", headers=auth_headers)
     assert response.status_code in [200, 401]  # May need auth
 
 
@@ -189,7 +189,7 @@ def test_create_item_type_endpoint(inventory_client, auth_headers):
         "category": "parent",
     }
     response = inventory_client.post(
-        "/api/v1/item-types", json=data, headers=auth_headers
+        "/api/v1/items/types", json=data, headers=auth_headers
     )
     assert response.status_code in [200, 201, 401, 422]
 
@@ -197,7 +197,7 @@ def test_create_item_type_endpoint(inventory_client, auth_headers):
 # Test Inventory Parent Items
 def test_list_parent_items_endpoint(inventory_client, setup_test_data, auth_headers):
     """Test listing parent items via API."""
-    response = inventory_client.get("/api/v1/parent-items", headers=auth_headers)
+    response = inventory_client.get("/api/v1/items/parent", headers=auth_headers)
     assert response.status_code in [200, 401]
 
 
@@ -209,7 +209,7 @@ def test_create_parent_item_endpoint(inventory_client, setup_test_data, auth_hea
         "current_location_id": str(setup_test_data["location"].id),
     }
     response = inventory_client.post(
-        "/api/v1/parent-items", json=data, headers=auth_headers
+        "/api/v1/items/parent", json=data, headers=auth_headers
     )
     assert response.status_code in [200, 201, 401, 422]
 
@@ -217,7 +217,7 @@ def test_create_parent_item_endpoint(inventory_client, setup_test_data, auth_hea
 # Test Inventory Child Items
 def test_list_child_items_endpoint(inventory_client, setup_test_data, auth_headers):
     """Test listing child items via API."""
-    response = inventory_client.get("/api/v1/child-items", headers=auth_headers)
+    response = inventory_client.get("/api/v1/items/child", headers=auth_headers)
     assert response.status_code in [200, 401]
 
 
@@ -229,7 +229,7 @@ def test_create_child_item_endpoint(inventory_client, setup_test_data, auth_head
         "parent_item_id": str(setup_test_data["parent_item"].id),
     }
     response = inventory_client.post(
-        "/api/v1/child-items", json=data, headers=auth_headers
+        "/api/v1/items/child", json=data, headers=auth_headers
     )
     assert response.status_code in [200, 201, 401, 422]
 
@@ -237,7 +237,7 @@ def test_create_child_item_endpoint(inventory_client, setup_test_data, auth_head
 # Test Location Types
 def test_list_location_types_endpoint(location_client, setup_test_data, auth_headers):
     """Test listing location types via API."""
-    response = location_client.get("/api/v1/location-types", headers=auth_headers)
+    response = location_client.get("/api/v1/locations/types", headers=auth_headers)
     assert response.status_code in [200, 401]
 
 
@@ -245,7 +245,7 @@ def test_create_location_type_endpoint(location_client, auth_headers):
     """Test creating location type via API."""
     data = {"name": "Office", "description": "Office space"}
     response = location_client.post(
-        "/api/v1/location-types", json=data, headers=auth_headers
+        "/api/v1/locations/types", json=data, headers=auth_headers
     )
     assert response.status_code in [200, 201, 401, 422]
 
@@ -253,7 +253,7 @@ def test_create_location_type_endpoint(location_client, auth_headers):
 # Test Locations
 def test_list_locations_endpoint(location_client, setup_test_data, auth_headers):
     """Test listing locations via API."""
-    response = location_client.get("/api/v1/locations", headers=auth_headers)
+    response = location_client.get("/api/v1/locations/locations", headers=auth_headers)
     assert response.status_code in [200, 401]
 
 
@@ -265,7 +265,7 @@ def test_create_location_endpoint(location_client, setup_test_data, auth_headers
         "location_metadata": {},
     }
     response = location_client.post(
-        "/api/v1/locations", json=data, headers=auth_headers
+        "/api/v1/locations/locations", json=data, headers=auth_headers
     )
     assert response.status_code in [200, 201, 401, 422]
 
@@ -356,14 +356,16 @@ def test_movement_history_endpoint(reporting_client, setup_test_data, auth_heade
 def test_invalid_item_type_id(inventory_client, auth_headers):
     """Test invalid item type ID."""
     response = inventory_client.get(
-        f"/api/v1/item-types/{uuid4()}", headers=auth_headers
+        f"/api/v1/items/types/{uuid4()}", headers=auth_headers
     )
     assert response.status_code in [404, 401]
 
 
 def test_invalid_location_id(location_client, auth_headers):
     """Test invalid location ID."""
-    response = location_client.get(f"/api/v1/locations/{uuid4()}", headers=auth_headers)
+    response = location_client.get(
+        f"/api/v1/locations/locations/{uuid4()}", headers=auth_headers
+    )
     assert response.status_code in [404, 401]
 
 
@@ -377,7 +379,7 @@ def test_invalid_user_id(user_client, auth_headers):
 def test_item_types_pagination(inventory_client, setup_test_data, auth_headers):
     """Test item types pagination."""
     response = inventory_client.get(
-        "/api/v1/item-types?skip=0&limit=10", headers=auth_headers
+        "/api/v1/items/types?skip=0&limit=10", headers=auth_headers
     )
     assert response.status_code in [200, 401]
 
@@ -385,7 +387,7 @@ def test_item_types_pagination(inventory_client, setup_test_data, auth_headers):
 def test_locations_pagination(location_client, setup_test_data, auth_headers):
     """Test locations pagination."""
     response = location_client.get(
-        "/api/v1/locations?skip=0&limit=10", headers=auth_headers
+        "/api/v1/locations/locations?skip=0&limit=10", headers=auth_headers
     )
     assert response.status_code in [200, 401]
 
@@ -402,7 +404,7 @@ def test_update_item_type(inventory_client, setup_test_data, auth_headers):
     item_type_id = setup_test_data["parent_type"].id
     data = {"description": "Updated description"}
     response = inventory_client.patch(
-        f"/api/v1/item-types/{item_type_id}", json=data, headers=auth_headers
+        f"/api/v1/items/types/{item_type_id}", json=data, headers=auth_headers
     )
     assert response.status_code in [200, 401, 404]
 
@@ -412,7 +414,7 @@ def test_update_location(location_client, setup_test_data, auth_headers):
     location_id = setup_test_data["location"].id
     data = {"description": "Updated location"}
     response = location_client.patch(
-        f"/api/v1/locations/{location_id}", json=data, headers=auth_headers
+        f"/api/v1/locations/locations/{location_id}", json=data, headers=auth_headers
     )
     assert response.status_code in [200, 401, 404]
 
@@ -431,7 +433,7 @@ def test_update_user(user_client, setup_test_data, auth_headers):
 def test_delete_item_type(inventory_client, auth_headers):
     """Test deleting item type."""
     response = inventory_client.delete(
-        f"/api/v1/item-types/{uuid4()}", headers=auth_headers
+        f"/api/v1/items/types/{uuid4()}", headers=auth_headers
     )
     assert response.status_code in [200, 204, 401, 404]
 
@@ -439,7 +441,7 @@ def test_delete_item_type(inventory_client, auth_headers):
 def test_delete_location(location_client, auth_headers):
     """Test deleting location."""
     response = location_client.delete(
-        f"/api/v1/locations/{uuid4()}", headers=auth_headers
+        f"/api/v1/locations/locations/{uuid4()}", headers=auth_headers
     )
     assert response.status_code in [200, 204, 401, 404]
 
@@ -473,7 +475,7 @@ def test_list_movements(inventory_client, setup_test_data, auth_headers):
 def test_search_items(inventory_client, setup_test_data, auth_headers):
     """Test searching items."""
     response = inventory_client.get(
-        "/api/v1/parent-items?search=Server", headers=auth_headers
+        "/api/v1/items/parent?search=Server", headers=auth_headers
     )
     assert response.status_code in [200, 401]
 
@@ -482,7 +484,7 @@ def test_filter_by_location(inventory_client, setup_test_data, auth_headers):
     """Test filtering by location."""
     location_id = setup_test_data["location"].id
     response = inventory_client.get(
-        f"/api/v1/parent-items?location_id={location_id}", headers=auth_headers
+        f"/api/v1/items/parent?location_id={location_id}", headers=auth_headers
     )
     assert response.status_code in [200, 401]
 
@@ -491,7 +493,7 @@ def test_filter_by_type(inventory_client, setup_test_data, auth_headers):
     """Test filtering by type."""
     type_id = setup_test_data["parent_type"].id
     response = inventory_client.get(
-        f"/api/v1/parent-items?item_type_id={type_id}", headers=auth_headers
+        f"/api/v1/items/parent?item_type_id={type_id}", headers=auth_headers
     )
     assert response.status_code in [200, 401]
 
@@ -534,13 +536,13 @@ def test_missing_required_fields(inventory_client, auth_headers):
 # Test Unauthorized Access
 def test_unauthorized_access_inventory(inventory_client):
     """Test unauthorized access to inventory."""
-    response = inventory_client.get("/api/v1/item-types")
+    response = inventory_client.get("/api/v1/items/types")
     assert response.status_code in [401, 403]
 
 
 def test_unauthorized_access_location(location_client):
     """Test unauthorized access to location."""
-    response = location_client.get("/api/v1/locations")
+    response = location_client.get("/api/v1/locations/locations")
     assert response.status_code in [401, 403]
 
 
@@ -553,12 +555,12 @@ def test_unauthorized_access_user(user_client):
 # Test CORS and Headers
 def test_cors_headers(inventory_client):
     """Test CORS headers."""
-    response = inventory_client.options("/api/v1/item-types")
+    response = inventory_client.options("/api/v1/items/types")
     assert response.status_code in [200, 204]
 
 
 def test_content_type_json(inventory_client, auth_headers):
     """Test content type JSON."""
-    response = inventory_client.get("/api/v1/item-types", headers=auth_headers)
+    response = inventory_client.get("/api/v1/items/types", headers=auth_headers)
     if response.status_code == 200:
         assert "application/json" in response.headers.get("content-type", "")

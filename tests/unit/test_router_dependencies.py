@@ -93,6 +93,9 @@ def test_verify_password_invalid():
 @pytest.mark.asyncio
 async def test_inventory_get_current_user_valid(test_db_session, test_user):
     """Test getting current user with valid token."""
+    # Expire all to force reload from DB after flush
+    test_db_session.expire_all()
+
     # Create TokenData object directly since we're testing the function,
     # not the endpoint
     from services.inventory.dependencies import TokenData
@@ -166,6 +169,9 @@ async def test_inventory_get_current_user_nonexistent(test_db_session):
 @pytest.mark.asyncio
 async def test_location_get_current_user_valid(test_db_session, test_user):
     """Test location service get current user."""
+    # Expire all to force reload from DB after flush
+    test_db_session.expire_all()
+
     from services.location.dependencies import TokenData
 
     token_data = TokenData(
@@ -182,6 +188,9 @@ async def test_location_get_current_user_valid(test_db_session, test_user):
 @pytest.mark.asyncio
 async def test_user_get_current_user_valid(test_db_session, test_user):
     """Test user service get current user."""
+    # Expire all to force reload from DB after flush
+    test_db_session.expire_all()
+
     from services.user.dependencies import TokenData
 
     token_data = TokenData(
@@ -198,6 +207,9 @@ async def test_user_get_current_user_valid(test_db_session, test_user):
 @pytest.mark.asyncio
 async def test_reporting_get_current_user_valid(test_db_session, test_user):
     """Test reporting service get current user."""
+    # Expire all to force reload from DB after flush
+    test_db_session.expire_all()
+
     from services.reporting.dependencies import TokenData
 
     token_data = TokenData(
