@@ -837,7 +837,14 @@ class TestAssignmentHistoryIntegration:
         assert assignment_history.to_parent_item_id == parent_item2.id
         assert assignment_history.assigned_by == user.id
         assert assignment_history.notes == "Test reassignment"
-        assert assignment_history.assigned_at == assignment_time
+        # Handle timezone-aware vs timezone-naive datetime comparison
+        if assignment_history.assigned_at.tzinfo is None:
+            assert (
+                assignment_history.assigned_at.replace(tzinfo=timezone.utc)
+                == assignment_time
+            )
+        else:
+            assert assignment_history.assigned_at == assignment_time
 
     def test_assignment_history_querying(self, test_db_session):
         """Test querying assignment history by various criteria."""
