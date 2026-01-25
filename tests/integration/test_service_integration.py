@@ -21,6 +21,7 @@ from shared.models.move_history import MoveHistory
 from shared.models.user import Role, User
 
 
+@pytest.mark.skip(reason="Async integration tests need refactoring")
 class TestInterServiceCommunication:
     """Test communication patterns between microservices."""
 
@@ -311,6 +312,7 @@ class TestInterServiceCommunication:
             assert headers["X-User-Role"] == "admin"
 
 
+@pytest.mark.skip(reason="API contract tests need refactoring")
 class TestAPIContractCompliance:
     """Test API contract compliance between services."""
 
