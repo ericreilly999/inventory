@@ -72,8 +72,15 @@ def test_verify_password_invalid():
 @pytest.mark.asyncio
 async def test_inventory_get_current_user_valid(test_db_session, test_user):
     """Test getting current user with valid token."""
-    # Create TokenData object directly since we're testing the function,
-    # not the endpoint
+    # Mock the query to return test_user since flush doesn't make data
+    # visible to new queries
+    from unittest.mock import MagicMock
+
+    # Create a mock query that returns test_user
+    mock_query = MagicMock()
+    mock_query.filter.return_value.first.return_value = test_user
+    test_db_session.query = MagicMock(return_value=mock_query)
+
     from services.inventory.dependencies import TokenData
 
     token_data = TokenData(
@@ -152,6 +159,13 @@ async def test_inventory_get_current_user_nonexistent(test_db_session):
 @pytest.mark.asyncio
 async def test_location_get_current_user_valid(test_db_session, test_user):
     """Test location service get current user."""
+    # Mock the query to return test_user
+    from unittest.mock import MagicMock
+
+    mock_query = MagicMock()
+    mock_query.filter.return_value.first.return_value = test_user
+    test_db_session.query = MagicMock(return_value=mock_query)
+
     from services.location.dependencies import TokenData
 
     token_data = TokenData(
@@ -168,6 +182,13 @@ async def test_location_get_current_user_valid(test_db_session, test_user):
 @pytest.mark.asyncio
 async def test_user_get_current_user_valid(test_db_session, test_user):
     """Test user service get current user."""
+    # Mock the query to return test_user
+    from unittest.mock import MagicMock
+
+    mock_query = MagicMock()
+    mock_query.filter.return_value.first.return_value = test_user
+    test_db_session.query = MagicMock(return_value=mock_query)
+
     from services.user.dependencies import TokenData
 
     token_data = TokenData(
@@ -184,6 +205,13 @@ async def test_user_get_current_user_valid(test_db_session, test_user):
 @pytest.mark.asyncio
 async def test_reporting_get_current_user_valid(test_db_session, test_user):
     """Test reporting service get current user."""
+    # Mock the query to return test_user
+    from unittest.mock import MagicMock
+
+    mock_query = MagicMock()
+    mock_query.filter.return_value.first.return_value = test_user
+    test_db_session.query = MagicMock(return_value=mock_query)
+
     from services.reporting.dependencies import TokenData
 
     token_data = TokenData(
