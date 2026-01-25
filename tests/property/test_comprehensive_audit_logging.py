@@ -105,7 +105,6 @@ class TestComprehensiveAuditLoggingProperties:
         with patch(
             "services.api_gateway.middleware.auth_middleware.logger"
         ) as mock_logger:
-
             if scenario_type == "successful_request":
                 # Mock successful microservice response
                 with patch("httpx.AsyncClient.request") as mock_request:

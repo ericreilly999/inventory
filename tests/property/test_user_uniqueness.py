@@ -138,7 +138,6 @@ class TestUserUniquenessProperties:
                 user2_data["username"] != user1_data["username"]
                 and user2_data["email"] != user1_data["email"]
             ):
-
                 user2 = User(
                     username=user2_data["username"],
                     email=user2_data["email"],

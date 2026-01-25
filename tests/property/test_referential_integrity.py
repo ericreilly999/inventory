@@ -128,9 +128,13 @@ def test_referential_integrity_validation_property(location_name, item_name):
         session = SessionLocal()
 
         # Create test data
-        user, location, location_type, parent_item_type, child_item_type = (
-            create_test_data(session)
-        )
+        (
+            user,
+            location,
+            location_type,
+            parent_item_type,
+            child_item_type,
+        ) = create_test_data(session)
 
         # Test 1: Creating location with non-existent location_type should fail
         non_existent_location_type_id = uuid.uuid4()
