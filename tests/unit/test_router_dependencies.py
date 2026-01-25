@@ -1,11 +1,9 @@
 """Tests for router dependencies and authentication."""
 
-from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException
-from jose import jwt
 
 from services.inventory.dependencies import (
     get_current_user as inventory_get_current_user,
@@ -13,7 +11,9 @@ from services.inventory.dependencies import (
 from services.inventory.dependencies import (
     require_permission as inventory_require_permission,
 )
-from services.location.dependencies import get_current_user as location_get_current_user
+from services.location.dependencies import (
+    get_current_user as location_get_current_user,
+)
 from services.location.dependencies import (
     require_permission as location_require_permission,
 )
@@ -21,7 +21,9 @@ from services.reporting.dependencies import (
     get_current_user as reporting_get_current_user,
 )
 from services.user.dependencies import get_current_user as user_get_current_user
-from services.user.dependencies import require_permission as user_require_permission
+from services.user.dependencies import (
+    require_permission as user_require_permission,
+)
 from shared.auth.utils import create_access_token, hash_password, verify_password
 from shared.config.settings import Settings
 from shared.models.user import Role, User
@@ -125,10 +127,13 @@ async def test_inventory_get_current_user_invalid_token(test_db_session):
 
 
 @pytest.mark.asyncio
-async def test_inventory_get_current_user_expired_token(test_db_session, test_user):
+async def test_inventory_get_current_user_expired_token(
+    test_db_session, test_user
+):
     """Test getting current user with expired token."""
-    # This test is about token expiry, which is handled by get_current_user_token
-    # For get_current_user, we test with inactive user instead
+    # This test is about token expiry, which is handled by
+    # get_current_user_token. For get_current_user, we test with
+    # inactive user instead
     test_user.active = False
     test_db_session.commit()
 
