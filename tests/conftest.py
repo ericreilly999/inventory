@@ -7,12 +7,12 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-# Import Base first
-from shared.models.base import Base
-
 # Import all models at module level to ensure they are registered
 # Import in dependency order to avoid foreign key issues
 from shared.models.assignment_history import AssignmentHistory  # noqa: F401
+
+# Import Base first
+from shared.models.base import Base
 from shared.models.item import ChildItem, ItemType, ParentItem  # noqa: F401
 from shared.models.location import Location, LocationType  # noqa: F401
 from shared.models.move_history import MoveHistory  # noqa: F401
