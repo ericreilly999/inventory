@@ -35,7 +35,7 @@ def test_user(test_db_session):
         permissions={"inventory": ["read", "write"], "location": ["read"]},
     )
     test_db_session.add(role)
-    test_db_session.commit()
+    test_db_session.flush()  # Make role visible in transaction
 
     user = User(
         id=uuid4(),
@@ -46,7 +46,9 @@ def test_user(test_db_session):
         active=True,
     )
     test_db_session.add(user)
-    test_db_session.commit()
+    test_db_session.flush()  # Make user visible in transaction
+    test_db_session.refresh(user)  # Refresh to load relationships
+    test_db_session.refresh(role)  # Refresh role too
     return user
 
 
@@ -224,7 +226,8 @@ async def test_inventory_require_permission_valid(test_user):
         role_id=test_user.role_id,
         permissions={"inventory:read": True, "inventory:write": True},
     )
-    result = await checker(token_data)
+    # checker is a dependency function, call it directly (not async)
+    result = checker(token_data)
     assert result is not None
 
 
@@ -242,7 +245,7 @@ async def test_inventory_require_permission_invalid(test_user):
         permissions={"inventory:read": True, "inventory:write": True},
     )
     with pytest.raises(HTTPException) as exc_info:
-        await checker(token_data)
+        checker(token_data)
     assert exc_info.value.status_code == 403
 
 
@@ -258,7 +261,7 @@ async def test_location_require_permission_valid(test_user):
         role_id=test_user.role_id,
         permissions={"location:read": True},
     )
-    result = await checker(token_data)
+    result = checker(token_data)
     assert result is not None
 
 
@@ -275,7 +278,7 @@ async def test_location_require_permission_invalid(test_user):
         permissions={"location:read": True},
     )
     with pytest.raises(HTTPException) as exc_info:
-        await checker(token_data)
+        checker(token_data)
     assert exc_info.value.status_code == 403
 
 
@@ -293,7 +296,7 @@ async def test_user_require_permission_valid(test_user):
         role_id=test_user.role_id,
         permissions={"user:read": True},
     )
-    result = await checker(token_data)
+    result = checker(token_data)
     assert result is not None
 
 
@@ -310,7 +313,7 @@ async def test_user_require_permission_invalid(test_user):
         permissions={"user:read": True},
     )
     with pytest.raises(HTTPException) as exc_info:
-        await checker(token_data)
+        checker(token_data)
     assert exc_info.value.status_code == 403
 
 
@@ -339,6 +342,7 @@ def test_inactive_user_authentication(test_db_session):
         permissions={},
     )
     test_db_session.add(role)
+    test_db_session.flush()
 
     inactive_user = User(
         id=uuid4(),
@@ -349,7 +353,7 @@ def test_inactive_user_authentication(test_db_session):
         active=False,
     )
     test_db_session.add(inactive_user)
-    test_db_session.commit()
+    test_db_session.flush()
 
     from services.inventory.dependencies import TokenData
 

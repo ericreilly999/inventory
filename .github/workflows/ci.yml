@@ -138,7 +138,7 @@ jobs:
 
     - name: Run UI tests
       working-directory: services/ui
-      run: npm run test -- --coverage --watchAll=false || echo "Test script not found, skipping"
+      run: npm run test -- --coverage --watchAll=false
 
     - name: Build UI
       working-directory: services/ui
@@ -218,7 +218,19 @@ jobs:
       working-directory: terraform/environments/dev
       run: terraform validate
 
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: us-west-2
+        role-session-name: GitHubActions-TerraformValidation
+      continue-on-error: true
+
     - name: Terraform Plan (Dev)
       working-directory: terraform/environments/dev
-      run: echo "Skipping terraform plan in CI (requires AWS credentials)"
+      run: terraform plan -input=false
       continue-on-error: true
+      env:
+        TF_VAR_environment: dev
+        TF_VAR_aws_region: us-west-2
+        TF_VAR_db_password: dummy-password-for-validation
