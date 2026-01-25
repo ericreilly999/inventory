@@ -40,8 +40,12 @@ app.include_router(
 app.include_router(
     child_items.router, prefix="/api/v1/items/child", tags=["child-items"]
 )
-app.include_router(item_types.router, prefix="/api/v1/items/types", tags=["item-types"])
-app.include_router(movements.router, prefix="/api/v1/movements", tags=["movements"])
+app.include_router(
+    item_types.router, prefix="/api/v1/items/types", tags=["item-types"]
+)
+app.include_router(
+    movements.router, prefix="/api/v1/movements", tags=["movements"]
+)
 
 
 @app.get("/health")

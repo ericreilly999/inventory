@@ -453,9 +453,11 @@ class TestLoadTesting:
 
             if first_third_avg > 0:
                 time_increase_ratio = last_third_avg / first_third_avg
-                assert (
-                    time_increase_ratio < 2.5
-                ), f"Response time increased {time_increase_ratio:.1f}x - possible memory leak"
+                msg = (
+                    f"Response time increased {time_increase_ratio:.1f}x - "
+                    f"possible memory leak"
+                )
+                assert time_increase_ratio < 2.5, msg
 
 
 class TestConcurrencyHandling:
@@ -541,7 +543,8 @@ class TestConcurrencyHandling:
                     results.append({"success": False, "error": str(e)})
 
         # System should handle concurrent updates gracefully
-        # (may reject some due to optimistic locking or return 404 for non-existent item)
+        # (may reject some due to optimistic locking or return 404 for
+        # non-existent item)
         if len(results) > 0:
             non_error_results = [r for r in results if r["success"]]
             # At least some requests should be handled properly

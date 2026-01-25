@@ -84,7 +84,9 @@ async def list_locations_with_item_counts(
             .count()
         )
 
-        location_dict = LocationWithItemsResponse.model_validate(location).model_dump()
+        location_dict = (
+            LocationWithItemsResponse.model_validate(location).model_dump()
+        )
         location_dict["item_count"] = item_count
         result.append(LocationWithItemsResponse(**location_dict))
 
@@ -203,9 +205,13 @@ async def delete_location(
 
     except IntegrityError:
         db.rollback()
+        detail = (
+            "Cannot delete location - it may be referenced by "
+            "existing items or move history"
+        )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Cannot delete location - it may be referenced by existing items or move history",
+            detail=detail,
         )
 
 

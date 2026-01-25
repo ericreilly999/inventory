@@ -55,13 +55,14 @@ def setup_file_logging() -> None:
     access_handler.setLevel(logging.INFO)
 
     # Create formatters
-    json_formatter = logging.Formatter(
-        '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "logger": "%(name)s", "message": "%(message)s", "service": "'
-        + os.getenv("SERVICE_NAME", "unknown")
-        + '", "environment": "'
-        + os.getenv("ENVIRONMENT", "development")
-        + '"}'
+    service_name = os.getenv("SERVICE_NAME", "unknown")
+    environment = os.getenv("ENVIRONMENT", "development")
+    json_format = (
+        '{"timestamp": "%(asctime)s", "level": "%(levelname)s", '
+        '"logger": "%(name)s", "message": "%(message)s", '
+        f'"service": "{service_name}", "environment": "{environment}"}}'
     )
+    json_formatter = logging.Formatter(json_format)
 
     app_handler.setFormatter(json_formatter)
     error_handler.setFormatter(json_formatter)

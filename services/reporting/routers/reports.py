@@ -37,7 +37,9 @@ router = APIRouter()
     "/inventory/status",
     response_model=InventoryStatusReport,
     summary="Get inventory status report",
-    description="Generate a report showing current inventory status by location",
+    description=(
+        "Generate a report showing current inventory status by location"
+    ),
     dependencies=[Depends(require_reports_read)],
 )
 async def get_inventory_status_report(
@@ -176,7 +178,10 @@ async def get_inventory_status_report(
     "/movements/history",
     response_model=MovementHistoryReport,
     summary="Get movement history report",
-    description="Generate a report showing item movement history with optional date filtering",
+    description=(
+        "Generate a report showing item movement history "
+        "with optional date filtering"
+    ),
     dependencies=[Depends(require_reports_read)],
 )
 async def get_movement_history_report(

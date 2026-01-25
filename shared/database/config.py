@@ -22,7 +22,10 @@ from shared.models.base import Base
 # Get database URL directly from environment variable
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://inventory_user:inventory_password@localhost:5432/inventory_management",
+    (
+        "postgresql://inventory_user:inventory_password@"
+        "localhost:5432/inventory_management"
+    ),
 )
 
 print(f"Using DATABASE_URL: {DATABASE_URL}")  # Debug print

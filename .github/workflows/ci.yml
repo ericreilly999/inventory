@@ -220,7 +220,7 @@ jobs:
 
     - name: Terraform Plan (Dev)
       working-directory: terraform/environments/dev
-      run: terraform plan -var-file=terraform.tfvars.example || echo "Terraform plan failed, continuing"
+      run: terraform plan -input=false || echo "Terraform plan failed"
       continue-on-error: true
       env:
         TF_VAR_environment: dev

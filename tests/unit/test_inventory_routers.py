@@ -2,8 +2,7 @@
 
 from uuid import uuid4
 
-import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException  # noqa: F401
 
 from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
 from shared.models.location import Location, LocationType

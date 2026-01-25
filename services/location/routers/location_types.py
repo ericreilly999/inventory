@@ -82,12 +82,13 @@ async def create_location_type(
         )
 
         if existing:
+            detail = (
+                f"Location type with name '{location_type_data.name}' "
+                f"already exists"
+            )
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    f"Location type with name "
-                    f"'{location_type_data.name}' already exists"
-                ),
+                detail=detail,
             )
 
         # Create new location type
@@ -127,12 +128,13 @@ async def update_location_type(
             )
 
             if existing:
+                detail = (
+                    f"Location type with name '{location_type_data.name}' "
+                    f"already exists"
+                )
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=(
-                        f"Location type with name "
-                        f"'{location_type_data.name}' already exists"
-                    ),
+                    detail=detail,
                 )
 
         # Update fields

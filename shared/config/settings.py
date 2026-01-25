@@ -13,7 +13,10 @@ class Settings(BaseSettings):
 
     # Database settings
     database_url: str = Field(
-        default="postgresql://inventory_user:inventory_password@localhost:5432/inventory_management",
+        default=(
+            "postgresql://inventory_user:inventory_password@"
+            "localhost:5432/inventory_management"
+        ),
         env="DATABASE_URL",
     )
     database_echo: bool = Field(default=False, env="DATABASE_ECHO")

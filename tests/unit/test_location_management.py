@@ -77,10 +77,10 @@ class TestLocationValidation:
         assert "Cannot delete location type" in exc_info.value.detail
         assert "2 locations are using it" in exc_info.value.detail
 
-    def test_validate_location_type_deletion_without_locations_should_pass(
+    def test_validate_location_type_deletion_without_locations_pass(
         self,
     ):
-        """Test that location type deletion validation passes when no locations use it."""
+        """Test location type deletion validation passes."""
         # Arrange
         mock_db = Mock(spec=Session)
         mock_location_type = Mock(spec=LocationType)

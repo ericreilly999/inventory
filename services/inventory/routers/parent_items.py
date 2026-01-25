@@ -209,6 +209,8 @@ async def delete_parent_item(
         deleted_by=str(current_user.id),
     )
 
-    return MessageResponse(
-        message=f"Parent item deleted successfully (including {child_count} child items)"
+    message = (
+        f"Parent item deleted successfully "
+        f"(including {child_count} child items)"
     )
+    return MessageResponse(message=message)

@@ -2,8 +2,6 @@
 
 from uuid import uuid4
 
-import pytest
-
 from shared.auth.utils import hash_password, verify_password
 from shared.models.user import Role, User
 
