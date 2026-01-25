@@ -114,9 +114,7 @@ def setup_test_data(test_db_session):
     test_db_session.add(location)
 
     # Create item types
-    parent_type = ItemType(
-        id=uuid4(), name="Equipment", category=ItemCategory.PARENT
-    )
+    parent_type = ItemType(id=uuid4(), name="Equipment", category=ItemCategory.PARENT)
     child_type = ItemType(id=uuid4(), name="Component", category=ItemCategory.CHILD)
     test_db_session.add_all([parent_type, child_type])
 
@@ -206,9 +204,7 @@ def test_list_parent_items_endpoint(inventory_client, setup_test_data, auth_head
     assert response.status_code in [200, 401]
 
 
-def test_create_parent_item_endpoint(
-    inventory_client, setup_test_data, auth_headers
-):
+def test_create_parent_item_endpoint(inventory_client, setup_test_data, auth_headers):
     """Test creating parent item via API."""
     data = {
         "name": "New Item",
@@ -335,9 +331,7 @@ def test_create_role_endpoint(user_client, auth_headers):
 
 
 # Test Reporting
-def test_inventory_summary_endpoint(
-    reporting_client, setup_test_data, auth_headers
-):
+def test_inventory_summary_endpoint(reporting_client, setup_test_data, auth_headers):
     """Test inventory summary endpoint."""
     response = reporting_client.get(
         "/api/v1/reports/inventory-summary", headers=auth_headers
@@ -372,9 +366,7 @@ def test_invalid_item_type_id(inventory_client, auth_headers):
 
 def test_invalid_location_id(location_client, auth_headers):
     """Test invalid location ID."""
-    response = location_client.get(
-        f"/api/v1/locations/{uuid4()}", headers=auth_headers
-    )
+    response = location_client.get(f"/api/v1/locations/{uuid4()}", headers=auth_headers)
     assert response.status_code in [404, 401]
 
 
@@ -403,9 +395,7 @@ def test_locations_pagination(location_client, setup_test_data, auth_headers):
 
 def test_users_pagination(user_client, setup_test_data, auth_headers):
     """Test users pagination."""
-    response = user_client.get(
-        "/api/v1/users?skip=0&limit=10", headers=auth_headers
-    )
+    response = user_client.get("/api/v1/users?skip=0&limit=10", headers=auth_headers)
     assert response.status_code in [200, 401]
 
 
