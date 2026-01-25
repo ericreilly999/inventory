@@ -1,5 +1,7 @@
 """User Service FastAPI application."""
 
+from typing import Dict
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -41,13 +43,13 @@ app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> Dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy", "service": "user-service"}
 
 
 @app.get("/")
-async def root():
+async def root() -> Dict[str, str]:
     """Root endpoint."""
     return {"message": "User Service API", "version": "1.0.0"}
 

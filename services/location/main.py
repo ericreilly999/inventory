@@ -1,6 +1,8 @@
 """Location Service FastAPI application."""
 
-from fastapi import FastAPI, Request, status
+from typing import Any, Callable, Dict
+
+from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -28,7 +30,9 @@ app = FastAPI(
 
 # Add custom exception handler for validation errors
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     """Log and return detailed validation errors."""
     logger.error(
         "Validation error",
@@ -62,7 +66,7 @@ app.add_middleware(auth_middleware.AuthMiddleware)
 
 # Add request logging middleware
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
+async def log_requests(request: Request, call_next: Callable) -> Response:
     """Log all incoming requests with details."""
     logger.info(
         f"Location Service - {request.method} {request.url.path}",
@@ -98,13 +102,13 @@ app.include_router(movements.router, prefix="/api/v1/movements", tags=["movement
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> Dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy", "service": "location-service"}
 
 
 @app.get("/")
-async def root():
+async def root() -> Dict[str, str]:
     """Root endpoint."""
     return {"message": "Location Service API", "version": "1.0.0"}
 
