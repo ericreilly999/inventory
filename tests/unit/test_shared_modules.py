@@ -9,11 +9,7 @@ from redis import Redis
 
 from shared.database.redis_config import RedisCache, get_redis, get_redis_pool
 from shared.health.checks import HealthCheck, check_basic, check_database, check_redis
-from shared.logging.config import (
-    configure_logging,
-    get_logger,
-    log_request,
-)
+from shared.logging.config import configure_logging, get_logger, log_request
 
 
 def test_configure_logging():
