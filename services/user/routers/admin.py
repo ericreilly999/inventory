@@ -237,7 +237,10 @@ async def run_migrations() -> Dict[str, Any]:
         # Get database URL from environment
         database_url = os.getenv(
             "DATABASE_URL",
-            "postgresql://inventory_user:inventory_password@localhost:5432/inventory_management",
+            (
+                "postgresql://inventory_user:inventory_password@"
+                "localhost:5432/inventory_management"
+            ),
         )
 
         logger.info(f"Running migrations with DATABASE_URL: {database_url}")

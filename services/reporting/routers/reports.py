@@ -318,7 +318,10 @@ async def get_movement_history_report(
     "/inventory/counts",
     response_model=InventoryCountReport,
     summary="Get inventory count report",
-    description="Generate a report showing inventory counts by item type and location type",
+    description=(
+        "Generate a report showing inventory counts by item type "
+        "and location type"
+    ),
     dependencies=[Depends(require_reports_read)],
 )
 async def get_inventory_count_report(

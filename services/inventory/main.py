@@ -15,7 +15,10 @@ configure_logging()
 # Create FastAPI app
 app = FastAPI(
     title="Inventory Service",
-    description="Inventory management service for parent items, child items, and movements",
+    description=(
+        "Inventory management service for parent items, "
+        "child items, and movements"
+    ),
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",

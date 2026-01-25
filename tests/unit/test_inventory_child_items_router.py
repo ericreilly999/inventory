@@ -1,6 +1,5 @@
 """Unit tests for inventory child items router."""
 
-from datetime import datetime, timezone
 from uuid import uuid4
 
 from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem

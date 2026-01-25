@@ -175,7 +175,11 @@ async def delete_location_type(
 
     except IntegrityError:
         db.rollback()
+        detail = (
+            "Cannot delete location type - it may be referenced by "
+            "existing locations"
+        )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Cannot delete location type - it may be referenced by existing locations",
+            detail=detail,
         )
