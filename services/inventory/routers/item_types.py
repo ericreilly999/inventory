@@ -18,7 +18,12 @@ from ..dependencies import (
     require_inventory_read,
     require_inventory_write,
 )
-from ..schemas import ItemTypeCreate, ItemTypeResponse, ItemTypeUpdate, MessageResponse
+from ..schemas import (
+    ItemTypeCreate,
+    ItemTypeResponse,
+    ItemTypeUpdate,
+    MessageResponse,
+)
 
 logger = get_logger(__name__)
 router = APIRouter()
