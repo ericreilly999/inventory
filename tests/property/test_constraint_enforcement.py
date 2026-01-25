@@ -6,11 +6,12 @@ Validates: Requirements 4.4, 4.5, 8.4
 
 import uuid
 
-from hypothesis import given, settings
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from sqlalchemy import create_engine, event
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from shared.models import (
     Base,
@@ -23,30 +24,25 @@ from shared.models import (
     User,
 )
 
-# Test database setup
-TEST_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(TEST_DATABASE_URL, echo=False)
 
+def get_test_session():
+    """Create a fresh test database session for each test."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
 
-# Enable foreign key constraints in SQLite
-@event.listens_for(engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+    # Enable foreign key constraints in SQLite
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-def setup_test_database():
-    """Set up test database with tables."""
     Base.metadata.create_all(bind=engine)
-
-
-def teardown_test_database():
-    """Clean up test database."""
-    Base.metadata.drop_all(bind=engine)
+    SessionLocal = sessionmaker(bind=engine)
+    return SessionLocal(), engine
 
 
 def create_test_data(session):
@@ -129,8 +125,10 @@ def create_test_data(session):
     item_type_name=st.text(min_size=1, max_size=50),
 )
 @settings(
-    deadline=None, max_examples=5
-)  # Disable deadline and reduce examples for faster testing
+    max_examples=5,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 def test_constraint_enforcement_property(
     location_name, location_type_name, item_type_name
 ):
@@ -142,10 +140,9 @@ def test_constraint_enforcement_property(
 
     **Validates: Requirements 4.4, 4.5, 8.4**
     """
-    setup_test_database()
+    session, engine = get_test_session()
 
     try:
-        session = SessionLocal()
 
         # Create test data
         (
@@ -268,21 +265,26 @@ def test_constraint_enforcement_property(
         session.close()
 
     finally:
-        teardown_test_database()
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
 
 
 @given(location_name=st.text(min_size=1, max_size=50))
-@settings(deadline=None, max_examples=3)
+@settings(
+    max_examples=3,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 def test_location_deletion_with_items_constraint(location_name):
     """
     Test specific constraint: locations with items cannot be deleted.
 
     **Validates: Requirement 4.4**
     """
-    setup_test_database()
+    session, engine = get_test_session()
 
     try:
-        session = SessionLocal()
 
         # Create test data
         (
@@ -314,21 +316,26 @@ def test_location_deletion_with_items_constraint(location_name):
         session.close()
 
     finally:
-        teardown_test_database()
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
 
 
 @given(item_type_name=st.text(min_size=1, max_size=50))
-@settings(deadline=None, max_examples=3)
+@settings(
+    max_examples=3,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 def test_item_type_deletion_with_items_constraint(item_type_name):
     """
     Test specific constraint: item types in use cannot be deleted.
 
     **Validates: Requirement 8.4**
     """
-    setup_test_database()
+    session, engine = get_test_session()
 
     try:
-        session = SessionLocal()
 
         # Create test data
         (
@@ -362,7 +369,9 @@ def test_item_type_deletion_with_items_constraint(item_type_name):
         session.close()
 
     finally:
-        teardown_test_database()
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
 
 
 if __name__ == "__main__":

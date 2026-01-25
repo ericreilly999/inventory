@@ -6,7 +6,7 @@ Validates: Requirements 9.2
 
 import uuid
 
-from hypothesis import given
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -171,6 +171,10 @@ def test_child_item_assignment_uniqueness_property(parent_count, child_count):
             new_parent_index = (i + 1) % len(parent_items)
             new_parent = parent_items[new_parent_index]
             old_parent_id = child_item.parent_item_id
+
+            # Skip if we would reassign to the same parent
+            if new_parent.id == old_parent_id:
+                continue
 
             # Reassign child to new parent
             child_item.parent_item_id = new_parent.id

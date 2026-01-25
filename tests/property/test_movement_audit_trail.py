@@ -154,7 +154,7 @@ def test_movement_audit_trail_property(data):
         parent_item.current_location_id = to_location.id
 
         move_history = MoveHistory(
-            item_id=parent_item.id,
+            parent_item_id=parent_item.id,
             from_location_id=original_location_id,
             to_location_id=to_location.id,
             moved_at=datetime.now(timezone.utc),
@@ -171,17 +171,23 @@ def test_movement_audit_trail_property(data):
 
         # Verify move history properties
         assert move_history.id is not None
-        assert move_history.item_id == parent_item.id
+        assert move_history.parent_item_id == parent_item.id
         assert move_history.from_location_id == from_location.id
         assert move_history.to_location_id == to_location.id
         assert move_history.moved_by == user.id
-        assert before_move_time <= move_history.moved_at <= after_move_time
+        
+        # Make moved_at timezone-aware if it's naive (SQLite returns naive datetimes)
+        moved_at = move_history.moved_at
+        if moved_at.tzinfo is None:
+            moved_at = moved_at.replace(tzinfo=timezone.utc)
+        
+        assert before_move_time <= moved_at <= after_move_time
         assert parent_item.current_location_id == to_location.id
 
         # Query tests
         history_records = (
             session.query(MoveHistory)
-            .filter(MoveHistory.item_id == parent_item.id)
+            .filter(MoveHistory.parent_item_id == parent_item.id)
             .all()
         )
         assert len(history_records) == 1
@@ -240,7 +246,7 @@ def test_chronological_move_history_ordering(data):
             current_to = to_location if i % 2 == 0 else from_location
 
             move_history = MoveHistory(
-                item_id=parent_item.id,
+                parent_item_id=parent_item.id,
                 from_location_id=current_from.id,
                 to_location_id=current_to.id,
                 moved_at=move_time,
@@ -255,7 +261,7 @@ def test_chronological_move_history_ordering(data):
         # Query move history ordered by timestamp (most recent first)
         ordered_moves = (
             session.query(MoveHistory)
-            .filter(MoveHistory.item_id == parent_item.id)
+            .filter(MoveHistory.parent_item_id == parent_item.id)
             .order_by(MoveHistory.moved_at.desc())
             .all()
         )
@@ -263,11 +269,26 @@ def test_chronological_move_history_ordering(data):
         # Verify chronological ordering (most recent first)
         assert len(ordered_moves) == 4
         for i in range(len(ordered_moves) - 1):
-            assert ordered_moves[i].moved_at >= ordered_moves[i + 1].moved_at
+            # Make moved_at timezone-aware if it's naive (SQLite returns naive datetimes)
+            current_at = ordered_moves[i].moved_at
+            next_at = ordered_moves[i + 1].moved_at
+            if current_at.tzinfo is None:
+                current_at = current_at.replace(tzinfo=timezone.utc)
+            if next_at.tzinfo is None:
+                next_at = next_at.replace(tzinfo=timezone.utc)
+            
+            assert current_at >= next_at
 
         # Verify the most recent movement is first
-        assert ordered_moves[0].moved_at == move_times[-1]
-        assert ordered_moves[-1].moved_at == move_times[0]
+        first_at = ordered_moves[0].moved_at
+        last_at = ordered_moves[-1].moved_at
+        if first_at.tzinfo is None:
+            first_at = first_at.replace(tzinfo=timezone.utc)
+        if last_at.tzinfo is None:
+            last_at = last_at.replace(tzinfo=timezone.utc)
+        
+        assert first_at == move_times[-1]
+        assert last_at == move_times[0]
 
     finally:
         session.close()
@@ -314,7 +335,7 @@ def test_move_history_filtering_by_date_range(data):
 
         # Movements outside the filter range
         old_move = MoveHistory(
-            item_id=parent_item.id,
+            parent_item_id=parent_item.id,
             from_location_id=from_location.id,
             to_location_id=to_location.id,
             moved_at=base_time - timedelta(days=10),
@@ -323,7 +344,7 @@ def test_move_history_filtering_by_date_range(data):
         )
 
         future_move = MoveHistory(
-            item_id=parent_item.id,
+            parent_item_id=parent_item.id,
             from_location_id=to_location.id,
             to_location_id=from_location.id,
             moved_at=base_time + timedelta(days=10),
@@ -333,7 +354,7 @@ def test_move_history_filtering_by_date_range(data):
 
         # Movements within the filter range
         recent_move1 = MoveHistory(
-            item_id=parent_item.id,
+            parent_item_id=parent_item.id,
             from_location_id=from_location.id,
             to_location_id=to_location.id,
             moved_at=base_time - timedelta(hours=2),
@@ -342,7 +363,7 @@ def test_move_history_filtering_by_date_range(data):
         )
 
         recent_move2 = MoveHistory(
-            item_id=parent_item.id,
+            parent_item_id=parent_item.id,
             from_location_id=to_location.id,
             to_location_id=from_location.id,
             moved_at=base_time - timedelta(hours=1),
@@ -361,7 +382,7 @@ def test_move_history_filtering_by_date_range(data):
         filtered_moves = (
             session.query(MoveHistory)
             .filter(
-                MoveHistory.item_id == parent_item.id,
+                MoveHistory.parent_item_id == parent_item.id,
                 MoveHistory.moved_at >= start_date,
                 MoveHistory.moved_at <= end_date,
             )
@@ -378,7 +399,14 @@ def test_move_history_filtering_by_date_range(data):
         assert future_move.id not in move_ids
 
         # Verify chronological ordering within filtered results
-        assert filtered_moves[0].moved_at >= filtered_moves[1].moved_at
+        first_at = filtered_moves[0].moved_at
+        second_at = filtered_moves[1].moved_at
+        if first_at.tzinfo is None:
+            first_at = first_at.replace(tzinfo=timezone.utc)
+        if second_at.tzinfo is None:
+            second_at = second_at.replace(tzinfo=timezone.utc)
+        
+        assert first_at >= second_at
 
     finally:
         session.close()

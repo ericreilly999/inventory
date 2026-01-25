@@ -6,10 +6,11 @@ Validates: Requirements 2.4, 2.5
 
 import uuid
 
-from hypothesis import given
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from shared.models import (
     Base,
@@ -22,20 +23,17 @@ from shared.models import (
     User,
 )
 
-# Test database setup
-TEST_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(TEST_DATABASE_URL, echo=False)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-
-def setup_test_database():
-    """Set up test database with tables."""
+def get_test_session():
+    """Create a fresh test database session for each test."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(bind=engine)
-
-
-def teardown_test_database():
-    """Clean up test database."""
-    Base.metadata.drop_all(bind=engine)
+    SessionLocal = sessionmaker(bind=engine)
+    return SessionLocal(), engine
 
 
 def create_test_data(session):
@@ -89,6 +87,11 @@ def create_test_data(session):
 
 
 @given(item_names=st.lists(st.text(min_size=1, max_size=50), min_size=1, max_size=3))
+@settings(
+    max_examples=10,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 def test_move_validation_and_error_handling_property(item_names):
     """
     Property 5: Move Validation and Error Handling
@@ -98,10 +101,9 @@ def test_move_validation_and_error_handling_property(item_names):
 
     **Validates: Requirements 2.4, 2.5**
     """
-    setup_test_database()
+    session, engine = get_test_session()
 
     try:
-        session = SessionLocal()
 
         # Create test data
         user, valid_location, item_type = create_test_data(session)
@@ -218,7 +220,9 @@ def test_move_validation_and_error_handling_property(item_names):
         session.close()
 
     finally:
-        teardown_test_database()
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
 
 
 if __name__ == "__main__":

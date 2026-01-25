@@ -19,10 +19,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def hash_password(password: str) -> str:
     """Hash a password."""
     try:
-        # Ensure password is a string and not too long
+        # Ensure password is a string
         password_str = str(password)
-        if len(password_str.encode("utf-8")) > 72:
-            password_str = password_str[:72]
+        
+        # Truncate to 72 bytes for bcrypt compatibility
+        password_bytes = password_str.encode("utf-8")
+        if len(password_bytes) > 72:
+            # Truncate at byte level, not character level
+            password_bytes = password_bytes[:72]
+            # Decode back, ignoring any incomplete characters at the end
+            password_str = password_bytes.decode("utf-8", errors="ignore")
 
         # Try to use bcrypt with explicit configuration to avoid version
         # detection issues
@@ -39,9 +45,13 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
     try:
-        # Try bcrypt first
-        if len(plain_password.encode("utf-8")) > 72:
-            plain_password = plain_password[:72]
+        # Truncate to 72 bytes for bcrypt compatibility
+        password_bytes = plain_password.encode("utf-8")
+        if len(password_bytes) > 72:
+            # Truncate at byte level, not character level
+            password_bytes = password_bytes[:72]
+            # Decode back, ignoring any incomplete characters at the end
+            plain_password = password_bytes.decode("utf-8", errors="ignore")
 
         # Try to verify with bcrypt directly to avoid version detection
         from passlib.handlers.bcrypt import bcrypt

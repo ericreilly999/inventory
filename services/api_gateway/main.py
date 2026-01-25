@@ -1,7 +1,8 @@
 """API Gateway Service FastAPI application."""
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from shared.config.settings import settings
 from shared.logging.config import configure_logging
@@ -20,6 +21,24 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+
+# Add exception handler for HTTPException
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Handle HTTPException and return consistent error format."""
+    # If detail is already a dict with error structure, return it directly
+    if isinstance(exc.detail, dict) and "error" in exc.detail:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=exc.detail,
+        )
+    # Otherwise wrap it in standard format
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
+
 
 # Add CORS middleware
 app.add_middleware(

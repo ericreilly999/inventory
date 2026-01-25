@@ -6,11 +6,12 @@ Validates: Requirements 4.1, 8.3, 9.1
 
 import uuid
 
-from hypothesis import given, settings
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from sqlalchemy import create_engine, event
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from shared.models import (
     Base,
@@ -24,30 +25,25 @@ from shared.models import (
     User,
 )
 
-# Test database setup
-TEST_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(TEST_DATABASE_URL, echo=False)
 
+def get_test_session():
+    """Create a fresh test database session for each test."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
 
-# Enable foreign key constraints in SQLite
-@event.listens_for(engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+    # Enable foreign key constraints in SQLite
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-def setup_test_database():
-    """Set up test database with tables."""
     Base.metadata.create_all(bind=engine)
-
-
-def teardown_test_database():
-    """Clean up test database."""
-    Base.metadata.drop_all(bind=engine)
+    SessionLocal = sessionmaker(bind=engine)
+    return SessionLocal(), engine
 
 
 def create_test_data(session):
@@ -111,8 +107,10 @@ def create_test_data(session):
     item_name=st.text(min_size=1, max_size=50),
 )
 @settings(
-    deadline=None, max_examples=10
-)  # Disable deadline and reduce examples for faster testing
+    max_examples=10,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 def test_referential_integrity_validation_property(location_name, item_name):
     """
     Property 8: Referential Integrity Validation
@@ -122,10 +120,9 @@ def test_referential_integrity_validation_property(location_name, item_name):
 
     **Validates: Requirements 4.1, 8.3, 9.1**
     """
-    setup_test_database()
+    session, engine = get_test_session()
 
     try:
-        session = SessionLocal()
 
         # Create test data
         (
@@ -266,7 +263,9 @@ def test_referential_integrity_validation_property(location_name, item_name):
         session.close()
 
     finally:
-        teardown_test_database()
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
 
 
 if __name__ == "__main__":

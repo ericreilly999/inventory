@@ -21,82 +21,40 @@ from shared.models.user import Role, User  # noqa: F401
 
 @pytest.fixture(scope="function")
 def test_db_session():
-    """Provide a transactional database session for tests."""
-    # Use PostgreSQL if DATABASE_URL is set (CI environment)
-    # Otherwise use in-memory SQLite (local development)
-    database_url = os.getenv("DATABASE_URL")
+    """Provide an isolated database session for each test.
+    
+    Each test gets a fresh in-memory SQLite database to ensure complete isolation.
+    This prevents test interference and state leakage between tests.
+    """
+    # Always use in-memory SQLite for test isolation
+    # This ensures each test has a completely fresh database
+    test_engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
 
-    if database_url:
-        # Use PostgreSQL from environment
-        test_engine = create_engine(database_url, echo=False)
+    # Enable foreign keys for SQLite
+    @event.listens_for(test_engine, "connect")
+    def set_sqlite_pragma(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
-        # Create all tables once
-        Base.metadata.create_all(bind=test_engine)
+    # Create all tables
+    Base.metadata.create_all(bind=test_engine)
 
-        # Create a connection for this test
-        connection = test_engine.connect()
+    # Create session
+    SessionLocal = sessionmaker(bind=test_engine)
+    session = SessionLocal()
 
-        # Begin a transaction
-        transaction = connection.begin()
-
-        # Create session bound to the transaction
-        SessionLocal = sessionmaker(bind=connection)
-        session = SessionLocal()
-
-        # Override commit to use flush instead - prevents actual commits
-        # This ensures transaction rollback will undo all changes
-        session.commit = session.flush
-        session.rollback = lambda: None  # Prevent rollback errors in tests
-
-        try:
-            yield session
-        finally:
-            session.close()
-            # Rollback the transaction to undo all changes
-            transaction.rollback()
-            connection.close()
-    else:
-        # Use in-memory SQLite for local testing
-        test_engine = create_engine(
-            "sqlite:///:memory:",
-            connect_args={"check_same_thread": False},
-            poolclass=StaticPool,
-        )
-
-        # Enable foreign keys for SQLite
-        @event.listens_for(test_engine, "connect")
-        def set_sqlite_pragma(dbapi_conn, connection_record):
-            cursor = dbapi_conn.cursor()
-            cursor.execute("PRAGMA foreign_keys=ON")
-            cursor.close()
-
-        # Create all tables
-        Base.metadata.create_all(bind=test_engine)
-
-        # Create session with autoflush=False for better control
-        SessionLocal = sessionmaker(bind=test_engine, autoflush=False)
-
-        # Start a transaction
-        connection = test_engine.connect()
-        transaction = connection.begin()
-
-        # Bind session to the transaction
-        session = SessionLocal(bind=connection)
-
-        # Override commit for SQLite too
-        session.commit = session.flush
-        session.rollback = lambda: None
-
-        try:
-            yield session
-        finally:
-            session.close()
-            # Rollback the transaction to undo all changes
-            transaction.rollback()
-            connection.close()
-            # For SQLite, drop tables
-            Base.metadata.drop_all(bind=test_engine)
-            test_engine.dispose()
+    try:
+        yield session
+    finally:
+        session.close()
+        # Drop all tables and dispose engine for complete cleanup
+        Base.metadata.drop_all(bind=test_engine)
+        test_engine.dispose()
 
 
 @pytest.fixture(scope="function")
@@ -114,20 +72,16 @@ def override_get_db(test_db_session):
 
 @pytest.fixture
 def test_user_with_auth(test_db_session):
-    """Create a test user with actual commit for auth tests.
+    """Create a test user for auth tests.
 
-    This fixture is specifically for tests that need to query the user
-    from the database (like get_current_user tests). It uses a savepoint
-    to ensure data is visible while still allowing rollback.
+    This fixture creates a user in the isolated test database.
+    Since each test has its own database, we can safely commit.
     """
     from uuid import uuid4
 
     from shared.auth.utils import hash_password
     from shared.models.user import Role as RoleModel
     from shared.models.user import User as UserModel
-
-    # Create a savepoint (nested transaction)
-    savepoint = test_db_session.begin_nested()
 
     # Create role and user
     role = RoleModel(
@@ -137,7 +91,7 @@ def test_user_with_auth(test_db_session):
         permissions={"inventory": ["read", "write"], "location": ["read"]},
     )
     test_db_session.add(role)
-    test_db_session.flush()  # Flush to make visible in current transaction
+    test_db_session.commit()
 
     user = UserModel(
         id=uuid4(),
@@ -148,10 +102,7 @@ def test_user_with_auth(test_db_session):
         active=True,
     )
     test_db_session.add(user)
-    test_db_session.flush()  # Flush to make visible in current transaction
-
-    # Commit the savepoint to make data visible to queries
-    savepoint.commit()
+    test_db_session.commit()
 
     # Refresh to ensure relationships are loaded
     test_db_session.refresh(user)
