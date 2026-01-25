@@ -41,9 +41,7 @@ class TestItemTypesRouter:
         test_db_session.commit()
 
         retrieved = (
-            test_db_session.query(ItemType)
-            .filter(ItemType.id == item_type.id)
-            .first()
+            test_db_session.query(ItemType).filter(ItemType.id == item_type.id).first()
         )
         assert retrieved is not None
         assert retrieved.name == "Test Equipment"
@@ -73,9 +71,7 @@ class TestParentItemsRouter:
         test_db_session.add(user)
         test_db_session.flush()
 
-        location_type = LocationType(
-            name="Warehouse", description="Storage"
-        )
+        location_type = LocationType(name="Warehouse", description="Storage")
         test_db_session.add(location_type)
         test_db_session.flush()
 
@@ -136,9 +132,7 @@ class TestChildItemsRouter:
         test_db_session.add(user)
         test_db_session.flush()
 
-        location_type = LocationType(
-            name="Warehouse", description="Storage"
-        )
+        location_type = LocationType(name="Warehouse", description="Storage")
         test_db_session.add(location_type)
         test_db_session.flush()
 

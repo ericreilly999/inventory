@@ -37,9 +37,7 @@ class TestRolesRouter:
         test_db_session.add(role)
         test_db_session.commit()
 
-        retrieved = (
-            test_db_session.query(Role).filter(Role.id == role.id).first()
-        )
+        retrieved = test_db_session.query(Role).filter(Role.id == role.id).first()
         assert retrieved is not None
         assert retrieved.name == "viewer"
 
@@ -112,9 +110,7 @@ class TestUsersRouter:
         test_db_session.add(user)
         test_db_session.commit()
 
-        retrieved = (
-            test_db_session.query(User).filter(User.id == user.id).first()
-        )
+        retrieved = test_db_session.query(User).filter(User.id == user.id).first()
         assert retrieved is not None
         assert retrieved.username == "testuser"
 

@@ -44,12 +44,8 @@ class TestLocationTypesRouter:
 
     def test_list_location_types(self, test_db_session):
         """Test listing location types."""
-        location_type1 = LocationType(
-            name="Warehouse", description="Storage warehouse"
-        )
-        location_type2 = LocationType(
-            name="Office", description="Office space"
-        )
+        location_type1 = LocationType(name="Warehouse", description="Storage warehouse")
+        location_type2 = LocationType(name="Office", description="Office space")
         test_db_session.add_all([location_type1, location_type2])
         test_db_session.commit()
 
@@ -62,9 +58,7 @@ class TestLocationsRouter:
 
     def test_create_location(self, test_db_session):
         """Test creating a location."""
-        location_type = LocationType(
-            name="Warehouse", description="Storage warehouse"
-        )
+        location_type = LocationType(name="Warehouse", description="Storage warehouse")
         test_db_session.add(location_type)
         test_db_session.flush()
 
@@ -84,9 +78,7 @@ class TestLocationsRouter:
 
     def test_get_location(self, test_db_session):
         """Test retrieving a location."""
-        location_type = LocationType(
-            name="Warehouse", description="Storage warehouse"
-        )
+        location_type = LocationType(name="Warehouse", description="Storage warehouse")
         test_db_session.add(location_type)
         test_db_session.flush()
 
@@ -99,18 +91,14 @@ class TestLocationsRouter:
         test_db_session.commit()
 
         retrieved = (
-            test_db_session.query(Location)
-            .filter(Location.id == location.id)
-            .first()
+            test_db_session.query(Location).filter(Location.id == location.id).first()
         )
         assert retrieved is not None
         assert retrieved.name == "Warehouse A"
 
     def test_list_locations(self, test_db_session):
         """Test listing locations."""
-        location_type = LocationType(
-            name="Warehouse", description="Storage warehouse"
-        )
+        location_type = LocationType(name="Warehouse", description="Storage warehouse")
         test_db_session.add(location_type)
         test_db_session.flush()
 
