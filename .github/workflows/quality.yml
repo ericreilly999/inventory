@@ -124,12 +124,13 @@ jobs:
           tests/unit/ tests/integration/
 
     - name: Upload coverage to Codecov
+      continue-on-error: true
       uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
-        fail_ci_if_error: true
+        fail_ci_if_error: false
 
     - name: Upload test reports
       uses: actions/upload-artifact@v4
