@@ -204,17 +204,13 @@ def test_assignment_history_tracking_property(data):
         assert assignment_history.from_parent_item_id == parent_item_1.id
         assert assignment_history.to_parent_item_id == parent_item_2.id
         assert assignment_history.assigned_by == user.id
-        
+
         # Make assigned_at timezone-aware if it's naive (SQLite returns naive datetimes)
         assigned_at = assignment_history.assigned_at
         if assigned_at.tzinfo is None:
             assigned_at = assigned_at.replace(tzinfo=timezone.utc)
-        
-        assert (
-            before_assignment_time
-            <= assigned_at
-            <= after_assignment_time
-        )
+
+        assert before_assignment_time <= assigned_at <= after_assignment_time
         assert child_item.parent_item_id == parent_item_2.id
 
         # Query tests
@@ -295,17 +291,13 @@ def test_initial_assignment_history_tracking(data):
         assert initial_assignment_history.from_parent_item_id is None
         assert initial_assignment_history.to_parent_item_id == parent_item_1.id
         assert initial_assignment_history.assigned_by == user.id
-        
+
         # Make assigned_at timezone-aware if it's naive (SQLite returns naive datetimes)
         assigned_at = initial_assignment_history.assigned_at
         if assigned_at.tzinfo is None:
             assigned_at = assigned_at.replace(tzinfo=timezone.utc)
-        
-        assert (
-            before_assignment_time
-            <= assigned_at
-            <= after_assignment_time
-        )
+
+        assert before_assignment_time <= assigned_at <= after_assignment_time
 
     finally:
         session.close()
@@ -397,7 +389,7 @@ def test_multiple_assignment_history_chronological_order(data):
                 current_at = current_at.replace(tzinfo=timezone.utc)
             if next_at.tzinfo is None:
                 next_at = next_at.replace(tzinfo=timezone.utc)
-            
+
             assert current_at >= next_at
 
         # Verify the most recent assignment is first
@@ -407,7 +399,7 @@ def test_multiple_assignment_history_chronological_order(data):
             first_at = first_at.replace(tzinfo=timezone.utc)
         if last_at.tzinfo is None:
             last_at = last_at.replace(tzinfo=timezone.utc)
-        
+
         assert first_at == assignment_times[-1]
         assert last_at == assignment_times[0]
 
@@ -537,7 +529,7 @@ def test_assignment_history_filtering_by_date_range(data):
             first_at = first_at.replace(tzinfo=timezone.utc)
         if second_at.tzinfo is None:
             second_at = second_at.replace(tzinfo=timezone.utc)
-        
+
         assert first_at >= second_at
 
     finally:

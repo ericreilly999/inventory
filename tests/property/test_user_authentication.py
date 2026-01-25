@@ -37,7 +37,9 @@ def valid_user_data(draw):
         st.text(
             min_size=8,
             max_size=72,
-            alphabet=st.characters(min_codepoint=33, max_codepoint=126),  # Printable ASCII
+            alphabet=st.characters(
+                min_codepoint=33, max_codepoint=126
+            ),  # Printable ASCII
         )
     )
     return {"username": username, "email": email, "password": password}
@@ -253,11 +255,11 @@ class TestUserAuthenticationProperties:
         # Truncate passwords to 72 bytes for bcrypt compatibility
         user_password = user_data["password"][:72]
         wrong_password = wrong_password[:72]
-        
+
         # Truncate passwords to 72 bytes for bcrypt compatibility
         user_password = user_data["password"][:72]
         wrong_password = wrong_password[:72]
-        
+
         # Ensure wrong password is actually different
         if wrong_password == user_password:
             wrong_password = user_password + "_different"

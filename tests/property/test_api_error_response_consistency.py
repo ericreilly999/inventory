@@ -9,16 +9,15 @@ The actual error handling works correctly in production but is difficult to test
 with property-based testing and mocking.
 """
 
-import pytest
 from unittest.mock import patch
 
+import pytest
 from fastapi.testclient import TestClient
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from services.api_gateway.main import app
 from shared.auth.utils import create_access_token
-
 
 # Mark all tests in this module as skipped
 pytestmark = pytest.mark.skip(

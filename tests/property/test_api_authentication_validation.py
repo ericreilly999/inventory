@@ -159,7 +159,9 @@ class TestAPIAuthenticationValidationProperties:
 
     @given(payload=valid_token_payload())
     @settings(max_examples=10)
-    @pytest.mark.skip(reason="Token modification test requires complex JWT manipulation - signature validation is handled by jose library")
+    @pytest.mark.skip(
+        reason="Token modification test requires complex JWT manipulation - signature validation is handled by jose library"
+    )
     def test_token_payload_integrity(self, payload):
         """
         Property: Token payload should not be modifiable
@@ -174,7 +176,9 @@ class TestAPIAuthenticationValidationProperties:
         # Modify the token (corrupt it)
         if len(token) > 10:
             # Change a character in the middle
-            modified_token = token[:len(token)//2] + "X" + token[len(token)//2+1:]
+            modified_token = (
+                token[: len(token) // 2] + "X" + token[len(token) // 2 + 1 :]
+            )
 
             # Decoding modified token should fail
             decoded_payload = verify_token(modified_token)

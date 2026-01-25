@@ -175,12 +175,12 @@ def test_movement_audit_trail_property(data):
         assert move_history.from_location_id == from_location.id
         assert move_history.to_location_id == to_location.id
         assert move_history.moved_by == user.id
-        
+
         # Make moved_at timezone-aware if it's naive (SQLite returns naive datetimes)
         moved_at = move_history.moved_at
         if moved_at.tzinfo is None:
             moved_at = moved_at.replace(tzinfo=timezone.utc)
-        
+
         assert before_move_time <= moved_at <= after_move_time
         assert parent_item.current_location_id == to_location.id
 
@@ -276,7 +276,7 @@ def test_chronological_move_history_ordering(data):
                 current_at = current_at.replace(tzinfo=timezone.utc)
             if next_at.tzinfo is None:
                 next_at = next_at.replace(tzinfo=timezone.utc)
-            
+
             assert current_at >= next_at
 
         # Verify the most recent movement is first
@@ -286,7 +286,7 @@ def test_chronological_move_history_ordering(data):
             first_at = first_at.replace(tzinfo=timezone.utc)
         if last_at.tzinfo is None:
             last_at = last_at.replace(tzinfo=timezone.utc)
-        
+
         assert first_at == move_times[-1]
         assert last_at == move_times[0]
 
@@ -405,7 +405,7 @@ def test_move_history_filtering_by_date_range(data):
             first_at = first_at.replace(tzinfo=timezone.utc)
         if second_at.tzinfo is None:
             second_at = second_at.replace(tzinfo=timezone.utc)
-        
+
         assert first_at >= second_at
 
     finally:

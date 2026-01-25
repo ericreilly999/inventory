@@ -81,7 +81,9 @@ class TestComprehensiveAuditLoggingProperties:
 
     @given(request_data=api_request_data(), audit_data=audit_scenario_data())
     @settings(max_examples=5, deadline=None)
-    @pytest.mark.skip(reason="Requires full API gateway infrastructure and logging setup")
+    @pytest.mark.skip(
+        reason="Requires full API gateway infrastructure and logging setup"
+    )
     def test_comprehensive_audit_logging_property(self, request_data, audit_data):
         """
         Property 16: Comprehensive Audit Logging
@@ -337,7 +339,9 @@ class TestComprehensiveAuditLoggingProperties:
 
     @given(request_data=api_request_data())
     @settings(max_examples=5, deadline=None)
-    @pytest.mark.skip(reason="Requires full API gateway infrastructure and logging setup")
+    @pytest.mark.skip(
+        reason="Requires full API gateway infrastructure and logging setup"
+    )
     def test_error_audit_logging_completeness(self, request_data):
         """
         Property: Error scenarios should be comprehensively logged
@@ -423,7 +427,9 @@ class TestComprehensiveAuditLoggingProperties:
         endpoint=st.sampled_from(["/api/v1/items/parent", "/api/v1/locations"]),
     )
     @settings(max_examples=5, deadline=None)
-    @pytest.mark.skip(reason="Requires full API gateway infrastructure and logging setup")
+    @pytest.mark.skip(
+        reason="Requires full API gateway infrastructure and logging setup"
+    )
     def test_invalid_authentication_audit_logging(self, invalid_token, endpoint):
         """
         Property: Invalid authentication attempts should be logged for security monitoring
