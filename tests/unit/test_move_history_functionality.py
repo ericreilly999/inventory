@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from shared.models.assignment_history import AssignmentHistory
-from shared.models.item import ItemCategory, ItemType, ParentItem
+from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
 from shared.models.location import Location, LocationType
 from shared.models.move_history import MoveHistory
 from shared.models.user import Role, User
