@@ -55,7 +55,7 @@ async def create_parent_item(
 
     # Create new parent item
     parent_item = ParentItem(
-        name=item_data.name,
+        sku=item_data.sku,
         description=item_data.description,
         item_type_id=item_data.item_type_id,
         current_location_id=item_data.current_location_id,
@@ -69,7 +69,7 @@ async def create_parent_item(
     logger.info(
         "Parent item created",
         parent_item_id=str(parent_item.id),
-        name=parent_item.name,
+        sku=parent_item.sku,
         location_id=str(parent_item.current_location_id),
         created_by=str(current_user.id),
     )
@@ -105,7 +105,7 @@ async def list_parent_items(
     # Search filter
     if search:
         search_filter = or_(
-            ParentItem.name.ilike(f"%{search}%"),
+            ParentItem.sku.ilike(f"%{search}%"),
             ParentItem.description.ilike(f"%{search}%"),
         )
         query = query.filter(search_filter)
@@ -157,9 +157,9 @@ async def update_parent_item(
 ):
     """Update parent item information."""
 
-    # Update name
-    if item_data.name is not None:
-        parent_item.name = item_data.name
+    # Update sku
+    if item_data.sku is not None:
+        parent_item.sku = item_data.sku
 
     # Update description
     if item_data.description is not None:
@@ -204,7 +204,7 @@ async def delete_parent_item(
     logger.info(
         "Parent item deleted",
         parent_item_id=str(parent_item.id),
-        name=parent_item.name,
+        sku=parent_item.sku,
         child_items_deleted=child_count,
         deleted_by=str(current_user.id),
     )

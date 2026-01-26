@@ -50,7 +50,7 @@ def create_test_data(session):
     # Create role
     role = Role(
         id=uuid.uuid4(),
-        name="test_role",
+        sku="test_role",
         description="Test role",
         permissions={},
     )
@@ -69,14 +69,14 @@ def create_test_data(session):
 
     # Create location type
     location_type = LocationType(
-        id=uuid.uuid4(), name="warehouse", description="Warehouse location"
+        id=uuid.uuid4(), sku="warehouse", description="Warehouse location"
     )
     session.add(location_type)
 
     # Create location
     location = Location(
         id=uuid.uuid4(),
-        name="Test Location",
+        sku="Test Location",
         description="Test location",
         location_type_id=location_type.id,
     )
@@ -85,13 +85,13 @@ def create_test_data(session):
     # Create item types
     parent_item_type = ItemType(
         id=uuid.uuid4(),
-        name="parent_item_type",
+        sku="parent_item_type",
         description="Parent item type",
         category=ItemCategory.PARENT,
     )
     child_item_type = ItemType(
         id=uuid.uuid4(),
-        name="child_item_type",
+        sku="child_item_type",
         description="Child item type",
         category=ItemCategory.CHILD,
     )
@@ -100,7 +100,7 @@ def create_test_data(session):
     # Create parent item
     parent_item = ParentItem(
         id=uuid.uuid4(),
-        name="Test Parent Item",
+        sku="Test Parent Item",
         description="Test parent item",
         item_type_id=parent_item_type.id,
         current_location_id=location.id,
@@ -193,7 +193,7 @@ def test_constraint_enforcement_property(
         # Create another location type that's not in use
         unused_location_type = LocationType(
             id=uuid.uuid4(),
-            name=location_type_name + "_unused",
+            sku=location_type_name + "_unused",
             description="Unused location type",
         )
         session.add(unused_location_type)
@@ -202,7 +202,7 @@ def test_constraint_enforcement_property(
         # Create another item type that's not in use
         unused_item_type = ItemType(
             id=uuid.uuid4(),
-            name=item_type_name + "_unused",
+            sku=item_type_name + "_unused",
             description="Unused item type",
             category=ItemCategory.PARENT,
         )

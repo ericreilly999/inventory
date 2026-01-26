@@ -17,8 +17,9 @@ from shared.models.move_history import MoveHistory
 
 from ..dependencies import require_reports_read
 from ..schemas import (
+    InventoryCountByChildType,
     InventoryCountByLocationAndType,
-    InventoryCountByType,
+    InventoryCountByParentType,
     InventoryCountReport,
     InventoryStatusByLocation,
     InventoryStatusReport,
@@ -115,14 +116,14 @@ async def get_inventory_status_report(
                 parent_items_details = [
                     {
                         "id": str(item.id),
-                        "name": item.name,
+                        "sku": item.sku,
                         "description": item.description,
                         "item_type": item.item_type.name,
                         "child_items_count": len(item.child_items),
                         "child_items": [
                             {
                                 "id": str(child.id),
-                                "name": child.name,
+                                "sku": child.sku,
                                 "item_type": child.item_type.name,
                             }
                             for child in item.child_items
@@ -268,7 +269,7 @@ async def get_movement_history_report(
                 MovementRecord(
                     id=movement.id,
                     parent_item_id=movement.parent_item_id,
-                    parent_item_name=movement.parent_item.name,
+                    parent_item_sku=movement.parent_item.sku,
                     from_location=from_location,
                     to_location=LocationSummary(
                         id=movement.to_location.id,
@@ -345,32 +346,62 @@ async def get_inventory_count_report(
         item_type_ids=item_type_ids,
     )
     try:
-        # Get counts by item type
-        item_type_query = (
+        # Get counts by parent item type
+        parent_type_query = (
             db.query(
                 ItemType,
                 func.count(func.distinct(ParentItem.id)).label("parent_count"),
-                func.count(func.distinct(ChildItem.id)).label("child_count"),
             )
             .outerjoin(ParentItem, ParentItem.item_type_id == ItemType.id)
-            .outerjoin(ChildItem, ChildItem.parent_item_id == ParentItem.id)
+            .filter(ItemType.category == "parent")
         )
 
         if item_type_ids:
-            item_type_query = item_type_query.filter(ItemType.id.in_(item_type_ids))
+            parent_type_query = parent_type_query.filter(
+                ItemType.id.in_(item_type_ids)
+            )
 
-        item_type_counts = item_type_query.group_by(ItemType.id).all()
+        parent_type_counts = parent_type_query.group_by(ItemType.id).all()
 
-        by_item_type = []
-        for item_type, parent_count, child_count in item_type_counts:
-            by_item_type.append(
-                InventoryCountByType(
+        by_parent_item_type = []
+        for item_type, parent_count in parent_type_counts:
+            by_parent_item_type.append(
+                InventoryCountByParentType(
                     item_type=ItemTypeSummary(
                         id=item_type.id,
                         name=item_type.name,
                         category=item_type.category.value,
                     ),
                     parent_items_count=parent_count or 0,
+                )
+            )
+
+        # Get counts by child item type
+        child_type_query = (
+            db.query(
+                ItemType,
+                func.count(func.distinct(ChildItem.id)).label("child_count"),
+            )
+            .outerjoin(ChildItem, ChildItem.item_type_id == ItemType.id)
+            .filter(ItemType.category == "child")
+        )
+
+        if item_type_ids:
+            child_type_query = child_type_query.filter(
+                ItemType.id.in_(item_type_ids)
+            )
+
+        child_type_counts = child_type_query.group_by(ItemType.id).all()
+
+        by_child_item_type = []
+        for item_type, child_count in child_type_counts:
+            by_child_item_type.append(
+                InventoryCountByChildType(
+                    item_type=ItemTypeSummary(
+                        id=item_type.id,
+                        name=item_type.name,
+                        category=item_type.category.value,
+                    ),
                     child_items_count=child_count or 0,
                 )
             )
@@ -436,7 +467,8 @@ async def get_inventory_count_report(
 
         return InventoryCountReport(
             generated_at=datetime.now(timezone.utc),
-            by_item_type=by_item_type,
+            by_parent_item_type=by_parent_item_type,
+            by_child_item_type=by_child_item_type,
             by_location_and_type=by_location_and_type,
         )
 
@@ -501,7 +533,7 @@ async def export_inventory_data(
         for item in parent_items:
             item_data = {
                 "parent_item_id": str(item.id),
-                "parent_item_name": item.name,
+                "parent_item_sku": item.sku,
                 "parent_item_description": item.description,
                 "parent_item_type": item.item_type.name,
                 "location_name": item.current_location.name,
@@ -517,7 +549,7 @@ async def export_inventory_data(
                     child_data.update(
                         {
                             "child_item_id": str(child.id),
-                            "child_item_name": child.name,
+                            "child_item_sku": child.sku,
                             "child_item_description": child.description,
                             "child_item_type": child.item_type.name,
                             "child_created_at": child.created_at.isoformat(),
@@ -529,7 +561,7 @@ async def export_inventory_data(
                 item_data.update(
                     {
                         "child_item_id": None,
-                        "child_item_name": None,
+                        "child_item_sku": None,
                         "child_item_description": None,
                         "child_item_type": None,
                         "child_created_at": None,

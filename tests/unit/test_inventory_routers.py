@@ -92,7 +92,7 @@ class TestParentItemsRouter:
 
         # Create parent item
         parent_item = ParentItem(
-            name="Laptop",
+            sku="Laptop",
             description="Dell Laptop",
             item_type_id=item_type.id,
             current_location_id=location.id,
@@ -103,7 +103,7 @@ class TestParentItemsRouter:
         test_db_session.refresh(parent_item)
 
         assert parent_item.id is not None
-        assert parent_item.name == "Laptop"
+        assert parent_item.sku == "Laptop"
         assert parent_item.current_location_id == location.id
 
 
@@ -157,7 +157,7 @@ class TestChildItemsRouter:
         test_db_session.flush()
 
         parent_item = ParentItem(
-            name="Laptop",
+            sku="Laptop",
             description="Dell Laptop",
             item_type_id=parent_item_type.id,
             current_location_id=location.id,
@@ -168,7 +168,7 @@ class TestChildItemsRouter:
 
         # Create child item
         child_item = ChildItem(
-            name="Mouse",
+            sku="Mouse",
             description="Wireless mouse",
             item_type_id=child_item_type.id,
             parent_item_id=parent_item.id,
@@ -179,5 +179,5 @@ class TestChildItemsRouter:
         test_db_session.refresh(child_item)
 
         assert child_item.id is not None
-        assert child_item.name == "Mouse"
+        assert child_item.sku == "Mouse"
         assert child_item.parent_item_id == parent_item.id

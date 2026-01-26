@@ -66,7 +66,7 @@ class MovementRecord(BaseModel):
 
     id: UUID
     parent_item_id: UUID
-    parent_item_name: str
+    parent_item_sku: str
     from_location: Optional[LocationSummary] = None
     to_location: LocationSummary
     moved_at: datetime
@@ -88,11 +88,17 @@ class MovementHistoryReport(BaseModel):
 
 
 # Inventory count report schemas
-class InventoryCountByType(BaseModel):
-    """Inventory count by item type."""
+class InventoryCountByParentType(BaseModel):
+    """Inventory count by parent item type."""
 
     item_type: ItemTypeSummary
     parent_items_count: int
+
+
+class InventoryCountByChildType(BaseModel):
+    """Inventory count by child item type."""
+
+    item_type: ItemTypeSummary
     child_items_count: int
 
 
@@ -109,7 +115,8 @@ class InventoryCountReport(BaseModel):
     """Inventory count report."""
 
     generated_at: datetime
-    by_item_type: List[InventoryCountByType]
+    by_parent_item_type: List[InventoryCountByParentType]
+    by_child_item_type: List[InventoryCountByChildType]
     by_location_and_type: List[InventoryCountByLocationAndType]
 
 

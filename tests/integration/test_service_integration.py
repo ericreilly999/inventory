@@ -56,7 +56,7 @@ class TestInterServiceCommunication:
                 "parent_items": [
                     {
                         "id": str(uuid.uuid4()),
-                        "name": "Test Parent Item",
+                        "sku": "Test Parent Item",
                         "description": "Test description",
                         "item_type_id": str(uuid.uuid4()),
                         "current_location_id": str(uuid.uuid4()),
@@ -65,7 +65,7 @@ class TestInterServiceCommunication:
                 "child_items": [
                     {
                         "id": str(uuid.uuid4()),
-                        "name": "Test Child Item",
+                        "sku": "Test Child Item",
                         "description": "Test child description",
                         "item_type_id": str(uuid.uuid4()),
                         "parent_item_id": str(uuid.uuid4()),
@@ -482,7 +482,7 @@ class TestDatabaseTransactionBoundaries:
         test_db_session.flush()
 
         parent_item = ParentItem(
-            name="Laptop",
+            sku="Laptop",
             description="Dell Laptop",
             item_type_id=item_type.id,
             current_location_id=location1.id,
@@ -574,7 +574,7 @@ class TestDatabaseTransactionBoundaries:
         test_db_session.flush()
 
         parent_item = ParentItem(
-            name="Laptop",
+            sku="Laptop",
             description="Dell Laptop",
             item_type_id=parent_item_type.id,
             current_location_id=location.id,
@@ -585,7 +585,7 @@ class TestDatabaseTransactionBoundaries:
 
         # Create a second parent item for reassignment
         parent_item2 = ParentItem(
-            name="Desktop",
+            sku="Desktop",
             description="Dell Desktop",
             item_type_id=parent_item_type.id,
             current_location_id=location.id,
@@ -595,7 +595,7 @@ class TestDatabaseTransactionBoundaries:
         test_db_session.flush()
 
         child_item = ChildItem(
-            name="Mouse",
+            sku="Mouse",
             description="Wireless mouse",
             item_type_id=child_item_type.id,
             parent_item_id=parent_item.id,  # Must have a parent
@@ -680,7 +680,7 @@ class TestDatabaseTransactionBoundaries:
         test_db_session.flush()
 
         parent_item = ParentItem(
-            name="Laptop",
+            sku="Laptop",
             description="Dell Laptop",
             item_type_id=item_type.id,
             current_location_id=location.id,

@@ -889,7 +889,7 @@ class TestReportDataExport:
         # Simulate export data structure
         export_data = {
             "parent_item_id": str(parent_item.id),
-            "parent_item_name": parent_item.name,
+            "parent_item_sku": parent_item.sku,
             "parent_item_description": parent_item.description,
             "parent_item_type": parent_item.item_type.name,
             "location_name": parent_item.current_location.name,
@@ -902,7 +902,7 @@ class TestReportDataExport:
         # Verify export data structure
         required_fields = [
             "parent_item_id",
-            "parent_item_name",
+            "parent_item_sku",
             "parent_item_type",
             "location_name",
             "location_type",
@@ -915,5 +915,5 @@ class TestReportDataExport:
 
         # Verify data types
         assert isinstance(export_data["child_items_count"], int)
-        assert isinstance(export_data["parent_item_name"], str)
+        assert isinstance(export_data["parent_item_sku"], str)
         assert isinstance(export_data["location_name"], str)

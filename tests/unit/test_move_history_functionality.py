@@ -22,7 +22,7 @@ class TestMoveHistoryRecording:
         # Create test data
         role = Role(
             id=uuid4(),
-            name="inventory_manager",
+            sku="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -38,12 +38,12 @@ class TestMoveHistoryRecording:
         )
 
         location_type = LocationType(
-            id=uuid4(), name="Warehouse", description="Storage facility"
+            id=uuid4(), sku="Warehouse", description="Storage facility"
         )
 
         from_location = Location(
             id=uuid4(),
-            name="Warehouse A",
+            sku="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -51,7 +51,7 @@ class TestMoveHistoryRecording:
 
         to_location = Location(
             id=uuid4(),
-            name="Warehouse B",
+            sku="Warehouse B",
             description="Secondary warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -59,14 +59,14 @@ class TestMoveHistoryRecording:
 
         item_type = ItemType(
             id=uuid4(),
-            name="Equipment",
+            sku="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
 
         parent_item = ParentItem(
             id=uuid4(),
-            name="Test Item",
+            sku="Test Item",
             description="Test item for move history",
             item_type_id=item_type.id,
             current_location_id=from_location.id,
@@ -123,7 +123,7 @@ class TestMoveHistoryRecording:
         # Create test data
         role = Role(
             id=uuid4(),
-            name="inventory_manager",
+            sku="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -139,12 +139,12 @@ class TestMoveHistoryRecording:
         )
 
         location_type = LocationType(
-            id=uuid4(), name="Warehouse", description="Storage facility"
+            id=uuid4(), sku="Warehouse", description="Storage facility"
         )
 
         location = Location(
             id=uuid4(),
-            name="Warehouse A",
+            sku="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -152,14 +152,14 @@ class TestMoveHistoryRecording:
 
         item_type = ItemType(
             id=uuid4(),
-            name="Equipment",
+            sku="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
 
         parent_item = ParentItem(
             id=uuid4(),
-            name="Test Item",
+            sku="Test Item",
             description="Test item for initial placement",
             item_type_id=item_type.id,
             current_location_id=location.id,
@@ -204,7 +204,7 @@ class TestMoveHistoryQuerying:
         # Create test data
         role = Role(
             id=uuid4(),
-            name="inventory_manager",
+            sku="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -220,12 +220,12 @@ class TestMoveHistoryQuerying:
         )
 
         location_type = LocationType(
-            id=uuid4(), name="Warehouse", description="Storage facility"
+            id=uuid4(), sku="Warehouse", description="Storage facility"
         )
 
         location1 = Location(
             id=uuid4(),
-            name="Warehouse A",
+            sku="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -233,7 +233,7 @@ class TestMoveHistoryQuerying:
 
         location2 = Location(
             id=uuid4(),
-            name="Warehouse B",
+            sku="Warehouse B",
             description="Secondary warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -241,14 +241,14 @@ class TestMoveHistoryQuerying:
 
         item_type = ItemType(
             id=uuid4(),
-            name="Equipment",
+            sku="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
 
         parent_item1 = ParentItem(
             id=uuid4(),
-            name="Test Item 1",
+            sku="Test Item 1",
             description="First test item",
             item_type_id=item_type.id,
             current_location_id=location1.id,
@@ -260,7 +260,7 @@ class TestMoveHistoryQuerying:
 
         parent_item2 = ParentItem(
             id=uuid4(),
-            name="Test Item 2",
+            sku="Test Item 2",
             description="Second test item",
             item_type_id=item_type.id,
             current_location_id=location1.id,
@@ -324,7 +324,7 @@ class TestMoveHistoryQuerying:
         # Create test data
         role = Role(
             id=uuid4(),
-            name="inventory_manager",
+            sku="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -340,12 +340,12 @@ class TestMoveHistoryQuerying:
         )
 
         location_type = LocationType(
-            id=uuid4(), name="Warehouse", description="Storage facility"
+            id=uuid4(), sku="Warehouse", description="Storage facility"
         )
 
         location_a = Location(
             id=uuid4(),
-            name="Warehouse A",
+            sku="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -353,7 +353,7 @@ class TestMoveHistoryQuerying:
 
         location_b = Location(
             id=uuid4(),
-            name="Warehouse B",
+            sku="Warehouse B",
             description="Secondary warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -361,7 +361,7 @@ class TestMoveHistoryQuerying:
 
         location_c = Location(
             id=uuid4(),
-            name="Warehouse C",
+            sku="Warehouse C",
             description="Third warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -369,14 +369,14 @@ class TestMoveHistoryQuerying:
 
         item_type = ItemType(
             id=uuid4(),
-            name="Equipment",
+            sku="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
 
         parent_item = ParentItem(
             id=uuid4(),
-            name="Test Item",
+            sku="Test Item",
             description="Test item for location queries",
             item_type_id=item_type.id,
             current_location_id=location_a.id,
@@ -448,7 +448,7 @@ class TestMoveHistoryFiltering:
         # Create test data
         role = Role(
             id=uuid4(),
-            name="inventory_manager",
+            sku="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -464,12 +464,12 @@ class TestMoveHistoryFiltering:
         )
 
         location_type = LocationType(
-            id=uuid4(), name="Warehouse", description="Storage facility"
+            id=uuid4(), sku="Warehouse", description="Storage facility"
         )
 
         location1 = Location(
             id=uuid4(),
-            name="Warehouse A",
+            sku="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -477,7 +477,7 @@ class TestMoveHistoryFiltering:
 
         location2 = Location(
             id=uuid4(),
-            name="Warehouse B",
+            sku="Warehouse B",
             description="Secondary warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -485,14 +485,14 @@ class TestMoveHistoryFiltering:
 
         item_type = ItemType(
             id=uuid4(),
-            name="Equipment",
+            sku="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
 
         parent_item = ParentItem(
             id=uuid4(),
-            name="Test Item",
+            sku="Test Item",
             description="Test item for chronological ordering",
             item_type_id=item_type.id,
             current_location_id=location1.id,
@@ -572,7 +572,7 @@ class TestMoveHistoryFiltering:
         # Create test data
         role = Role(
             id=uuid4(),
-            name="inventory_manager",
+            sku="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -588,12 +588,12 @@ class TestMoveHistoryFiltering:
         )
 
         location_type = LocationType(
-            id=uuid4(), name="Warehouse", description="Storage facility"
+            id=uuid4(), sku="Warehouse", description="Storage facility"
         )
 
         location1 = Location(
             id=uuid4(),
-            name="Warehouse A",
+            sku="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -601,7 +601,7 @@ class TestMoveHistoryFiltering:
 
         location2 = Location(
             id=uuid4(),
-            name="Warehouse B",
+            sku="Warehouse B",
             description="Secondary warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -609,14 +609,14 @@ class TestMoveHistoryFiltering:
 
         item_type = ItemType(
             id=uuid4(),
-            name="Equipment",
+            sku="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
 
         parent_item = ParentItem(
             id=uuid4(),
-            name="Test Item",
+            sku="Test Item",
             description="Test item for date filtering",
             item_type_id=item_type.id,
             current_location_id=location1.id,
@@ -720,7 +720,7 @@ class TestAssignmentHistoryIntegration:
         # Create test data
         role = Role(
             id=uuid4(),
-            name="inventory_manager",
+            sku="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -736,12 +736,12 @@ class TestAssignmentHistoryIntegration:
         )
 
         location_type = LocationType(
-            id=uuid4(), name="Warehouse", description="Storage facility"
+            id=uuid4(), sku="Warehouse", description="Storage facility"
         )
 
         location = Location(
             id=uuid4(),
-            name="Warehouse A",
+            sku="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -749,21 +749,21 @@ class TestAssignmentHistoryIntegration:
 
         parent_item_type = ItemType(
             id=uuid4(),
-            name="Equipment",
+            sku="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
 
         child_item_type = ItemType(
             id=uuid4(),
-            name="Component",
+            sku="Component",
             description="Component items",
             category=ItemCategory.CHILD,
         )
 
         parent_item1 = ParentItem(
             id=uuid4(),
-            name="Parent Item 1",
+            sku="Parent Item 1",
             description="First parent item",
             item_type_id=parent_item_type.id,
             current_location_id=location.id,
@@ -775,7 +775,7 @@ class TestAssignmentHistoryIntegration:
 
         parent_item2 = ParentItem(
             id=uuid4(),
-            name="Parent Item 2",
+            sku="Parent Item 2",
             description="Second parent item",
             item_type_id=parent_item_type.id,
             current_location_id=location.id,
@@ -803,7 +803,7 @@ class TestAssignmentHistoryIntegration:
         # Create a child item for the assignment history
         child_item = ChildItem(
             id=uuid4(),
-            name="Test Child Item",
+            sku="Test Child Item",
             description="Child item for assignment test",
             item_type_id=child_item_type.id,
             parent_item_id=parent_item1.id,
@@ -851,7 +851,7 @@ class TestAssignmentHistoryIntegration:
         # Create test data
         role = Role(
             id=uuid4(),
-            name="inventory_manager",
+            sku="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -867,12 +867,12 @@ class TestAssignmentHistoryIntegration:
         )
 
         location_type = LocationType(
-            id=uuid4(), name="Warehouse", description="Storage facility"
+            id=uuid4(), sku="Warehouse", description="Storage facility"
         )
 
         location = Location(
             id=uuid4(),
-            name="Warehouse A",
+            sku="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -880,21 +880,21 @@ class TestAssignmentHistoryIntegration:
 
         parent_item_type = ItemType(
             id=uuid4(),
-            name="Equipment",
+            sku="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
 
         child_item_type = ItemType(
             id=uuid4(),
-            name="Component",
+            sku="Component",
             description="Component items",
             category=ItemCategory.CHILD,
         )
 
         parent_item1 = ParentItem(
             id=uuid4(),
-            name="Parent Item 1",
+            sku="Parent Item 1",
             description="First parent item",
             item_type_id=parent_item_type.id,
             current_location_id=location.id,
@@ -906,7 +906,7 @@ class TestAssignmentHistoryIntegration:
 
         parent_item2 = ParentItem(
             id=uuid4(),
-            name="Parent Item 2",
+            sku="Parent Item 2",
             description="Second parent item",
             item_type_id=parent_item_type.id,
             current_location_id=location.id,
@@ -934,7 +934,7 @@ class TestAssignmentHistoryIntegration:
         # Create a child item for the assignment history
         child_item = ChildItem(
             id=uuid4(),
-            name="Test Child Item",
+            sku="Test Child Item",
             description="Child item for assignment test",
             item_type_id=child_item_type.id,
             parent_item_id=parent_item1.id,

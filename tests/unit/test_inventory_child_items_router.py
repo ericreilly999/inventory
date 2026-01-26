@@ -83,7 +83,7 @@ def test_create_child_item(test_db_session):
 
     # Verify
     assert child_item.id is not None
-    assert child_item.name == "Power Supply"
+    assert child_item.sku == "Power Supply"
     assert child_item.parent_item_id == parent_item.id
 
 

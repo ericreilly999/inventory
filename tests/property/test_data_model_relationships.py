@@ -42,7 +42,7 @@ def create_test_data(session):
     # Create role
     role = Role(
         id=uuid.uuid4(),
-        name="test_role",
+        sku="test_role",
         description="Test role",
         permissions={},
     )
@@ -61,20 +61,20 @@ def create_test_data(session):
 
     # Create location type
     location_type = LocationType(
-        id=uuid.uuid4(), name="warehouse", description="Warehouse location"
+        id=uuid.uuid4(), sku="warehouse", description="Warehouse location"
     )
     session.add(location_type)
 
     # Create locations
     location1 = Location(
         id=uuid.uuid4(),
-        name="Location A",
+        sku="Location A",
         description="First location",
         location_type_id=location_type.id,
     )
     location2 = Location(
         id=uuid.uuid4(),
-        name="Location B",
+        sku="Location B",
         description="Second location",
         location_type_id=location_type.id,
     )
@@ -83,7 +83,7 @@ def create_test_data(session):
     # Create item type
     item_type = ItemType(
         id=uuid.uuid4(),
-        name="test_item_type",
+        sku="test_item_type",
         description="Test item type",
         category=ItemCategory.PARENT,
     )
@@ -120,7 +120,7 @@ def test_cascading_item_movement_property(parent_name, child_names):
         # Create child item type
         child_item_type = ItemType(
             id=uuid.uuid4(),
-            name="child_item_type",
+            sku="child_item_type",
             description="Child item type",
             category=ItemCategory.CHILD,
         )
@@ -130,7 +130,7 @@ def test_cascading_item_movement_property(parent_name, child_names):
         # Create parent item at location1
         parent_item = ParentItem(
             id=uuid.uuid4(),
-            name=parent_name,
+            sku=parent_name,
             description="Test parent item",
             item_type_id=parent_item_type.id,
             current_location_id=location1.id,
@@ -144,7 +144,7 @@ def test_cascading_item_movement_property(parent_name, child_names):
         for child_name in child_names:
             child_item = ChildItem(
                 id=uuid.uuid4(),
-                name=child_name,
+                sku=child_name,
                 description="Test child item",
                 item_type_id=child_item_type.id,
                 parent_item_id=parent_item.id,

@@ -235,7 +235,7 @@ class TestAPIPerformance:
                     "/api/v1/items/parent",
                     {
                         "json": {
-                            "name": f"Test Item {random.randint(1000, 9999)}",
+                            "sku": f"Test Item {random.randint(1000, 9999)}",
                             "description": "Load test item",
                             "item_type_id": "test-type-id",
                             "current_location_id": "test-location-id",
@@ -479,7 +479,7 @@ class TestConcurrencyHandling:
                 "POST",
                 "/api/v1/items/parent",
                 json={
-                    "name": f"Concurrent Item {item_suffix}",
+                    "sku": f"Concurrent Item {item_suffix}",
                     "description": f"Created concurrently {item_suffix}",
                     "item_type_id": "test-type-id",
                     "current_location_id": "test-location-id",
@@ -525,7 +525,7 @@ class TestConcurrencyHandling:
                 "PUT",
                 "/api/v1/items/parent/test-item-id",
                 json={
-                    "name": f"Updated Item {update_suffix}",
+                    "sku": f"Updated Item {update_suffix}",
                     "description": f"Updated concurrently {update_suffix}",
                 },
             )
@@ -563,7 +563,7 @@ class TestConcurrencyHandling:
                 "POST",
                 "/api/v1/items/parent",
                 json={
-                    "name": f"RW Test Item {suffix}",
+                    "sku": f"RW Test Item {suffix}",
                     "description": "Read-write concurrency test",
                     "item_type_id": "test-type-id",
                     "current_location_id": "test-location-id",

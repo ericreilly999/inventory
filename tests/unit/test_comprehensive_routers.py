@@ -254,7 +254,7 @@ def test_parent_item_creation(test_db_session, parent_item_type, location, admin
     test_db_session.commit()
 
     assert item.id is not None
-    assert item.name == "Desk"
+    assert item.sku == "Desk"
 
 
 def test_parent_item_with_children(test_db_session, parent_item, child_item):

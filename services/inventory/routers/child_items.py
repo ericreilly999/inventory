@@ -57,7 +57,7 @@ async def create_child_item(
 
     # Create new child item
     child_item = ChildItem(
-        name=item_data.name,
+        sku=item_data.sku,
         description=item_data.description,
         item_type_id=item_data.item_type_id,
         parent_item_id=item_data.parent_item_id,
@@ -84,7 +84,7 @@ async def create_child_item(
     logger.info(
         "Child item created",
         child_item_id=str(child_item.id),
-        name=child_item.name,
+        sku=child_item.sku,
         parent_item_id=str(child_item.parent_item_id),
         created_by=str(current_user.id),
     )
@@ -120,7 +120,7 @@ async def list_child_items(
     # Search filter
     if search:
         search_filter = or_(
-            ChildItem.name.ilike(f"%{search}%"),
+            ChildItem.sku.ilike(f"%{search}%"),
             ChildItem.description.ilike(f"%{search}%"),
         )
         query = query.filter(search_filter)
@@ -157,9 +157,9 @@ async def update_child_item(
 ):
     """Update child item information."""
 
-    # Update name
-    if item_data.name is not None:
-        child_item.name = item_data.name
+    # Update sku
+    if item_data.sku is not None:
+        child_item.sku = item_data.sku
 
     # Update description
     if item_data.description is not None:
@@ -230,7 +230,7 @@ async def delete_child_item(
     logger.info(
         "Child item deleted",
         child_item_id=str(child_item.id),
-        name=child_item.name,
+        sku=child_item.sku,
         deleted_by=str(current_user.id),
     )
 

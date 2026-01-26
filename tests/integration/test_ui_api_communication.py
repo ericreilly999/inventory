@@ -347,7 +347,7 @@ class TestUIErrorHandling:
 
         # Create a large description field
         large_data = {
-            "name": "Test Item",
+            "sku": "Test Item",
             "description": "x" * 10000,  # 10KB description
             "item_type_id": "test-id",
             "current_location_id": "test-location-id",

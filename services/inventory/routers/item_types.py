@@ -76,11 +76,13 @@ async def create_item_type(
 async def list_item_types(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    category: Optional[str] = Query(None),
+    category: Optional[str] = Query(
+        None, description="Filter by category: 'parent' or 'child'"
+    ),
     search: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
-    """List item types with optional filtering."""
+    """List item types with optional filtering by category."""
 
     query = db.query(ItemType)
 

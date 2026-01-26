@@ -664,9 +664,9 @@ def test_pagination_limit(test_db_session, location_fixture):
 
 
 # Test Ordering
-def test_order_by_name(test_db_session, parent_item_fixture):
-    """Test ordering by name."""
-    result = test_db_session.query(ParentItem).order_by(ParentItem.name).all()
+def test_order_by_sku(test_db_session, parent_item_fixture):
+    """Test ordering by sku."""
+    result = test_db_session.query(ParentItem).order_by(ParentItem.sku).all()
     assert isinstance(result, list)
 
 

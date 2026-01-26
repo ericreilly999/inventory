@@ -21,7 +21,7 @@ class ItemTypeBase(BaseModel):
 class ParentItemBase(BaseModel):
     """Base parent item schema."""
 
-    name: str = Field(..., min_length=1, max_length=200)
+    sku: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
     item_type_id: UUID
     current_location_id: UUID
@@ -30,7 +30,7 @@ class ParentItemBase(BaseModel):
 class ChildItemBase(BaseModel):
     """Base child item schema."""
 
-    name: str = Field(..., min_length=1, max_length=200)
+    sku: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
     item_type_id: UUID
     parent_item_id: UUID
@@ -64,7 +64,7 @@ class ParentItemCreate(ParentItemBase):
 class ParentItemUpdate(BaseModel):
     """Schema for updating a parent item."""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    sku: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
     item_type_id: Optional[UUID] = None
 
@@ -76,7 +76,7 @@ class ChildItemCreate(ChildItemBase):
 class ChildItemUpdate(BaseModel):
     """Schema for updating a child item."""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    sku: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
     item_type_id: Optional[UUID] = None
     parent_item_id: Optional[UUID] = None
