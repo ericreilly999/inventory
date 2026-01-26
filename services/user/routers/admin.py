@@ -334,3 +334,41 @@ async def test_password() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error testing password: {e}")
         raise HTTPException(status_code=500, detail=f"Error testing password: {str(e)}")
+
+
+@router.get("/debug/users")
+async def debug_users(db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Debug endpoint to check all users in database."""
+    try:
+        from sqlalchemy.orm import joinedload
+
+        # Get all users with their roles
+        users = db.query(User).options(joinedload(User.role)).all()
+
+        users_data = []
+        for user in users:
+            users_data.append({
+                "id": str(user.id),
+                "username": user.username,
+                "email": user.email,
+                "active": user.active,
+                "role_id": str(user.role_id) if user.role_id else None,
+                "role_name": user.role.name if user.role else None,
+                "password_hash_length": len(user.password_hash) if user.password_hash else 0,
+                "password_hash_prefix": user.password_hash[:20] if user.password_hash else "None",
+                "created_at": user.created_at.isoformat() if user.created_at else None,
+                "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+            })
+
+        return {
+            "message": "Users retrieved successfully",
+            "total_users": len(users),
+            "users": users_data,
+            "status": "success",
+        }
+
+    except Exception as e:
+        logger.error(f"Error retrieving users: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving users: {str(e)}"
+        )
