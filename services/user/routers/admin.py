@@ -317,8 +317,14 @@ async def test_login(db: Session = Depends(get_db)) -> Dict[str, Any]:
         }
 
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         logger.error(f"Error testing login: {e}", exc_info=True)
-        return {"message": f"Error testing login: {str(e)}", "status": "error"}
+        return {
+            "message": f"Error testing login: {str(e)}",
+            "error_details": error_details,
+            "status": "error"
+        }
 
 
 @router.post("/test-password")
@@ -380,7 +386,20 @@ async def debug_users(db: Session = Depends(get_db)) -> Dict[str, Any]:
         }
 
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         logger.error(f"Error retrieving users: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Error retrieving users: {str(e)}"
-        )
+        return {
+            "message": f"Error retrieving users: {str(e)}",
+            "error_details": error_details,
+            "status": "error"
+        }
+
+
+@router.get("/debug/simple")
+async def debug_simple() -> Dict[str, Any]:
+    """Simple debug endpoint that doesn't query database."""
+    return {
+        "message": "Simple debug endpoint working",
+        "status": "success"
+    }
