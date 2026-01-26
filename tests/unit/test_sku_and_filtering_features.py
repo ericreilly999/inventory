@@ -144,9 +144,7 @@ class TestItemTypeFiltering:
             description="Accessory type",
             category=ItemCategory.CHILD,
         )
-        test_db_session.add_all(
-            [parent_type1, parent_type2, child_type1, child_type2]
-        )
+        test_db_session.add_all([parent_type1, parent_type2, child_type1, child_type2])
         test_db_session.commit()
 
         # Query for parent types only

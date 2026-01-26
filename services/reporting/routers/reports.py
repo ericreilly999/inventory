@@ -357,9 +357,7 @@ async def get_inventory_count_report(
         )
 
         if item_type_ids:
-            parent_type_query = parent_type_query.filter(
-                ItemType.id.in_(item_type_ids)
-            )
+            parent_type_query = parent_type_query.filter(ItemType.id.in_(item_type_ids))
 
         parent_type_counts = parent_type_query.group_by(ItemType.id).all()
 
@@ -387,9 +385,7 @@ async def get_inventory_count_report(
         )
 
         if item_type_ids:
-            child_type_query = child_type_query.filter(
-                ItemType.id.in_(item_type_ids)
-            )
+            child_type_query = child_type_query.filter(ItemType.id.in_(item_type_ids))
 
         child_type_counts = child_type_query.group_by(ItemType.id).all()
 

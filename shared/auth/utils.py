@@ -53,9 +53,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
             password_length=len(plain_password),
             hash_length=len(hashed_password),
             hash_prefix=(
-                hashed_password[:10]
-                if len(hashed_password) >= 10
-                else hashed_password
+                hashed_password[:10] if len(hashed_password) >= 10 else hashed_password
             ),
         )
 
