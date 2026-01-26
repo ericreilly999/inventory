@@ -55,13 +55,26 @@ async def seed_database(db: Session = Depends(get_db)) -> Dict[str, Any]:
         existing_admin = db.query(User).filter(User.username == "admin").first()
         if existing_admin:
             # Update the password hash to ensure it's compatible with current bcrypt implementation
+            old_hash = existing_admin.password_hash
             existing_admin.password_hash = hash_password("admin")
             existing_admin.updated_at = datetime.now(timezone.utc)
             db.commit()
+            
+            # Test password verification
+            from shared.auth.utils import verify_password
+            password_correct = verify_password("admin", existing_admin.password_hash)
+            
             return {
                 "message": "Admin user already exists - password hash updated",
                 "username": "admin",
                 "status": "updated",
+                "debug_info": {
+                    "user_id": str(existing_admin.id),
+                    "active": existing_admin.active,
+                    "old_hash_prefix": old_hash[:20] if old_hash else "None",
+                    "new_hash_prefix": existing_admin.password_hash[:20],
+                    "password_verification_test": password_correct,
+                }
             }
 
         # Create admin role
