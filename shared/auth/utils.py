@@ -34,18 +34,22 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its bcrypt hash."""
-    # Truncate to 72 bytes for bcrypt compatibility
-    password_bytes = plain_password.encode("utf-8")
-    if len(password_bytes) > 72:
-        # Truncate at byte level, not character level
-        password_bytes = password_bytes[:72]
-        # Decode back, ignoring any incomplete characters at the end
-        plain_password = password_bytes.decode("utf-8", errors="ignore")
+    try:
+        # Truncate to 72 bytes for bcrypt compatibility
         password_bytes = plain_password.encode("utf-8")
+        if len(password_bytes) > 72:
+            # Truncate at byte level, not character level
+            password_bytes = password_bytes[:72]
+            # Decode back, ignoring any incomplete characters at the end
+            plain_password = password_bytes.decode("utf-8", errors="ignore")
+            password_bytes = plain_password.encode("utf-8")
 
-    # Use bcrypt directly for verification
-    hashed_bytes = hashed_password.encode("utf-8")
-    return bcrypt_lib.checkpw(password_bytes, hashed_bytes)
+        # Use bcrypt directly for verification
+        hashed_bytes = hashed_password.encode("utf-8")
+        return bcrypt_lib.checkpw(password_bytes, hashed_bytes)
+    except (ValueError, AttributeError):
+        # Invalid hash format or other bcrypt error
+        return False
 
 
 def create_access_token(data: Dict[str, Any]) -> str:
