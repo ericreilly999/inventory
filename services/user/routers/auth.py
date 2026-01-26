@@ -30,6 +30,18 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
         .first()
     )
 
+    # Debug logging
+    if user:
+        logger.info(
+            "User found for login attempt",
+            username=user_credentials.username,
+            user_id=str(user.id),
+            password_hash_length=len(user.password_hash) if user.password_hash else 0,
+            password_hash_prefix=user.password_hash[:10] if user.password_hash else "None",
+        )
+    else:
+        logger.warning("User not found for login attempt", username=user_credentials.username)
+
     if not user or not verify_password(user_credentials.password, user.password_hash):
         logger.warning("Failed login attempt", username=user_credentials.username)
         raise HTTPException(
