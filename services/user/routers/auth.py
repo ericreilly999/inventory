@@ -20,9 +20,52 @@ router = APIRouter()
 async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     """Authenticate user and return access token."""
 
+    # Debug logging - log the incoming credentials
+    logger.info(
+        "Login attempt started",
+        username=user_credentials.username,
+        username_length=len(user_credentials.username),
+        password_length=len(user_credentials.password),
+    )
+
     # Find user by username with role relationship loaded
     from sqlalchemy.orm import joinedload
 
+    # First try without joinedload to see if that's the issue
+    user_simple = (
+        db.query(User)
+        .filter(User.username == user_credentials.username)
+        .first()
+    )
+    
+    logger.info(
+        "Simple query result",
+        user_found=user_simple is not None,
+        username_searched=user_credentials.username,
+    )
+    
+    if user_simple:
+        logger.info(
+            "User found with simple query",
+            user_id=str(user_simple.id),
+            username=user_simple.username,
+            active=user_simple.active,
+            password_hash_length=len(user_simple.password_hash) if user_simple.password_hash else 0,
+        )
+
+    # Now try with active filter
+    user_with_active = (
+        db.query(User)
+        .filter(User.username == user_credentials.username, User.active is True)
+        .first()
+    )
+    
+    logger.info(
+        "Query with active filter result",
+        user_found=user_with_active is not None,
+    )
+
+    # Now try with joinedload
     user = (
         db.query(User)
         .options(joinedload(User.role))
