@@ -53,10 +53,10 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
             password_hash_length=len(user_simple.password_hash) if user_simple.password_hash else 0,
         )
 
-    # Now try with active filter
+    # Now try with active filter using == instead of is
     user_with_active = (
         db.query(User)
-        .filter(User.username == user_credentials.username, User.active is True)
+        .filter(User.username == user_credentials.username, User.active == True)
         .first()
     )
     
@@ -69,7 +69,7 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     user = (
         db.query(User)
         .options(joinedload(User.role))
-        .filter(User.username == user_credentials.username, User.active is True)
+        .filter(User.username == user_credentials.username, User.active == True)
         .first()
     )
 
