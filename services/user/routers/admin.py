@@ -54,10 +54,14 @@ async def seed_database(db: Session = Depends(get_db)) -> Dict[str, Any]:
         # Check if admin user already exists
         existing_admin = db.query(User).filter(User.username == "admin").first()
         if existing_admin:
+            # Update the password hash to ensure it's compatible with current bcrypt implementation
+            existing_admin.password_hash = hash_password("admin")
+            existing_admin.updated_at = datetime.now(timezone.utc)
+            db.commit()
             return {
-                "message": "Admin user already exists",
+                "message": "Admin user already exists - password hash updated",
                 "username": "admin",
-                "status": "exists",
+                "status": "updated",
             }
 
         # Create admin role
