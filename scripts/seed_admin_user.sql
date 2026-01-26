@@ -14,13 +14,13 @@ VALUES (
 
 -- Create admin user with password 'admin'
 -- Password hash generated with bcrypt for 'admin' (cost factor 12)
--- Hash generated using: python -c "from passlib.context import CryptContext; print(CryptContext(schemes=['bcrypt']).hash('admin'))"
+-- Hash generated using: python3 -c "import bcrypt; print(bcrypt.hashpw(b'admin', bcrypt.gensalt(rounds=12)).decode('utf-8'))"
 INSERT INTO users (id, username, email, password_hash, active, role_id, created_at, updated_at)
 VALUES (
     gen_random_uuid(),
     'admin',
     'admin@inventory.local',
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5NU2xN7qhV/7e', -- bcrypt hash for 'admin'
+    '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', -- bcrypt hash for 'admin'
     true,
     (SELECT id FROM roles WHERE name = 'admin'),
     NOW(),
