@@ -19,8 +19,16 @@ from shared.models.user import Role, User
 @pytest.fixture(scope="function")
 def test_engine():
     """Create a test database engine."""
+    # Use a file-based database for better session isolation
+    import tempfile
+    import os
+
+    # Create a temporary database file
+    db_fd, db_path = tempfile.mkstemp(suffix=".db")
+    os.close(db_fd)
+
     engine = create_engine(
-        "sqlite:///:memory:",
+        f"sqlite:///{db_path}",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
@@ -28,6 +36,12 @@ def test_engine():
     yield engine
     Base.metadata.drop_all(bind=engine)
     engine.dispose()
+
+    # Clean up the temporary file
+    try:
+        os.unlink(db_path)
+    except Exception:
+        pass
 
 
 @pytest.fixture(scope="function")
