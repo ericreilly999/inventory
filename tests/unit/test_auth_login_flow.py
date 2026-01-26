@@ -25,7 +25,7 @@ def test_db():
         poolclass=StaticPool,
     )
     Base.metadata.create_all(bind=engine)
-    SessionLocal = sessionmaker(bind=engine)
+    SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     db = SessionLocal()
     try:
         yield db
@@ -46,8 +46,11 @@ def client(test_db):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
-    client = TestClient(app)
-    yield client
+    
+    # Create test client
+    with TestClient(app) as client:
+        yield client
+    
     app.dependency_overrides.clear()
 
 
@@ -64,7 +67,7 @@ def admin_user(test_db):
         updated_at=datetime.now(timezone.utc),
     )
     test_db.add(admin_role)
-    test_db.commit()
+    test_db.flush()  # Flush to get the ID without committing
 
     # Create admin user with password 'admin'
     admin = User(
@@ -78,8 +81,13 @@ def admin_user(test_db):
         updated_at=datetime.now(timezone.utc),
     )
     test_db.add(admin)
-    test_db.commit()
+    test_db.flush()  # Flush to get the ID without committing
     test_db.refresh(admin)
+    test_db.refresh(admin_role)
+    
+    # Ensure the role relationship is loaded
+    admin.role = admin_role
+    
     return admin
 
 
