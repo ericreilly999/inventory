@@ -101,17 +101,74 @@ def test_multiple_hashes():
     assert verify_password(password, hash3) is True
 
 
-def test_known_hash():
-    """Test with the known hash from seed script."""
-    password = "admin"
-    # This is the hash from scripts/seed_admin_user.sql
-    known_hash = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5NU2xN7qhV/7e"
+def test_database_round_trip():
+    """Test hash storage and retrieval from database."""
+    import uuid
+    from datetime import datetime, timezone
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.pool import StaticPool
     
-    print(f"\nPassword: {password}")
-    print(f"Known hash: {known_hash}")
+    from shared.models.base import Base
+    from shared.models.user import Role, User
     
-    # Verify with known hash
-    result = verify_password(password, known_hash)
-    print(f"Verify result: {result}")
+    # Create test database
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    SessionLocal = sessionmaker(bind=engine)
+    db = SessionLocal()
     
-    assert result is True
+    try:
+        # Create role
+        admin_role = Role(
+            id=uuid.uuid4(),
+            name="admin",
+            description="Administrator",
+            permissions={"*": True},
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+        db.add(admin_role)
+        db.commit()
+        
+        # Create user with hashed password
+        password = "admin"
+        hashed = hash_password(password)
+        print(f"\nOriginal password: {password}")
+        print(f"Hash before storing: {hashed}")
+        print(f"Hash length: {len(hashed)}")
+        
+        admin = User(
+            id=uuid.uuid4(),
+            username="admin",
+            email="admin@example.com",
+            password_hash=hashed,
+            active=True,
+            role_id=admin_role.id,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+        db.add(admin)
+        db.commit()
+        db.refresh(admin)
+        
+        # Retrieve and verify
+        retrieved_user = db.query(User).filter(User.username == "admin").first()
+        print(f"Hash after retrieval: {retrieved_user.password_hash}")
+        print(f"Hash length after retrieval: {len(retrieved_user.password_hash)}")
+        print(f"Hashes match: {hashed == retrieved_user.password_hash}")
+        
+        # Verify password
+        result = verify_password(password, retrieved_user.password_hash)
+        print(f"Verify result: {result}")
+        
+        assert result is True
+        
+    finally:
+        db.close()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
