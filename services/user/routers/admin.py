@@ -275,20 +275,29 @@ async def run_migrations() -> Dict[str, Any]:
 async def test_login(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Test login functionality."""
     try:
-        from sqlalchemy.orm import joinedload
-
         from shared.auth.utils import verify_password
 
-        # Find admin user with role loaded
+        # Find admin user without eager loading
         user = (
             db.query(User)
-            .options(joinedload(User.role))
             .filter(User.username == "admin", User.active is True)
             .first()
         )
 
         if not user:
-            return {"message": "Admin user not found", "status": "error"}
+            # Check if user exists but is inactive
+            inactive_user = db.query(User).filter(User.username == "admin").first()
+            if inactive_user:
+                return {
+                    "message": "Admin user found but is inactive",
+                    "user_found": True,
+                    "active": False,
+                    "status": "error"
+                }
+            return {"message": "Admin user not found", "user_found": False, "status": "error"}
+
+        # Get role separately
+        role = db.query(Role).filter(Role.id == user.role_id).first() if user.role_id else None
 
         # Test password verification
         password_correct = verify_password("admin", user.password_hash)
@@ -296,17 +305,19 @@ async def test_login(db: Session = Depends(get_db)) -> Dict[str, Any]:
         return {
             "message": "Login test completed",
             "user_found": True,
+            "active": user.active,
             "password_correct": password_correct,
             "user_id": str(user.id),
             "username": user.username,
             "role_id": str(user.role_id) if user.role_id else None,
-            "role_name": user.role.name if user.role else None,
-            "role_permissions": user.role.permissions if user.role else None,
+            "role_name": role.name if role else None,
+            "role_permissions": role.permissions if role else None,
+            "password_hash_prefix": user.password_hash[:20] if user.password_hash else "None",
             "status": "success",
         }
 
     except Exception as e:
-        logger.error(f"Error testing login: {e}")
+        logger.error(f"Error testing login: {e}", exc_info=True)
         return {"message": f"Error testing login: {str(e)}", "status": "error"}
 
 
@@ -340,20 +351,21 @@ async def test_password() -> Dict[str, Any]:
 async def debug_users(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Debug endpoint to check all users in database."""
     try:
-        from sqlalchemy.orm import joinedload
-
-        # Get all users with their roles
-        users = db.query(User).options(joinedload(User.role)).all()
+        # Get all users without eager loading
+        users = db.query(User).all()
 
         users_data = []
         for user in users:
+            # Get role separately to avoid lazy loading issues
+            role = db.query(Role).filter(Role.id == user.role_id).first() if user.role_id else None
+            
             users_data.append({
                 "id": str(user.id),
                 "username": user.username,
                 "email": user.email,
                 "active": user.active,
                 "role_id": str(user.role_id) if user.role_id else None,
-                "role_name": user.role.name if user.role else None,
+                "role_name": role.name if role else None,
                 "password_hash_length": len(user.password_hash) if user.password_hash else 0,
                 "password_hash_prefix": user.password_hash[:20] if user.password_hash else "None",
                 "created_at": user.created_at.isoformat() if user.created_at else None,
@@ -368,7 +380,7 @@ async def debug_users(db: Session = Depends(get_db)) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error retrieving users: {e}")
+        logger.error(f"Error retrieving users: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Error retrieving users: {str(e)}"
         )
