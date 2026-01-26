@@ -46,19 +46,23 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
         # Use bcrypt directly for verification
         hashed_bytes = hashed_password.encode("utf-8")
-        
+
         # Debug logging
         logger.debug(
             "Verifying password",
             password_length=len(plain_password),
             hash_length=len(hashed_password),
-            hash_prefix=hashed_password[:10] if len(hashed_password) >= 10 else hashed_password,
+            hash_prefix=(
+                hashed_password[:10]
+                if len(hashed_password) >= 10
+                else hashed_password
+            ),
         )
-        
+
         result = bcrypt_lib.checkpw(password_bytes, hashed_bytes)
-        
+
         logger.debug("Password verification result", result=result)
-        
+
         return result
     except (ValueError, AttributeError) as e:
         # Invalid hash format or other bcrypt error
