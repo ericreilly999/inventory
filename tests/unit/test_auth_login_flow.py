@@ -17,37 +17,49 @@ from shared.models.user import Role, User
 
 
 @pytest.fixture(scope="function")
-def test_db():
-    """Create a test database."""
+def test_engine():
+    """Create a test database engine."""
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
     Base.metadata.create_all(bind=engine)
-    # Use autocommit=False and autoflush=True for better transaction handling
+    yield engine
+    Base.metadata.drop_all(bind=engine)
+    engine.dispose()
+
+
+@pytest.fixture(scope="function")
+def test_db(test_engine):
+    """Create a test database session."""
     SessionLocal = sessionmaker(
-        bind=engine, autoflush=True, autocommit=False, expire_on_commit=False
+        bind=test_engine, autoflush=True, autocommit=False, expire_on_commit=False
     )
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.rollback()  # Rollback any uncommitted changes
+        db.rollback()
         db.close()
-        Base.metadata.drop_all(bind=engine)
-        engine.dispose()
 
 
 @pytest.fixture(scope="function")
-def client(test_db):
+def client(test_engine):
     """Create a test client with database override."""
 
     def override_get_db():
+        SessionLocal = sessionmaker(
+            bind=test_engine,
+            autoflush=True,
+            autocommit=False,
+            expire_on_commit=False,
+        )
+        db = SessionLocal()
         try:
-            yield test_db
+            yield db
         finally:
-            pass
+            db.close()
 
     app.dependency_overrides[get_db] = override_get_db
 
@@ -71,7 +83,7 @@ def admin_user(test_db):
         updated_at=datetime.now(timezone.utc),
     )
     test_db.add(admin_role)
-    test_db.commit()  # Commit the role
+    test_db.commit()
 
     # Create admin user with password 'admin'
     admin = User(
@@ -85,7 +97,7 @@ def admin_user(test_db):
         updated_at=datetime.now(timezone.utc),
     )
     test_db.add(admin)
-    test_db.commit()  # Commit the user
+    test_db.commit()
     test_db.refresh(admin)
     test_db.refresh(admin_role)
 
