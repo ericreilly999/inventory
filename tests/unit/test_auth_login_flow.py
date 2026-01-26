@@ -25,11 +25,15 @@ def test_db():
         poolclass=StaticPool,
     )
     Base.metadata.create_all(bind=engine)
-    SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    # Use autocommit=False and autoflush=True for better transaction handling
+    SessionLocal = sessionmaker(
+        bind=engine, autoflush=True, autocommit=False, expire_on_commit=False
+    )
     db = SessionLocal()
     try:
         yield db
     finally:
+        db.rollback()  # Rollback any uncommitted changes
         db.close()
         Base.metadata.drop_all(bind=engine)
         engine.dispose()
@@ -67,7 +71,7 @@ def admin_user(test_db):
         updated_at=datetime.now(timezone.utc),
     )
     test_db.add(admin_role)
-    test_db.flush()  # Flush to get the ID without committing
+    test_db.commit()  # Commit the role
 
     # Create admin user with password 'admin'
     admin = User(
@@ -81,7 +85,7 @@ def admin_user(test_db):
         updated_at=datetime.now(timezone.utc),
     )
     test_db.add(admin)
-    test_db.flush()  # Flush to get the ID without committing
+    test_db.commit()  # Commit the user
     test_db.refresh(admin)
     test_db.refresh(admin_role)
 
