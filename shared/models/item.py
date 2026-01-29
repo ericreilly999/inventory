@@ -40,7 +40,8 @@ class ParentItem(Base, UUIDMixin, TimestampMixin):
 
     __tablename__ = "parent_items"
 
-    sku = Column(String(200), nullable=False, index=True)
+    # Support both 'name' and 'sku' for backward compatibility during migration
+    sku = Column("name", String(200), nullable=False, index=True)
     description = Column(Text, nullable=True)
 
     # Foreign keys
@@ -107,7 +108,8 @@ class ChildItem(Base, UUIDMixin, TimestampMixin):
 
     __tablename__ = "child_items"
 
-    sku = Column(String(200), nullable=False, index=True)
+    # Support both 'name' and 'sku' for backward compatibility during migration
+    sku = Column("name", String(200), nullable=False, index=True)
     description = Column(Text, nullable=True)
 
     # Foreign keys
