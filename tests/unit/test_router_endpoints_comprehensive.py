@@ -136,7 +136,7 @@ def test_data(test_db_session, admin_user_with_token):
     # Parent item
     parent_item = ParentItem(
         id=uuid4(),
-        name=f"Server_{unique_id}",
+        sku=f"Server_{unique_id}",
         item_type_id=parent_type.id,
         current_location_id=location.id,
         created_by=user.id,
@@ -146,7 +146,7 @@ def test_data(test_db_session, admin_user_with_token):
     # Child item
     child_item = ChildItem(
         id=uuid4(),
-        name=f"Power Supply_{unique_id}",
+        sku=f"Power Supply_{unique_id}",
         item_type_id=child_type.id,
         parent_item_id=parent_item.id,
         created_by=user.id,
