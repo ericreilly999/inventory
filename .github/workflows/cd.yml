@@ -109,6 +109,22 @@ jobs:
       id: sha
       run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+    - name: Run database migrations
+      run: |
+        echo "========================================="
+        echo "Running Database Migrations"
+        echo "========================================="
+        
+        # Install dependencies
+        pip install poetry
+        poetry config virtualenvs.create false
+        poetry install --no-interaction --no-ansi
+        
+        # Run migrations
+        poetry run alembic upgrade head
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
     - name: Update ECS task definitions and deploy
       run: |
         services=("api-gateway" "inventory-service" "location-service" "user-service" "reporting-service" "ui-service")
