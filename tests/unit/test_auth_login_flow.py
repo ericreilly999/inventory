@@ -20,8 +20,8 @@ from shared.models.user import Role, User
 def test_engine():
     """Create a test database engine."""
     # Use a file-based database for better session isolation
-    import tempfile
     import os
+    import tempfile
 
     # Create a temporary database file
     db_fd, db_path = tempfile.mkstemp(suffix=".db")

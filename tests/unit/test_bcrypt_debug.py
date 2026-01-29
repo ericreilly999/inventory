@@ -109,6 +109,7 @@ def test_database_round_trip():
     """Test hash storage and retrieval from database."""
     import uuid
     from datetime import datetime, timezone
+
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from sqlalchemy.pool import StaticPool
