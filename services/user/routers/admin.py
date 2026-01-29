@@ -293,7 +293,9 @@ async def test_login(db: Session = Depends(get_db)) -> Dict[str, Any]:
 
         # Find admin user without eager loading
         user = (
-            db.query(User).filter(User.username == "admin", User.active is True).first()
+            db.query(User)
+            .filter(User.username == "admin", User.active.is_(True))
+            .first()
         )
 
         if not user:

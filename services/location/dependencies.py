@@ -70,7 +70,7 @@ async def get_current_user(
     """Get current user from database."""
     user = (
         db.query(User)
-        .filter(User.id == token_data.user_id, User.active is True)
+        .filter(User.id == token_data.user_id, User.active.is_(True))
         .first()
     )
 
