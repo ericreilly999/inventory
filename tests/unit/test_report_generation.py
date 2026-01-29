@@ -65,7 +65,7 @@ class TestInventoryStatusReports:
         # Create parent items
         parent_item1 = ParentItem(
             id=uuid4(),
-            name="Equipment 1",
+            sku="Equipment 1",
             description="First equipment item",
             item_type_id=parent_item_type.id,
             current_location_id=location.id,
@@ -77,7 +77,7 @@ class TestInventoryStatusReports:
 
         parent_item2 = ParentItem(
             id=uuid4(),
-            name="Equipment 2",
+            sku="Equipment 2",
             description="Second equipment item",
             item_type_id=parent_item_type.id,
             current_location_id=location.id,
@@ -105,7 +105,7 @@ class TestInventoryStatusReports:
         # Create child items
         child_item1 = ChildItem(
             id=uuid4(),
-            name="Component 1",
+            sku="Component 1",
             description="First component",
             item_type_id=child_item_type.id,
             parent_item_id=parent_item1.id,
@@ -117,7 +117,7 @@ class TestInventoryStatusReports:
 
         child_item2 = ChildItem(
             id=uuid4(),
-            name="Component 2",
+            sku="Component 2",
             description="Second component",
             item_type_id=child_item_type.id,
             parent_item_id=parent_item1.id,
@@ -255,7 +255,7 @@ class TestMovementHistoryReports:
 
         parent_item = ParentItem(
             id=uuid4(),
-            name="Test Equipment",
+            sku="Test Equipment",
             description="Equipment for movement testing",
             item_type_id=item_type.id,
             current_location_id=location1.id,
@@ -367,7 +367,7 @@ class TestMovementHistoryReports:
 
         parent_item = ParentItem(
             id=uuid4(),
-            name="Test Equipment",
+            sku="Test Equipment",
             description="Equipment for date filtering testing",
             item_type_id=item_type.id,
             current_location_id=location1.id,
@@ -497,7 +497,7 @@ class TestInventoryCountReports:
         # Create items of different types
         equipment1 = ParentItem(
             id=uuid4(),
-            name="Equipment 1",
+            sku="Equipment 1",
             description="First equipment",
             item_type_id=equipment_type.id,
             current_location_id=location.id,
@@ -509,7 +509,7 @@ class TestInventoryCountReports:
 
         equipment2 = ParentItem(
             id=uuid4(),
-            name="Equipment 2",
+            sku="Equipment 2",
             description="Second equipment",
             item_type_id=equipment_type.id,
             current_location_id=location.id,
@@ -537,7 +537,7 @@ class TestInventoryCountReports:
         # Create child items
         component1 = ChildItem(
             id=uuid4(),
-            name="Component 1",
+            sku="Component 1",
             description="First component",
             item_type_id=component_type.id,
             parent_item_id=equipment1.id,
@@ -549,7 +549,7 @@ class TestInventoryCountReports:
 
         component2 = ChildItem(
             id=uuid4(),
-            name="Component 2",
+            sku="Component 2",
             description="Second component",
             item_type_id=component_type.id,
             parent_item_id=equipment1.id,
@@ -561,7 +561,7 @@ class TestInventoryCountReports:
 
         component3 = ChildItem(
             id=uuid4(),
-            name="Component 3",
+            sku="Component 3",
             description="Third component",
             item_type_id=component_type.id,
             parent_item_id=equipment2.id,
@@ -645,7 +645,7 @@ class TestInventoryCountReports:
         # Create items at different location types
         warehouse_item = ParentItem(
             id=uuid4(),
-            name="Warehouse Equipment",
+            sku="Warehouse Equipment",
             description="Equipment in warehouse",
             item_type_id=item_type.id,
             current_location_id=warehouse.id,
@@ -657,7 +657,7 @@ class TestInventoryCountReports:
 
         delivery_item = ParentItem(
             id=uuid4(),
-            name="Delivery Equipment",
+            sku="Delivery Equipment",
             description="Equipment at delivery site",
             item_type_id=item_type.id,
             current_location_id=delivery_site.id,
@@ -782,7 +782,7 @@ class TestReportErrorHandling:
         for i in range(10):  # Reduced for test performance
             item = ParentItem(
                 id=uuid4(),
-                name=f"Equipment {i}",
+                sku=f"Equipment {i}",
                 description=f"Equipment item {i}",
                 item_type_id=item_type.id,
                 current_location_id=location.id,
@@ -870,7 +870,7 @@ class TestReportDataExport:
 
         parent_item = ParentItem(
             id=uuid4(),
-            name="Export Test Item",
+            sku="Export Test Item",
             description="Item for export testing",
             item_type_id=item_type.id,
             current_location_id=location.id,

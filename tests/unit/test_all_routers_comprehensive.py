@@ -104,7 +104,7 @@ def parent_item_fixture(
     """Create parent item."""
     item = ParentItem(
         id=uuid4(),
-        name="Server Rack",
+        sku="Server Rack",
         description="Main server rack",
         item_type_id=parent_item_type_fixture.id,
         current_location_id=location_fixture.id,
@@ -122,7 +122,7 @@ def child_item_fixture(
     """Create child item."""
     item = ChildItem(
         id=uuid4(),
-        name="Power Supply",
+        sku="Power Supply",
         description="Backup power",
         item_type_id=child_item_type_fixture.id,
         parent_item_id=parent_item_fixture.id,
@@ -203,7 +203,7 @@ def test_get_parent_item(test_db_session, parent_item_fixture):
         test_db_session.query(ParentItem).filter_by(id=parent_item_fixture.id).first()
     )
     assert result is not None
-    assert result.name == "Server Rack"
+    assert result.sku == "Server Rack"
 
 
 def test_create_parent_item(
@@ -212,7 +212,7 @@ def test_create_parent_item(
     """Test creating a parent item."""
     new_item = ParentItem(
         id=uuid4(),
-        name="New Equipment",
+        sku="New Equipment",
         item_type_id=parent_item_type_fixture.id,
         current_location_id=location_fixture.id,
         created_by=admin_user.id,
@@ -238,7 +238,7 @@ def test_delete_parent_item(
     """Test deleting a parent item."""
     item = ParentItem(
         id=uuid4(),
-        name="Temp",
+        sku="Temp",
         item_type_id=parent_item_type_fixture.id,
         current_location_id=location_fixture.id,
         created_by=admin_user.id,
@@ -266,7 +266,7 @@ def test_get_child_item(test_db_session, child_item_fixture):
         test_db_session.query(ChildItem).filter_by(id=child_item_fixture.id).first()
     )
     assert result is not None
-    assert result.name == "Power Supply"
+    assert result.sku == "Power Supply"
 
 
 def test_create_child_item(
@@ -275,7 +275,7 @@ def test_create_child_item(
     """Test creating a child item."""
     new_item = ChildItem(
         id=uuid4(),
-        name="New Component",
+        sku="New Component",
         item_type_id=child_item_type_fixture.id,
         parent_item_id=parent_item_fixture.id,
         created_by=admin_user.id,
@@ -301,7 +301,7 @@ def test_delete_child_item(
     """Test deleting a child item."""
     item = ChildItem(
         id=uuid4(),
-        name="Temp",
+        sku="Temp",
         item_type_id=child_item_type_fixture.id,
         parent_item_id=parent_item_fixture.id,
         created_by=admin_user.id,
@@ -699,7 +699,7 @@ def test_relationship_loading(test_db_session, parent_item_fixture, child_item_f
 # Test Edge Cases
 def test_empty_query_result(test_db_session):
     """Test empty query result."""
-    result = test_db_session.query(ParentItem).filter_by(name="NonExistent").all()
+    result = test_db_session.query(ParentItem).filter_by(sku="NonExistent").all()
     assert len(result) == 0
 
 

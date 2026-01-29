@@ -60,7 +60,7 @@ def test_create_child_item(test_db_session):
 
     parent_item = ParentItem(
         id=uuid4(),
-        name="Server Rack",
+        sku="Server Rack",
         description="Main server rack",
         item_type_id=parent_item_type.id,
         current_location_id=location.id,
@@ -72,7 +72,7 @@ def test_create_child_item(test_db_session):
     # Create child item
     child_item = ChildItem(
         id=uuid4(),
-        name="Power Supply",
+        sku="Power Supply",
         description="Backup power supply",
         item_type_id=child_item_type.id,
         parent_item_id=parent_item.id,
@@ -120,7 +120,7 @@ def test_list_child_items(test_db_session):
 
     parent = ParentItem(
         id=uuid4(),
-        name="Parent",
+        sku="Parent",
         item_type_id=parent_type.id,
         current_location_id=location.id,
         created_by=user.id,
@@ -132,7 +132,7 @@ def test_list_child_items(test_db_session):
     for i in range(3):
         child = ChildItem(
             id=uuid4(),
-            name=f"Child {i}",
+            sku=f"Child {i}",
             item_type_id=child_type.id,
             parent_item_id=parent.id,
             created_by=user.id,
@@ -177,7 +177,7 @@ def test_update_child_item(test_db_session):
 
     parent = ParentItem(
         id=uuid4(),
-        name="Parent",
+        sku="Parent",
         item_type_id=parent_type.id,
         current_location_id=location.id,
         created_by=user.id,
@@ -186,7 +186,7 @@ def test_update_child_item(test_db_session):
 
     child = ChildItem(
         id=uuid4(),
-        name="Original Name",
+        sku="Original Name",
         item_type_id=child_type.id,
         parent_item_id=parent.id,
         created_by=user.id,
@@ -237,7 +237,7 @@ def test_delete_child_item(test_db_session):
 
     parent = ParentItem(
         id=uuid4(),
-        name="Parent",
+        sku="Parent",
         item_type_id=parent_type.id,
         current_location_id=location.id,
         created_by=user.id,
@@ -246,7 +246,7 @@ def test_delete_child_item(test_db_session):
 
     child = ChildItem(
         id=uuid4(),
-        name="To Delete",
+        sku="To Delete",
         item_type_id=child_type.id,
         parent_item_id=parent.id,
         created_by=user.id,
