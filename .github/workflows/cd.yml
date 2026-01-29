@@ -109,19 +109,61 @@ jobs:
       id: sha
       run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-    - name: Run database migrations
+    - name: Run database migrations via ECS task
       run: |
         echo "========================================="
-        echo "Running Database Migrations"
+        echo "Running Database Migrations via ECS Task"
         echo "========================================="
         
-        # Install all required packages for migrations
-        pip install --user alembic psycopg2-binary sqlalchemy pydantic pydantic-settings python-dotenv
+        # Get network configuration from inventory-service
+        SERVICE_INFO=$(aws ecs describe-services \
+          --cluster ${{ env.ECS_CLUSTER }} \
+          --services dev-inventory-service \
+          --region ${{ env.AWS_REGION }} \
+          --query 'services[0].networkConfiguration.awsvpcConfiguration' \
+          --output json)
         
-        # Run migrations
-        alembic upgrade head
-      env:
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        SUBNET=$(echo "$SERVICE_INFO" | jq -r '.subnets[0]')
+        SECURITY_GROUP=$(echo "$SERVICE_INFO" | jq -r '.securityGroups[0]')
+        
+        echo "Running migration task in subnet: $SUBNET"
+        echo "Using security group: $SECURITY_GROUP"
+        
+        # Run migration task
+        TASK_ARN=$(aws ecs run-task \
+          --cluster ${{ env.ECS_CLUSTER }} \
+          --task-definition dev-migration-task \
+          --launch-type FARGATE \
+          --network-configuration "awsvpcConfiguration={subnets=[$SUBNET],securityGroups=[$SECURITY_GROUP],assignPublicIp=DISABLED}" \
+          --region ${{ env.AWS_REGION }} \
+          --query 'tasks[0].taskArn' \
+          --output text)
+        
+        echo "Migration task started: $TASK_ARN"
+        
+        # Wait for task to complete
+        echo "Waiting for migration to complete..."
+        aws ecs wait tasks-stopped \
+          --cluster ${{ env.ECS_CLUSTER }} \
+          --tasks "$TASK_ARN" \
+          --region ${{ env.AWS_REGION }}
+        
+        # Check exit code
+        EXIT_CODE=$(aws ecs describe-tasks \
+          --cluster ${{ env.ECS_CLUSTER }} \
+          --tasks "$TASK_ARN" \
+          --region ${{ env.AWS_REGION }} \
+          --query 'tasks[0].containers[0].exitCode' \
+          --output text)
+        
+        if [ "$EXIT_CODE" != "0" ]; then
+          echo "❌ Migration failed with exit code: $EXIT_CODE"
+          echo "Check CloudWatch logs at: /ecs/dev/migration-task"
+          exit 1
+        fi
+        
+        echo "✅ Migration completed successfully!"
+
 
     - name: Update ECS task definitions and deploy
       run: |

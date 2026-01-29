@@ -2,6 +2,8 @@
 
 from uuid import uuid4
 
+from sqlalchemy import func
+
 from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
 from shared.models.location import Location, LocationType
 
@@ -253,8 +255,6 @@ class TestReportSplitting:
         test_db_session.commit()
 
         # Count parent items by type
-        from sqlalchemy import func
-
         counts = (
             test_db_session.query(
                 ItemType.name, func.count(ParentItem.id).label("count")
@@ -344,8 +344,6 @@ class TestReportSplitting:
         test_db_session.commit()
 
         # Count child items by type
-        from sqlalchemy import func
-
         counts = (
             test_db_session.query(
                 ItemType.name, func.count(ChildItem.id).label("count")
@@ -419,8 +417,6 @@ class TestReportSplitting:
         test_db_session.commit()
 
         # Verify separate counts
-        from sqlalchemy import func
-
         parent_count = (
             test_db_session.query(func.count(ParentItem.id))
             .join(ItemType, ParentItem.item_type_id == ItemType.id)

@@ -52,7 +52,9 @@ async def seed_database(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Seed the database with initial admin user and sample data."""
     try:
         # Check if admin user already exists
-        existing_admin = db.query(User).filter(User.username == "admin").first()
+        existing_admin = (
+            db.query(User).filter(User.username == "admin").first()
+        )
         if existing_admin:
             # Update password hash for bcrypt compatibility
             old_hash = existing_admin.password_hash
