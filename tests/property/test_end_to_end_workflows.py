@@ -243,7 +243,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
         item_type_id = random.choice(parent_item_types).id
 
         parent_item = ParentItem(
-            name=name,
+            sku=name,
             description=description,
             item_type_id=item_type_id,
             current_location_id=location_id,
@@ -272,7 +272,7 @@ class InventorySystemStateMachine(RuleBasedStateMachine):
         item_type_id = random.choice(child_item_types).id
 
         child_item = ChildItem(
-            name=name,
+            sku=name,
             description=description,
             item_type_id=item_type_id,
             created_by=user_id,
