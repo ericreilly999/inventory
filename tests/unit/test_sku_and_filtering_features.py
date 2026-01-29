@@ -1,11 +1,9 @@
 """Tests for SKU field and item type filtering features."""
 
-import pytest
 from uuid import uuid4
 
 from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
 from shared.models.location import Location, LocationType
-from shared.models.user import Role, User
 
 
 class TestSKUFieldRename:

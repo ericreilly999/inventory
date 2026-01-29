@@ -54,7 +54,7 @@ async def seed_database(db: Session = Depends(get_db)) -> Dict[str, Any]:
         # Check if admin user already exists
         existing_admin = db.query(User).filter(User.username == "admin").first()
         if existing_admin:
-            # Update the password hash to ensure it's compatible with current bcrypt implementation
+            # Update password hash for bcrypt compatibility
             old_hash = existing_admin.password_hash
             existing_admin.password_hash = hash_password("admin")
             existing_admin.updated_at = datetime.now(timezone.utc)
