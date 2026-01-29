@@ -98,7 +98,7 @@ resource "aws_ecs_task_definition" "migration" {
     {
       name  = "migration"
       image = var.migration_image
-      
+
       command = [
         "sh",
         "-c",
