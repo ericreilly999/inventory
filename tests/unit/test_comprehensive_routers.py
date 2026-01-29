@@ -102,7 +102,7 @@ def parent_item(test_db_session, parent_item_type, location, admin_user):
     """Create parent item."""
     item = ParentItem(
         id=uuid4(),
-        name="Server Rack",
+        sku="Server Rack",
         description="Main server rack",
         item_type_id=parent_item_type.id,
         current_location_id=location.id,
@@ -118,7 +118,7 @@ def child_item(test_db_session, child_item_type, parent_item, admin_user):
     """Create child item."""
     item = ChildItem(
         id=uuid4(),
-        name="Power Supply",
+        sku="Power Supply",
         description="Backup power",
         item_type_id=child_item_type.id,
         parent_item_id=parent_item.id,
@@ -245,7 +245,7 @@ def test_parent_item_creation(test_db_session, parent_item_type, location, admin
     """Test creating a parent item."""
     item = ParentItem(
         id=uuid4(),
-        name="Desk",
+        sku="Desk",
         item_type_id=parent_item_type.id,
         current_location_id=location.id,
         created_by=admin_user.id,
