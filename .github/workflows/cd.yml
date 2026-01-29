@@ -115,8 +115,8 @@ jobs:
         echo "Running Database Migrations"
         echo "========================================="
         
-        # Install only the required packages for migrations
-        pip install --user alembic psycopg2-binary sqlalchemy
+        # Install all required packages for migrations
+        pip install --user alembic psycopg2-binary sqlalchemy pydantic pydantic-settings python-dotenv
         
         # Run migrations
         alembic upgrade head
