@@ -115,13 +115,11 @@ jobs:
         echo "Running Database Migrations"
         echo "========================================="
         
-        # Install dependencies
-        pip install poetry
-        poetry config virtualenvs.create false
-        poetry install --no-interaction --no-ansi
+        # Install only the required packages for migrations
+        pip install --user alembic psycopg2-binary sqlalchemy
         
         # Run migrations
-        poetry run alembic upgrade head
+        alembic upgrade head
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
