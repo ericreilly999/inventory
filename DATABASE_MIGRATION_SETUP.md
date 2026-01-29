@@ -19,6 +19,8 @@ From AWS Secrets Manager (`dev/inventory-management/database`):
 
 The DATABASE_URL should be set as a GitHub secret with the following value:
 
+**IMPORTANT:** Use `inventory_management` as the database name (not `database`)
+
 ```
 postgresql://inventory_user:InventoryDB2025!@dev-inventory-db.c54y4qiae8o2.us-west-2.rds.amazonaws.com:5432/inventory_management
 ```
