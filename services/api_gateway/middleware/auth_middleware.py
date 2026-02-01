@@ -24,12 +24,20 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/openapi.json",
         "/api/user/auth/login",
         "/api/user/auth/register",
+        "/api/v1/auth/login",
+        "/api/v1/auth/register",
         "/api/user/admin/seed-database",
         "/api/user/admin/seed-status",
         "/api/user/admin/debug/config",
         "/api/user/admin/run-migrations",
         "/api/user/admin/test-password",
         "/api/user/admin/cleanup-admin",
+        "/api/v1/admin/seed-database",
+        "/api/v1/admin/seed-status",
+        "/api/v1/admin/debug/config",
+        "/api/v1/admin/run-migrations",
+        "/api/v1/admin/test-password",
+        "/api/v1/admin/cleanup-admin",
     }
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
@@ -54,7 +62,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         )
 
         # Check if endpoint requires authentication
-        if path not in self.PUBLIC_ENDPOINTS and not path.startswith("/api/user/auth/"):
+        if path not in self.PUBLIC_ENDPOINTS and not path.startswith("/api/user/auth/") and not path.startswith("/api/v1/auth/"):
             # Extract and verify JWT token
             authorization = request.headers.get("Authorization")
             if not authorization or not authorization.startswith("Bearer "):
