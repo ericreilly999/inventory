@@ -99,7 +99,7 @@ const Reports: React.FC = () => {
   const [selectedLocationType, setSelectedLocationType] = useState('');
   const [selectedItemType, setSelectedItemType] = useState('');
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().subtract(30, 'day'));
-  const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
 
   useEffect(() => {
     fetchMetadata();
