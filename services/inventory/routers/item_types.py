@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from shared.database.config import get_db
 from shared.logging.config import get_logger
-from shared.models.item import ChildItem, ItemType, ParentItem
+from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
 
 from ..dependencies import (
     get_current_user,
@@ -86,9 +86,16 @@ async def list_item_types(
 
     query = db.query(ItemType)
 
-    # Filter by category
+    # Filter by category - convert string to enum
     if category:
-        query = query.filter(ItemType.category == category)
+        try:
+            category_enum = ItemCategory(category.lower())
+            query = query.filter(ItemType.category == category_enum)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid category: {category}. Must be 'parent' or 'child'",
+            )
 
     # Search filter
     if search:

@@ -30,13 +30,20 @@ import { apiService } from '../../services/api';
 
 interface InventoryReport {
   generated_at: string;
-  by_item_type: Array<{
+  by_parent_item_type: Array<{
     item_type: {
       id: string;
       name: string;
       category: string;
     };
     parent_items_count: number;
+  }>;
+  by_child_item_type: Array<{
+    item_type: {
+      id: string;
+      name: string;
+      category: string;
+    };
     child_items_count: number;
   }>;
   by_location_and_type: Array<{
@@ -186,9 +193,14 @@ const Reports: React.FC = () => {
     return acc;
   }, []) || [];
 
-  const itemTypeChartData = inventoryReport?.by_item_type.map(item => ({
+  const parentItemTypeChartData = inventoryReport?.by_parent_item_type.map(item => ({
     name: item.item_type.name,
-    value: item.parent_items_count + item.child_items_count,
+    value: item.parent_items_count,
+  })) || [];
+
+  const childItemTypeChartData = inventoryReport?.by_child_item_type.map(item => ({
+    name: item.item_type.name,
+    value: item.child_items_count,
   })) || [];
 
   return (
@@ -276,7 +288,7 @@ const Reports: React.FC = () => {
             {/* Inventory Charts */}
             {inventoryReport && inventoryChartData.length > 0 && (
               <Grid container spacing={3} sx={{ mb: 3 }}>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                   <Card>
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
@@ -306,20 +318,40 @@ const Reports: React.FC = () => {
                     </CardContent>
                   </Card>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                   <Card>
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
-                        Items by Type
+                        Parent Items by Type
                       </Typography>
                       <Box sx={{ height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={itemTypeChartData}>
+                          <BarChart data={parentItemTypeChartData}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
                             <Bar dataKey="value" fill="#1976d2" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Child Items by Type
+                      </Typography>
+                      <Box sx={{ height: 300 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={childItemTypeChartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Bar dataKey="value" fill="#00C49F" />
                           </BarChart>
                         </ResponsiveContainer>
                       </Box>
