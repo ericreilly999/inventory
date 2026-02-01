@@ -79,7 +79,7 @@ async def create_child_item(
     )
 
     db.add(assignment_history)
-    
+
     try:
         db.commit()
         db.refresh(child_item)
@@ -88,7 +88,7 @@ async def create_child_item(
         if "uq_child_items_sku" in str(e) or "duplicate key" in str(e).lower():
             raise HTTPException(
                 status_code=400,
-                detail=f"Child item with SKU '{item_data.sku}' already exists"
+                detail=f"Child item with SKU '{item_data.sku}' already exists",
             )
         raise
 
@@ -220,7 +220,7 @@ async def update_child_item(
         if "uq_child_items_sku" in str(e) or "duplicate key" in str(e).lower():
             raise HTTPException(
                 status_code=400,
-                detail=f"Child item with SKU '{item_data.sku}' already exists"
+                detail=f"Child item with SKU '{item_data.sku}' already exists",
             )
         raise
 

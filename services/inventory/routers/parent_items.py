@@ -65,7 +65,7 @@ async def create_parent_item(
     )
 
     db.add(parent_item)
-    
+
     try:
         db.commit()
         db.refresh(parent_item)
@@ -74,7 +74,7 @@ async def create_parent_item(
         if "uq_parent_items_sku" in str(e) or "duplicate key" in str(e).lower():
             raise HTTPException(
                 status_code=400,
-                detail=f"Parent item with SKU '{item_data.sku}' already exists"
+                detail=f"Parent item with SKU '{item_data.sku}' already exists",
             )
         raise
 
@@ -207,7 +207,7 @@ async def update_parent_item(
         if "uq_parent_items_sku" in str(e) or "duplicate key" in str(e).lower():
             raise HTTPException(
                 status_code=400,
-                detail=f"Parent item with SKU '{item_data.sku}' already exists"
+                detail=f"Parent item with SKU '{item_data.sku}' already exists",
             )
         raise
 
