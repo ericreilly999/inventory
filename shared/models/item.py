@@ -40,7 +40,7 @@ class ParentItem(Base, UUIDMixin, TimestampMixin):
 
     __tablename__ = "parent_items"
 
-    sku = Column(String(200), nullable=False, index=True)
+    sku = Column(String(200), nullable=False, unique=True, index=True)
     description = Column(Text, nullable=True)
 
     # Foreign keys
@@ -107,7 +107,7 @@ class ChildItem(Base, UUIDMixin, TimestampMixin):
 
     __tablename__ = "child_items"
 
-    sku = Column(String(200), nullable=False, index=True)
+    sku = Column(String(200), nullable=False, unique=True, index=True)
     description = Column(Text, nullable=True)
 
     # Foreign keys

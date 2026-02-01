@@ -35,8 +35,8 @@ engine = create_engine(
     DATABASE_URL,
     echo=os.getenv("DATABASE_ECHO", "false").lower() == "true",
     poolclass=QueuePool,
-    pool_size=int(os.getenv("DATABASE_POOL_SIZE", "10")),
-    max_overflow=int(os.getenv("DATABASE_MAX_OVERFLOW", "20")),
+    pool_size=int(os.getenv("DATABASE_POOL_SIZE", "5")),
+    max_overflow=int(os.getenv("DATABASE_MAX_OVERFLOW", "10")),
     pool_pre_ping=True,
     pool_recycle=3600,  # Recycle connections after 1 hour
 )

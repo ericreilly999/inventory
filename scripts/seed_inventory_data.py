@@ -97,6 +97,9 @@ def create_parent_item(sku: str, description: str, item_type_id: str, location_i
     )
     if response.status_code in [200, 201]:
         return response.json()
+    elif response.status_code == 400 and "duplicate" in response.text.lower():
+        print(f"Warning: Duplicate SKU {sku}, skipping...")
+        return None
     else:
         print(f"Warning: Failed to create parent item {sku}: {response.text[:200]}")
         return None
@@ -114,6 +117,9 @@ def create_child_item(sku: str, description: str, item_type_id: str, parent_item
     )
     if response.status_code in [200, 201]:
         return response.json()
+    elif response.status_code == 400 and "duplicate" in response.text.lower():
+        print(f"Warning: Duplicate SKU {sku}, skipping...")
+        return None
     else:
         print(f"Warning: Failed to create child item {sku}: {response.text}")
         return None
@@ -155,7 +161,7 @@ def create_parent_items_with_children(parent_type, child_types_config, count, lo
         )
         
         if not parent_item:
-            time.sleep(1.0)  # 1 second delay even on failure
+            time.sleep(2.0)  # 2 second delay even on failure
             continue
         
         print(f"Created parent item: {sku} ({parent_type['name']}) at {location['name']}")
@@ -180,10 +186,10 @@ def create_parent_items_with_children(parent_type, child_types_config, count, lo
             if child_item:
                 print(f"  - Added child item: {child_sku}")
             
-            time.sleep(1.0)  # 1 second delay between child items
+            time.sleep(2.0)  # 2 second delay between child items
         
         parent_items.append(parent_item)
-        time.sleep(1.0)  # 1 second delay between parent items
+        time.sleep(2.0)  # 2 second delay between parent items
     
     return parent_items
 
@@ -222,7 +228,7 @@ def create_movements(parent_items, locations, num_movements=50):
             print(f"Moved {parent_item['sku']} to {to_location['name']}")
             movements_created += 1
         
-        time.sleep(1.0)  # 1 second delay between movements
+        time.sleep(2.0)  # 2 second delay between movements
     
     print(f"Created {movements_created} movements")
 

@@ -4,8 +4,9 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from shared.database.config import get_db
@@ -78,8 +79,18 @@ async def create_child_item(
     )
 
     db.add(assignment_history)
-    db.commit()
-    db.refresh(child_item)
+    
+    try:
+        db.commit()
+        db.refresh(child_item)
+    except IntegrityError as e:
+        db.rollback()
+        if "uq_child_items_sku" in str(e) or "duplicate key" in str(e).lower():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Child item with SKU '{item_data.sku}' already exists"
+            )
+        raise
 
     logger.info(
         "Child item created",
@@ -201,8 +212,17 @@ async def update_child_item(
             reassigned_by=str(current_user.id),
         )
 
-    db.commit()
-    db.refresh(child_item)
+    try:
+        db.commit()
+        db.refresh(child_item)
+    except IntegrityError as e:
+        db.rollback()
+        if "uq_child_items_sku" in str(e) or "duplicate key" in str(e).lower():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Child item with SKU '{item_data.sku}' already exists"
+            )
+        raise
 
     logger.info(
         "Child item updated",

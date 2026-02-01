@@ -3,8 +3,9 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from shared.database.config import get_db
@@ -64,8 +65,18 @@ async def create_parent_item(
     )
 
     db.add(parent_item)
-    db.commit()
-    db.refresh(parent_item)
+    
+    try:
+        db.commit()
+        db.refresh(parent_item)
+    except IntegrityError as e:
+        db.rollback()
+        if "uq_parent_items_sku" in str(e) or "duplicate key" in str(e).lower():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Parent item with SKU '{item_data.sku}' already exists"
+            )
+        raise
 
     logger.info(
         "Parent item created",
@@ -188,8 +199,17 @@ async def update_parent_item(
         await validate_item_type_category(item_type, "parent")
         parent_item.item_type_id = item_data.item_type_id
 
-    db.commit()
-    db.refresh(parent_item)
+    try:
+        db.commit()
+        db.refresh(parent_item)
+    except IntegrityError as e:
+        db.rollback()
+        if "uq_parent_items_sku" in str(e) or "duplicate key" in str(e).lower():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Parent item with SKU '{item_data.sku}' already exists"
+            )
+        raise
 
     logger.info(
         "Parent item updated",
