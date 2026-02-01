@@ -159,7 +159,11 @@ class ChildItemWithParentResponse(ChildItemBase):
 
 
 class ParentItemSummaryResponse(BaseModel):
-    """Schema for parent item summary (without child items to avoid circular reference)."""
+    """
+    Schema for parent item summary.
+
+    Without child items to avoid circular reference.
+    """
 
     id: UUID
     sku: str

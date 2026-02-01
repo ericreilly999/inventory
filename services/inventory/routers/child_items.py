@@ -27,7 +27,6 @@ from ..dependencies import (
 from ..schemas import (
     AssignmentHistoryResponse,
     ChildItemCreate,
-    ChildItemResponse,
     ChildItemUpdate,
     ChildItemWithParentResponse,
     MessageResponse,

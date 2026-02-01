@@ -43,7 +43,7 @@ class TestMoveHistoryRecording:
 
         from_location = Location(
             id=uuid4(),
-            sku="Warehouse A",
+            name="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -51,7 +51,7 @@ class TestMoveHistoryRecording:
 
         to_location = Location(
             id=uuid4(),
-            sku="Warehouse B",
+            name="Warehouse B",
             description="Secondary warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -144,7 +144,7 @@ class TestMoveHistoryRecording:
 
         location = Location(
             id=uuid4(),
-            sku="Warehouse A",
+            name="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -225,7 +225,7 @@ class TestMoveHistoryQuerying:
 
         location1 = Location(
             id=uuid4(),
-            sku="Warehouse A",
+            name="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -233,7 +233,7 @@ class TestMoveHistoryQuerying:
 
         location2 = Location(
             id=uuid4(),
-            sku="Warehouse B",
+            name="Warehouse B",
             description="Secondary warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -345,7 +345,7 @@ class TestMoveHistoryQuerying:
 
         location_a = Location(
             id=uuid4(),
-            sku="Warehouse A",
+            name="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -353,7 +353,7 @@ class TestMoveHistoryQuerying:
 
         location_b = Location(
             id=uuid4(),
-            sku="Warehouse B",
+            name="Warehouse B",
             description="Secondary warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -361,7 +361,7 @@ class TestMoveHistoryQuerying:
 
         location_c = Location(
             id=uuid4(),
-            sku="Warehouse C",
+            name="Warehouse C",
             description="Third warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -469,7 +469,7 @@ class TestMoveHistoryFiltering:
 
         location1 = Location(
             id=uuid4(),
-            sku="Warehouse A",
+            name="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -477,7 +477,7 @@ class TestMoveHistoryFiltering:
 
         location2 = Location(
             id=uuid4(),
-            sku="Warehouse B",
+            name="Warehouse B",
             description="Secondary warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -593,7 +593,7 @@ class TestMoveHistoryFiltering:
 
         location1 = Location(
             id=uuid4(),
-            sku="Warehouse A",
+            name="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -601,7 +601,7 @@ class TestMoveHistoryFiltering:
 
         location2 = Location(
             id=uuid4(),
-            sku="Warehouse B",
+            name="Warehouse B",
             description="Secondary warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -741,7 +741,7 @@ class TestAssignmentHistoryIntegration:
 
         location = Location(
             id=uuid4(),
-            sku="Warehouse A",
+            name="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
@@ -872,7 +872,7 @@ class TestAssignmentHistoryIntegration:
 
         location = Location(
             id=uuid4(),
-            sku="Warehouse A",
+            name="Warehouse A",
             description="Main warehouse",
             location_type_id=location_type.id,
             location_type=location_type,
