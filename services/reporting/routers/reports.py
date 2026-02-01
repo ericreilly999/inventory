@@ -353,7 +353,7 @@ async def get_inventory_count_report(
                 func.count(func.distinct(ParentItem.id)).label("parent_count"),
             )
             .outerjoin(ParentItem, ParentItem.item_type_id == ItemType.id)
-            .filter(ItemType.category == "parent")
+            .filter(ItemType.category == ItemCategory.PARENT)
         )
 
         if item_type_ids:
@@ -381,7 +381,7 @@ async def get_inventory_count_report(
                 func.count(func.distinct(ChildItem.id)).label("child_count"),
             )
             .outerjoin(ChildItem, ChildItem.item_type_id == ItemType.id)
-            .filter(ItemType.category == "child")
+            .filter(ItemType.category == ItemCategory.CHILD)
         )
 
         if item_type_ids:

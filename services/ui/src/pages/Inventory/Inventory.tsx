@@ -111,7 +111,7 @@ const Inventory: React.FC = () => {
   const handleEditItem = (item: any) => {
     setEditingItem(item);
     setFormData({
-      name: item.name,
+      name: item.sku,
       description: item.description,
       item_type_id: item.item_type?.id || '',
       current_location_id: item.current_location?.id || '',
@@ -129,13 +129,13 @@ const Inventory: React.FC = () => {
     const endpoint = tabValue === 0 ? '/api/v1/items/parent' : '/api/v1/items/child';
     const data = tabValue === 0 
       ? {
-          name: formData.name,
+          sku: formData.name,
           description: formData.description,
           item_type_id: formData.item_type_id,
           current_location_id: formData.current_location_id,
         }
       : {
-          name: formData.name,
+          sku: formData.name,
           description: formData.description,
           item_type_id: formData.item_type_id,
           parent_item_id: formData.parent_item_id,
@@ -255,7 +255,7 @@ const Inventory: React.FC = () => {
       field: 'parent_item', 
       headerName: 'Parent Item', 
       width: 150,
-      valueGetter: (params) => params.row.parent_item?.name || 'Unassigned',
+      valueGetter: (params) => params.row.parent_item?.sku || 'Unassigned',
     },
     { 
       field: 'created_at', 
@@ -333,7 +333,7 @@ const Inventory: React.FC = () => {
           <TextField
             autoFocus
             margin="dense"
-            label="Name"
+            label="SKU"
             fullWidth
             variant="outlined"
             value={formData.name}
@@ -386,7 +386,7 @@ const Inventory: React.FC = () => {
                 <MenuItem value="">Unassigned</MenuItem>
                 {parentItems.map((item) => (
                   <MenuItem key={item.id} value={item.id}>
-                    {item.name}
+                    {item.sku}
                   </MenuItem>
                 ))}
               </Select>
@@ -403,7 +403,7 @@ const Inventory: React.FC = () => {
 
       {/* Move Dialog */}
       <Dialog open={moveDialogOpen} onClose={() => setMoveDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Move Item: {movingItem?.name}</DialogTitle>
+        <DialogTitle>Move Item: {movingItem?.sku}</DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="dense">
             <InputLabel>New Location</InputLabel>
