@@ -132,8 +132,13 @@ async def create_location(
     except HTTPException:
         # Re-raise validation errors from get_location_type_by_id
         raise
-    except IntegrityError:
+    except IntegrityError as e:
         db.rollback()
+        if "uq_location_name_type" in str(e) or "duplicate key" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Location with name '{location_data.name}' already exists for this location type",
+            )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Location creation failed due to constraint violation",

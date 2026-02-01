@@ -1,6 +1,6 @@
 """Location and LocationType models."""
 
-from sqlalchemy import JSON, Column, ForeignKey, String, Text
+from sqlalchemy import JSON, Column, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from .base import GUID, Base, TimestampMixin, UUIDMixin
@@ -25,6 +25,9 @@ class Location(Base, UUIDMixin, TimestampMixin):
     """Location model for physical storage places."""
 
     __tablename__ = "locations"
+    __table_args__ = (
+        UniqueConstraint('name', 'location_type_id', name='uq_location_name_type'),
+    )
 
     name = Column(String(200), nullable=False, index=True)
     description = Column(Text, nullable=True)
