@@ -59,7 +59,7 @@ class TestMoveHistoryRecording:
 
         item_type = ItemType(
             id=uuid4(),
-            sku="Equipment",
+            name="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
@@ -152,7 +152,7 @@ class TestMoveHistoryRecording:
 
         item_type = ItemType(
             id=uuid4(),
-            sku="Equipment",
+            name="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
@@ -241,7 +241,7 @@ class TestMoveHistoryQuerying:
 
         item_type = ItemType(
             id=uuid4(),
-            sku="Equipment",
+            name="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
@@ -369,7 +369,7 @@ class TestMoveHistoryQuerying:
 
         item_type = ItemType(
             id=uuid4(),
-            sku="Equipment",
+            name="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
@@ -485,7 +485,7 @@ class TestMoveHistoryFiltering:
 
         item_type = ItemType(
             id=uuid4(),
-            sku="Equipment",
+            name="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
@@ -609,7 +609,7 @@ class TestMoveHistoryFiltering:
 
         item_type = ItemType(
             id=uuid4(),
-            sku="Equipment",
+            name="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
@@ -749,14 +749,14 @@ class TestAssignmentHistoryIntegration:
 
         parent_item_type = ItemType(
             id=uuid4(),
-            sku="Equipment",
+            name="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
 
         child_item_type = ItemType(
             id=uuid4(),
-            sku="Component",
+            name="Component",
             description="Component items",
             category=ItemCategory.CHILD,
         )
@@ -880,14 +880,14 @@ class TestAssignmentHistoryIntegration:
 
         parent_item_type = ItemType(
             id=uuid4(),
-            sku="Equipment",
+            name="Equipment",
             description="Equipment items",
             category=ItemCategory.PARENT,
         )
 
         child_item_type = ItemType(
             id=uuid4(),
-            sku="Component",
+            name="Component",
             description="Component items",
             category=ItemCategory.CHILD,
         )
