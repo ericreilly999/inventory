@@ -98,7 +98,8 @@ def create_parent_item(sku: str, description: str, item_type_id: str, location_i
     if response.status_code in [200, 201]:
         return response.json()
     else:
-        raise Exception(f"Failed to create parent item {sku}: {response.text}")
+        print(f"Warning: Failed to create parent item {sku}: {response.text[:200]}")
+        return None
 
 def create_child_item(sku: str, description: str, item_type_id: str, parent_item_id: str):
     """Create a child item."""
@@ -139,8 +140,8 @@ def create_parent_items_with_children(parent_type, child_types_config, count, lo
     parent_items = []
     
     for i in range(start_number, start_number + count):
-        # Create parent item SKU
-        sku = f"{parent_type['name']} {i}"
+        # Create parent item SKU - just the number
+        sku = str(i)
         
         # Select a random location
         location = random.choice(locations)
@@ -154,9 +155,10 @@ def create_parent_items_with_children(parent_type, child_types_config, count, lo
         )
         
         if not parent_item:
+            time.sleep(1.0)  # 1 second delay even on failure
             continue
         
-        print(f"Created parent item: {sku} at {location['name']}")
+        print(f"Created parent item: {sku} ({parent_type['name']}) at {location['name']}")
         
         # Create child items based on configuration
         for child_config in child_types_config:
@@ -167,19 +169,21 @@ def create_parent_items_with_children(parent_type, child_types_config, count, lo
             if is_optional and random.random() < 0.5:
                 continue
             
-            # Create child item
+            # Create child item - SKU is parent SKU + child type name
             child_sku = f"{sku}-{child_type['name']}"
             child_item = create_child_item(
                 sku=child_sku,
-                description=f"{child_type['name']} for {sku}",
+                description=f"{child_type['name']} for {parent_type['name']} {sku}",
                 item_type_id=child_type['id'],
                 parent_item_id=parent_item['id']
             )
             if child_item:
                 print(f"  - Added child item: {child_sku}")
+            
+            time.sleep(1.0)  # 1 second delay between child items
         
         parent_items.append(parent_item)
-        time.sleep(0.1)  # Small delay to avoid overwhelming the API
+        time.sleep(1.0)  # 1 second delay between parent items
     
     return parent_items
 
@@ -218,7 +222,7 @@ def create_movements(parent_items, locations, num_movements=50):
             print(f"Moved {parent_item['sku']} to {to_location['name']}")
             movements_created += 1
         
-        time.sleep(0.1)  # Small delay
+        time.sleep(1.0)  # 1 second delay between movements
     
     print(f"Created {movements_created} movements")
 
