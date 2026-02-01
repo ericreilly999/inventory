@@ -55,6 +55,31 @@ class ChildItemDetail(BaseModel):
         from_attributes = True
 
 
+# Dashboard schemas
+class InventoryByLocationItem(BaseModel):
+    """Inventory count by location and item type for dashboard."""
+
+    location_name: str
+    item_type_name: str
+    count: int
+
+
+class ThroughputByLocationItem(BaseModel):
+    """Throughput by location and item type for dashboard."""
+
+    location_name: str
+    item_type_name: str
+    count: int
+
+
+class DashboardData(BaseModel):
+    """Dashboard data response."""
+
+    inventory_by_location: List[InventoryByLocationItem]
+    inbound_throughput: List[ThroughputByLocationItem]
+    outbound_throughput: List[ThroughputByLocationItem]
+
+
 # Inventory status report schemas
 class InventoryStatusByLocation(BaseModel):
     """Inventory status by location."""

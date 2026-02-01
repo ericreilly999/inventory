@@ -18,6 +18,8 @@ from shared.models.move_history import MoveHistory
 from ..dependencies import require_reports_read
 from ..schemas import (
     ChildItemDetail,
+    DashboardData,
+    InventoryByLocationItem,
     InventoryCountByChildType,
     InventoryCountByLocationAndType,
     InventoryCountByParentType,
@@ -28,6 +30,7 @@ from ..schemas import (
     LocationSummary,
     MovementHistoryReport,
     MovementRecord,
+    ThroughputByLocationItem,
     UserSummary,
 )
 
@@ -657,4 +660,151 @@ async def export_inventory_data(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error exporting inventory data: {str(e)}",
+        )
+
+
+@router.get(
+    "/dashboard",
+    response_model=DashboardData,
+    summary="Get dashboard data",
+    description="Get dashboard data with inventory and throughput by location",
+    dependencies=[Depends(require_reports_read)],
+)
+async def get_dashboard_data(
+    location_type_id: UUID = Query(..., description="Filter by location type (required)"),
+    start_date: Optional[str] = Query(None, description="Start date for throughput (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date for throughput (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+):
+    """
+    Generate dashboard data with inventory and throughput by location.
+    
+    Requires location_type_id filter.
+    """
+    logger.info(
+        "Generating dashboard data",
+        location_type_id=str(location_type_id),
+        start_date=start_date,
+        end_date=end_date,
+    )
+    try:
+        # Get inventory by location and item type
+        inventory_query = (
+            db.query(
+                Location.name.label("location_name"),
+                ItemType.name.label("item_type_name"),
+                func.count(ParentItem.id).label("count"),
+            )
+            .join(ParentItem, ParentItem.current_location_id == Location.id)
+            .join(ItemType, ParentItem.item_type_id == ItemType.id)
+            .filter(Location.location_type_id == location_type_id)
+            .group_by(Location.name, ItemType.name)
+            .order_by(Location.name, ItemType.name)
+        )
+
+        inventory_results = inventory_query.all()
+        inventory_by_location = [
+            InventoryByLocationItem(
+                location_name=row.location_name,
+                item_type_name=row.item_type_name,
+                count=row.count,
+            )
+            for row in inventory_results
+        ]
+
+        # Parse dates if provided
+        start_datetime = None
+        end_datetime = None
+        if start_date:
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+        if end_date:
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d").replace(
+                hour=23, minute=59, second=59
+            )
+
+        # Get inbound throughput (moves TO locations of this type)
+        inbound_query = (
+            db.query(
+                Location.name.label("location_name"),
+                ItemType.name.label("item_type_name"),
+                func.count(MoveHistory.id).label("count"),
+            )
+            .join(MoveHistory, MoveHistory.to_location_id == Location.id)
+            .join(ParentItem, MoveHistory.parent_item_id == ParentItem.id)
+            .join(ItemType, ParentItem.item_type_id == ItemType.id)
+            .filter(Location.location_type_id == location_type_id)
+        )
+
+        if start_datetime:
+            inbound_query = inbound_query.filter(MoveHistory.moved_at >= start_datetime)
+        if end_datetime:
+            inbound_query = inbound_query.filter(MoveHistory.moved_at <= end_datetime)
+
+        inbound_query = inbound_query.group_by(Location.name, ItemType.name).order_by(
+            Location.name, ItemType.name
+        )
+
+        inbound_results = inbound_query.all()
+        inbound_throughput = [
+            ThroughputByLocationItem(
+                location_name=row.location_name,
+                item_type_name=row.item_type_name,
+                count=row.count,
+            )
+            for row in inbound_results
+        ]
+
+        # Get outbound throughput (moves FROM locations of this type)
+        outbound_query = (
+            db.query(
+                Location.name.label("location_name"),
+                ItemType.name.label("item_type_name"),
+                func.count(MoveHistory.id).label("count"),
+            )
+            .join(MoveHistory, MoveHistory.from_location_id == Location.id)
+            .join(ParentItem, MoveHistory.parent_item_id == ParentItem.id)
+            .join(ItemType, ParentItem.item_type_id == ItemType.id)
+            .filter(Location.location_type_id == location_type_id)
+        )
+
+        if start_datetime:
+            outbound_query = outbound_query.filter(MoveHistory.moved_at >= start_datetime)
+        if end_datetime:
+            outbound_query = outbound_query.filter(MoveHistory.moved_at <= end_datetime)
+
+        outbound_query = outbound_query.group_by(Location.name, ItemType.name).order_by(
+            Location.name, ItemType.name
+        )
+
+        outbound_results = outbound_query.all()
+        outbound_throughput = [
+            ThroughputByLocationItem(
+                location_name=row.location_name,
+                item_type_name=row.item_type_name,
+                count=row.count,
+            )
+            for row in outbound_results
+        ]
+
+        return DashboardData(
+            inventory_by_location=inventory_by_location,
+            inbound_throughput=inbound_throughput,
+            outbound_throughput=outbound_throughput,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "Error generating dashboard data",
+            error=str(e),
+            error_type=type(e).__name__,
+            traceback=traceback.format_exc(),
+            location_type_id=str(location_type_id),
+            start_date=start_date,
+            end_date=end_date,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating dashboard data: {str(e)}",
         )
