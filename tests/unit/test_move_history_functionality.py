@@ -38,7 +38,7 @@ class TestMoveHistoryRecording:
         )
 
         location_type = LocationType(
-            id=uuid4(), sku="Warehouse", description="Storage facility"
+            id=uuid4(), name="Warehouse", description="Storage facility"
         )
 
         from_location = Location(
@@ -139,7 +139,7 @@ class TestMoveHistoryRecording:
         )
 
         location_type = LocationType(
-            id=uuid4(), sku="Warehouse", description="Storage facility"
+            id=uuid4(), name="Warehouse", description="Storage facility"
         )
 
         location = Location(
@@ -220,7 +220,7 @@ class TestMoveHistoryQuerying:
         )
 
         location_type = LocationType(
-            id=uuid4(), sku="Warehouse", description="Storage facility"
+            id=uuid4(), name="Warehouse", description="Storage facility"
         )
 
         location1 = Location(
@@ -340,7 +340,7 @@ class TestMoveHistoryQuerying:
         )
 
         location_type = LocationType(
-            id=uuid4(), sku="Warehouse", description="Storage facility"
+            id=uuid4(), name="Warehouse", description="Storage facility"
         )
 
         location_a = Location(
@@ -464,7 +464,7 @@ class TestMoveHistoryFiltering:
         )
 
         location_type = LocationType(
-            id=uuid4(), sku="Warehouse", description="Storage facility"
+            id=uuid4(), name="Warehouse", description="Storage facility"
         )
 
         location1 = Location(
@@ -588,7 +588,7 @@ class TestMoveHistoryFiltering:
         )
 
         location_type = LocationType(
-            id=uuid4(), sku="Warehouse", description="Storage facility"
+            id=uuid4(), name="Warehouse", description="Storage facility"
         )
 
         location1 = Location(
@@ -736,7 +736,7 @@ class TestAssignmentHistoryIntegration:
         )
 
         location_type = LocationType(
-            id=uuid4(), sku="Warehouse", description="Storage facility"
+            id=uuid4(), name="Warehouse", description="Storage facility"
         )
 
         location = Location(
@@ -867,7 +867,7 @@ class TestAssignmentHistoryIntegration:
         )
 
         location_type = LocationType(
-            id=uuid4(), sku="Warehouse", description="Storage facility"
+            id=uuid4(), name="Warehouse", description="Storage facility"
         )
 
         location = Location(

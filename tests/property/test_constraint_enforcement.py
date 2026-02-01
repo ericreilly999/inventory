@@ -69,7 +69,7 @@ def create_test_data(session):
 
     # Create location type
     location_type = LocationType(
-        id=uuid.uuid4(), sku="warehouse", description="Warehouse location"
+        id=uuid.uuid4(), name="warehouse", description="Warehouse location"
     )
     session.add(location_type)
 
