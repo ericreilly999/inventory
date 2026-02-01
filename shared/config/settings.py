@@ -65,7 +65,7 @@ class Settings(BaseSettings):
         ],
         env="CORS_ORIGINS",
     )
-    rate_limit_requests: int = Field(default=100, env="RATE_LIMIT_REQUESTS")
+    rate_limit_requests: int = Field(default=300, env="RATE_LIMIT_REQUESTS")
     rate_limit_window: int = Field(default=60, env="RATE_LIMIT_WINDOW")
 
     class Config:

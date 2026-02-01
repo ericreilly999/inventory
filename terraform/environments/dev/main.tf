@@ -152,9 +152,9 @@ module "api_gateway_service" {
 
   container_image = var.api_gateway_image
   container_port  = 8000
-  cpu             = 256
-  memory          = 512
-  desired_count   = 1
+  cpu             = 512
+  memory          = 1024
+  desired_count   = 3
 
   security_group_ids = [module.security.ecs_security_group_id]
   subnet_ids         = module.networking.private_subnet_ids
@@ -271,9 +271,9 @@ module "inventory_service" {
 
   container_image = var.inventory_service_image
   container_port  = 8003
-  cpu             = 256
-  memory          = 512
-  desired_count   = 1
+  cpu             = 512
+  memory          = 1024
+  desired_count   = 2
 
   security_group_ids = [module.security.ecs_security_group_id]
   subnet_ids         = module.networking.private_subnet_ids
@@ -326,9 +326,9 @@ module "location_service" {
 
   container_image = var.location_service_image
   container_port  = 8002
-  cpu             = 256
-  memory          = 512
-  desired_count   = 1
+  cpu             = 512
+  memory          = 1024
+  desired_count   = 2
 
   security_group_ids = [module.security.ecs_security_group_id]
   subnet_ids         = module.networking.private_subnet_ids
