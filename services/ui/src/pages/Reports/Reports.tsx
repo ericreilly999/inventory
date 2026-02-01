@@ -60,6 +60,13 @@ interface InventoryReport {
     parent_items_count: number;
     child_items_count: number;
   }>;
+  parent_items_detail: Array<{
+    id: string;
+    sku: string;
+    parent_item_type: string;
+    location_name: string;
+    location_type: string;
+  }>;
   child_items_detail: Array<{
     id: string;
     sku: string;
@@ -163,29 +170,70 @@ const Reports: React.FC = () => {
     }
   };
 
-  const exportReport = async () => {
-    try {
-      // Only inventory export is available
-      const endpoint = '/api/v1/reports/export/inventory';
-      const params = new URLSearchParams();
-      
-      if (selectedLocation) params.append('location_ids', selectedLocation);
-      
-      const response = await apiService.get(`${endpoint}?${params}`);
-      
-      // Create and download file
-      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${tabValue === 0 ? 'inventory' : 'movement'}-report-${new Date().toISOString()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error: any) {
-      setError(error.response?.data?.error?.message || 'Failed to export report');
-    }
+  const exportReportAsJSON = () => {
+    if (!inventoryReport) return;
+    
+    const data = {
+      parent_items_detail: inventoryReport.parent_items_detail,
+      child_items_detail: inventoryReport.child_items_detail,
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `inventory-report-${new Date().toISOString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const exportReportAsCSV = () => {
+    if (!inventoryReport) return;
+    
+    // Export parent items as CSV
+    const parentHeaders = ['Parent Item SKU', 'Item Type', 'Location', 'Location Type'];
+    const parentRows = inventoryReport.parent_items_detail.map(item => [
+      item.sku,
+      item.parent_item_type,
+      item.location_name,
+      item.location_type,
+    ]);
+    
+    const parentCSV = [
+      parentHeaders.join(','),
+      ...parentRows.map(row => row.map(cell => `"${cell}"`).join(',')),
+    ].join('\n');
+    
+    // Export child items as CSV
+    const childHeaders = ['Child Item SKU', 'Child Item Type', 'Parent Item SKU', 'Parent Item Type', 'Location', 'Location Type'];
+    const childRows = inventoryReport.child_items_detail.map(item => [
+      item.sku,
+      item.child_item_type,
+      item.parent_item_sku,
+      item.parent_item_type,
+      item.location_name,
+      item.location_type,
+    ]);
+    
+    const childCSV = [
+      childHeaders.join(','),
+      ...childRows.map(row => row.map(cell => `"${cell}"`).join(',')),
+    ].join('\n');
+    
+    // Combine both CSVs with section headers
+    const combinedCSV = `Parent Items\n${parentCSV}\n\nChild Items\n${childCSV}`;
+    
+    const blob = new Blob([combinedCSV], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `inventory-report-${new Date().toISOString()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   };
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d', '#ffc658', '#ff7c7c'];
@@ -209,46 +257,67 @@ const Reports: React.FC = () => {
 
   // Transform data for stacked bar charts - Child Items by Location
   const transformChildItemsData = () => {
-    if (!inventoryReport?.by_location_and_type) return [];
+    if (!inventoryReport?.child_items_detail) return [];
     
     const locationMap = new Map<string, any>();
     
-    inventoryReport.by_location_and_type.forEach((item) => {
-      if (!locationMap.has(item.location.name)) {
-        locationMap.set(item.location.name, { location: item.location.name });
+    // Group child items by location and child item type
+    inventoryReport.child_items_detail.forEach((item) => {
+      if (!locationMap.has(item.location_name)) {
+        locationMap.set(item.location_name, { location: item.location_name });
       }
-      const locationData = locationMap.get(item.location.name);
-      locationData[item.item_type.name] = item.child_items_count;
+      const locationData = locationMap.get(item.location_name);
+      // Count child items by their child item type
+      locationData[item.child_item_type] = (locationData[item.child_item_type] || 0) + 1;
     });
     
     return Array.from(locationMap.values());
   };
 
-  // Get unique item types for legend
-  const getItemTypes = () => {
+  // Get unique parent item types for legend
+  const getParentItemTypes = () => {
     if (!inventoryReport?.by_location_and_type) return [];
     const types = new Set<string>();
     inventoryReport.by_location_and_type.forEach((item) => types.add(item.item_type.name));
     return Array.from(types);
   };
 
+  // Get unique child item types for legend
+  const getChildItemTypes = () => {
+    if (!inventoryReport?.child_items_detail) return [];
+    const types = new Set<string>();
+    inventoryReport.child_items_detail.forEach((item) => types.add(item.child_item_type));
+    return Array.from(types);
+  };
+
   const parentItemsChartData = transformParentItemsData();
   const childItemsChartData = transformChildItemsData();
-  const itemTypes = getItemTypes();
+  const parentItemTypes = getParentItemTypes();
+  const childItemTypes = getChildItemTypes();
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4">Reports & Analytics</Typography>
-          <Button
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            onClick={exportReport}
-            disabled={loading || (tabValue === 0 ? !inventoryReport : !movementReport)}
-          >
-            Export Report
-          </Button>
+          <Box display="flex" gap={2}>
+            <Button
+              variant="contained"
+              startIcon={<DownloadIcon />}
+              onClick={exportReportAsJSON}
+              disabled={loading || !inventoryReport}
+            >
+              Export as JSON
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<DownloadIcon />}
+              onClick={exportReportAsCSV}
+              disabled={loading || !inventoryReport}
+            >
+              Export as CSV
+            </Button>
+          </Box>
         </Box>
 
         {error && (
@@ -338,7 +407,7 @@ const Reports: React.FC = () => {
                             <YAxis />
                             <Tooltip />
                             <Legend />
-                            {itemTypes.map((itemType, index) => (
+                            {parentItemTypes.map((itemType, index) => (
                               <Bar
                                 key={itemType}
                                 dataKey={itemType}
@@ -359,7 +428,7 @@ const Reports: React.FC = () => {
                         Child Items by Location
                       </Typography>
                       <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Stacked by item type
+                        Stacked by child item type
                       </Typography>
                       <Box sx={{ height: 400, mt: 2 }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -369,7 +438,7 @@ const Reports: React.FC = () => {
                             <YAxis />
                             <Tooltip />
                             <Legend />
-                            {itemTypes.map((itemType, index) => (
+                            {childItemTypes.map((itemType, index) => (
                               <Bar
                                 key={itemType}
                                 dataKey={itemType}
@@ -386,41 +455,83 @@ const Reports: React.FC = () => {
               </Grid>
             )}
 
-            {/* Inventory Table - Child Items Detail */}
-            {inventoryReport && inventoryReport.child_items_detail && inventoryReport.child_items_detail.length > 0 && (
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Detailed Inventory Report - Child Items
-                  </Typography>
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Child Item SKU</TableCell>
-                          <TableCell>Child Item Type</TableCell>
-                          <TableCell>Parent Item SKU</TableCell>
-                          <TableCell>Parent Item Type</TableCell>
-                          <TableCell>Location</TableCell>
-                          <TableCell>Location Type</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {inventoryReport.child_items_detail.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>{item.sku}</TableCell>
-                            <TableCell>{item.child_item_type}</TableCell>
-                            <TableCell>{item.parent_item_sku}</TableCell>
-                            <TableCell>{item.parent_item_type}</TableCell>
-                            <TableCell>{item.location_name}</TableCell>
-                            <TableCell>{item.location_type}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
+            {/* Inventory Tables - Parent and Child Items Detail */}
+            {inventoryReport && (
+              <Grid container spacing={3}>
+                {/* Parent Items Detail Table */}
+                {inventoryReport.parent_items_detail && inventoryReport.parent_items_detail.length > 0 && (
+                  <Grid item xs={12}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          Detailed Inventory Report - Parent Items
+                        </Typography>
+                        <TableContainer>
+                          <Table>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Parent Item SKU</TableCell>
+                                <TableCell>Item Type</TableCell>
+                                <TableCell>Location</TableCell>
+                                <TableCell>Location Type</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {inventoryReport.parent_items_detail.map((item) => (
+                                <TableRow key={item.id}>
+                                  <TableCell>{item.sku}</TableCell>
+                                  <TableCell>{item.parent_item_type}</TableCell>
+                                  <TableCell>{item.location_name}</TableCell>
+                                  <TableCell>{item.location_type}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )}
+
+                {/* Child Items Detail Table */}
+                {inventoryReport.child_items_detail && inventoryReport.child_items_detail.length > 0 && (
+                  <Grid item xs={12}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          Detailed Inventory Report - Child Items
+                        </Typography>
+                        <TableContainer>
+                          <Table>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Child Item SKU</TableCell>
+                                <TableCell>Child Item Type</TableCell>
+                                <TableCell>Parent Item SKU</TableCell>
+                                <TableCell>Parent Item Type</TableCell>
+                                <TableCell>Location</TableCell>
+                                <TableCell>Location Type</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {inventoryReport.child_items_detail.map((item) => (
+                                <TableRow key={item.id}>
+                                  <TableCell>{item.sku}</TableCell>
+                                  <TableCell>{item.child_item_type}</TableCell>
+                                  <TableCell>{item.parent_item_sku}</TableCell>
+                                  <TableCell>{item.parent_item_type}</TableCell>
+                                  <TableCell>{item.location_name}</TableCell>
+                                  <TableCell>{item.location_type}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )}
+              </Grid>
             )}
           </Box>
         )}

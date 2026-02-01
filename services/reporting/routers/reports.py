@@ -30,6 +30,7 @@ from ..schemas import (
     LocationSummary,
     MovementHistoryReport,
     MovementRecord,
+    ParentItemDetail,
     ThroughputByLocationItem,
     UserSummary,
 )
@@ -527,11 +528,57 @@ async def get_inventory_count_report(
                 )
             )
 
+        # Get detailed parent item information
+        parent_items_query = (
+            db.query(
+                ParentItem.id,
+                ParentItem.sku,
+                ItemType.name.label("parent_item_type"),
+                Location.name.label("location_name"),
+                LocationType.name.label("location_type"),
+            )
+            .join(ItemType, ParentItem.item_type_id == ItemType.id)
+            .join(Location, ParentItem.current_location_id == Location.id)
+            .join(LocationType, Location.location_type_id == LocationType.id)
+        )
+
+        # Apply filters to parent items query
+        if location_ids:
+            parent_items_query = parent_items_query.filter(
+                Location.id.in_(location_ids)
+            )
+
+        if location_type_ids:
+            parent_items_query = parent_items_query.filter(
+                Location.location_type_id.in_(location_type_ids)
+            )
+
+        if item_type_ids:
+            parent_items_query = parent_items_query.filter(
+                ParentItem.item_type_id.in_(item_type_ids)
+            )
+
+        parent_items_results = parent_items_query.all()
+
+        # Build parent items detail list
+        parent_items_detail = []
+        for result in parent_items_results:
+            parent_items_detail.append(
+                ParentItemDetail(
+                    id=result.id,
+                    sku=result.sku,
+                    parent_item_type=result.parent_item_type,
+                    location_name=result.location_name,
+                    location_type=result.location_type,
+                )
+            )
+
         return InventoryCountReport(
             generated_at=datetime.now(timezone.utc),
             by_parent_item_type=by_parent_item_type,
             by_child_item_type=by_child_item_type,
             by_location_and_type=by_location_and_type,
+            parent_items_detail=parent_items_detail,
             child_items_detail=child_items_detail,
         )
 

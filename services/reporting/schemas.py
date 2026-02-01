@@ -55,6 +55,19 @@ class ChildItemDetail(BaseModel):
         from_attributes = True
 
 
+class ParentItemDetail(BaseModel):
+    """Detailed parent item information for reports."""
+
+    id: UUID
+    sku: str
+    parent_item_type: str
+    location_name: str
+    location_type: str
+
+    class Config:
+        from_attributes = True
+
+
 # Dashboard schemas
 class InventoryByLocationItem(BaseModel):
     """Inventory count by location and item type for dashboard."""
@@ -158,6 +171,7 @@ class InventoryCountReport(BaseModel):
     by_parent_item_type: List[InventoryCountByParentType]
     by_child_item_type: List[InventoryCountByChildType]
     by_location_and_type: List[InventoryCountByLocationAndType]
+    parent_items_detail: List[ParentItemDetail] = []
     child_items_detail: List[ChildItemDetail] = []
 
 
