@@ -206,24 +206,23 @@ const Inventory: React.FC = () => {
   };
 
   const parentColumns: GridColDef[] = [
-    { field: 'sku', headerName: 'SKU', width: 200 },
-    { field: 'description', headerName: 'Description', width: 250 },
+    { field: 'sku', headerName: 'SKU', width: 250 },
     { 
       field: 'item_type', 
       headerName: 'Type', 
-      width: 150,
+      width: 200,
       valueGetter: (params) => params.row.item_type?.name || '',
     },
     { 
       field: 'current_location', 
       headerName: 'Location', 
-      width: 150,
+      width: 200,
       valueGetter: (params) => params.row.current_location?.name || '',
     },
     { 
       field: 'created_at', 
       headerName: 'Created', 
-      width: 150, 
+      width: 180, 
       type: 'dateTime',
       valueGetter: (params) => params.row.created_at ? new Date(params.row.created_at) : null,
     },
@@ -253,24 +252,23 @@ const Inventory: React.FC = () => {
   ];
 
   const childColumns: GridColDef[] = [
-    { field: 'sku', headerName: 'SKU', width: 200 },
-    { field: 'description', headerName: 'Description', width: 250 },
+    { field: 'sku', headerName: 'SKU', width: 250 },
     { 
       field: 'item_type', 
       headerName: 'Type', 
-      width: 150,
+      width: 200,
       valueGetter: (params) => params.row.item_type?.name || '',
     },
     { 
       field: 'parent_item', 
       headerName: 'Parent Item', 
-      width: 150,
+      width: 200,
       valueGetter: (params) => params.row.parent_item?.sku || 'Unassigned',
     },
     { 
       field: 'created_at', 
       headerName: 'Created', 
-      width: 150, 
+      width: 180, 
       type: 'dateTime',
       valueGetter: (params) => params.row.created_at ? new Date(params.row.created_at) : null,
     },
@@ -278,7 +276,7 @@ const Inventory: React.FC = () => {
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
-      width: 100,
+      width: 120,
       getActions: (params) => [
         <GridActionsCellItem
           icon={<EditIcon />}
@@ -396,7 +394,7 @@ const Inventory: React.FC = () => {
                 <MenuItem value="">Unassigned</MenuItem>
                 {parentItems.map((item) => (
                   <MenuItem key={item.id} value={item.id}>
-                    {item.sku}
+                    {item.item_type.name} - {item.sku}
                   </MenuItem>
                 ))}
               </Select>
