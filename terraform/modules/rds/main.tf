@@ -141,5 +141,6 @@ resource "aws_secretsmanager_secret_version" "db_password" {
     host     = aws_db_instance.main.endpoint
     port     = aws_db_instance.main.port
     dbname   = var.db_name
+    url      = "postgresql://${var.db_username}:${local.db_password}@${aws_db_instance.main.endpoint}/${var.db_name}"
   })
 }

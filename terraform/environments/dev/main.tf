@@ -74,6 +74,22 @@ module "rds" {
   }
 }
 
+# Migration Task
+module "migration_task" {
+  source = "../../modules/migration-task"
+
+  environment          = var.environment
+  aws_region           = var.aws_region
+  migration_image      = var.inventory_service_image  # Use inventory service image (contains alembic)
+  database_secret_arn  = module.rds.db_secret_arn
+
+  tags = {
+    Environment = var.environment
+    Product     = "inventory-management"
+    Purpose     = "database-migrations"
+  }
+}
+
 # ElastiCache module
 module "elasticache" {
   source = "../../modules/elasticache"
