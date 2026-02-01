@@ -26,6 +26,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/api/user/auth/register",
         "/api/v1/auth/login",
         "/api/v1/auth/register",
+        "/api/v1/users/auth/login",
+        "/api/v1/users/auth/register",
+        "/api/v1/users/health",
         "/api/user/admin/seed-database",
         "/api/user/admin/seed-status",
         "/api/user/admin/debug/config",
@@ -66,6 +69,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             path not in self.PUBLIC_ENDPOINTS
             and not path.startswith("/api/user/auth/")
             and not path.startswith("/api/v1/auth/")
+            and not path.startswith("/api/v1/users/auth/")
         ):
             # Extract and verify JWT token
             authorization = request.headers.get("Authorization")
