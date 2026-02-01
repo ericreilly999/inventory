@@ -24,7 +24,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { Download as DownloadIcon, Assessment as AssessmentIcon } from '@mui/icons-material';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import dayjs, { Dayjs } from 'dayjs';
 import { apiService } from '../../services/api';
 
@@ -99,14 +99,12 @@ const Reports: React.FC = () => {
   const [movementReport, setMovementReport] = useState<MovementReport | null>(null);
   const [locations, setLocations] = useState<any[]>([]);
   const [locationTypes, setLocationTypes] = useState<any[]>([]);
-  const [itemTypes, setItemTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
   // Filters
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedLocationType, setSelectedLocationType] = useState('');
-  const [selectedItemType, setSelectedItemType] = useState('');
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().subtract(30, 'day'));
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
 
@@ -116,15 +114,13 @@ const Reports: React.FC = () => {
 
   const fetchMetadata = async () => {
     try {
-      const [locationsResponse, locationTypesResponse, itemTypesResponse] = await Promise.all([
+      const [locationsResponse, locationTypesResponse] = await Promise.all([
         apiService.get('/api/v1/locations/locations'),
         apiService.get('/api/v1/locations/types'),
-        apiService.get('/api/v1/items/types'),
       ]);
 
       setLocations(locationsResponse.data);
       setLocationTypes(locationTypesResponse.data);
-      setItemTypes(itemTypesResponse.data);
     } catch (error) {
       setError('Failed to fetch metadata');
     }
@@ -138,7 +134,6 @@ const Reports: React.FC = () => {
       const params = new URLSearchParams();
       if (selectedLocation) params.append('location_ids', selectedLocation);
       if (selectedLocationType) params.append('location_type_ids', selectedLocationType);
-      if (selectedItemType) params.append('item_type_ids', selectedItemType);
 
       const response = await apiService.get(`/api/v1/reports/inventory/counts?${params}`);
       setInventoryReport(response.data);
@@ -193,29 +188,53 @@ const Reports: React.FC = () => {
     }
   };
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d', '#ffc658', '#ff7c7c'];
 
-  // Transform data for charts
-  const inventoryChartData = inventoryReport?.by_location_and_type.reduce((acc: any[], item) => {
-    const existing = acc.find(x => x.name === item.location.name);
-    const count = item.parent_items_count; // Only count parent items
-    if (existing) {
-      existing.value += count;
-    } else {
-      acc.push({ name: item.location.name, value: count });
-    }
-    return acc;
-  }, []) || [];
+  // Transform data for stacked bar charts - Parent Items by Location
+  const transformParentItemsData = () => {
+    if (!inventoryReport?.by_location_and_type) return [];
+    
+    const locationMap = new Map<string, any>();
+    
+    inventoryReport.by_location_and_type.forEach((item) => {
+      if (!locationMap.has(item.location.name)) {
+        locationMap.set(item.location.name, { location: item.location.name });
+      }
+      const locationData = locationMap.get(item.location.name);
+      locationData[item.item_type.name] = item.parent_items_count;
+    });
+    
+    return Array.from(locationMap.values());
+  };
 
-  const parentItemTypeChartData = inventoryReport?.by_parent_item_type.map(item => ({
-    name: item.item_type.name,
-    value: item.parent_items_count,
-  })) || [];
+  // Transform data for stacked bar charts - Child Items by Location
+  const transformChildItemsData = () => {
+    if (!inventoryReport?.by_location_and_type) return [];
+    
+    const locationMap = new Map<string, any>();
+    
+    inventoryReport.by_location_and_type.forEach((item) => {
+      if (!locationMap.has(item.location.name)) {
+        locationMap.set(item.location.name, { location: item.location.name });
+      }
+      const locationData = locationMap.get(item.location.name);
+      locationData[item.item_type.name] = item.child_items_count;
+    });
+    
+    return Array.from(locationMap.values());
+  };
 
-  const childItemTypeChartData = inventoryReport?.by_child_item_type.map(item => ({
-    name: item.item_type.name,
-    value: item.child_items_count,
-  })) || [];
+  // Get unique item types for legend
+  const getItemTypes = () => {
+    if (!inventoryReport?.by_location_and_type) return [];
+    const types = new Set<string>();
+    inventoryReport.by_location_and_type.forEach((item) => types.add(item.item_type.name));
+    return Array.from(types);
+  };
+
+  const parentItemsChartData = transformParentItemsData();
+  const childItemsChartData = transformChildItemsData();
+  const itemTypes = getItemTypes();
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -252,7 +271,7 @@ const Reports: React.FC = () => {
                   Inventory Report Filters
                 </Typography>
                 <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} md={3}>
+                  <Grid item xs={12} md={4}>
                     <FormControl fullWidth>
                       <InputLabel>Location</InputLabel>
                       <Select
@@ -268,7 +287,7 @@ const Reports: React.FC = () => {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} md={3}>
+                  <Grid item xs={12} md={4}>
                     <FormControl fullWidth>
                       <InputLabel>Location Type</InputLabel>
                       <Select
@@ -284,23 +303,7 @@ const Reports: React.FC = () => {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} md={3}>
-                    <FormControl fullWidth>
-                      <InputLabel>Item Type</InputLabel>
-                      <Select
-                        value={selectedItemType}
-                        onChange={(e) => setSelectedItemType(e.target.value)}
-                      >
-                        <MenuItem value="">All Item Types</MenuItem>
-                        {itemTypes.map((type) => (
-                          <MenuItem key={type.id} value={type.id}>
-                            {type.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} md={3}>
+                  <Grid item xs={12} md={4}>
                     <Button
                       variant="contained"
                       startIcon={<AssessmentIcon />}
@@ -316,72 +319,64 @@ const Reports: React.FC = () => {
             </Card>
 
             {/* Inventory Charts */}
-            {inventoryReport && inventoryChartData.length > 0 && (
+            {inventoryReport && parentItemsChartData.length > 0 && (
               <Grid container spacing={3} sx={{ mb: 3 }}>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} md={6}>
                   <Card>
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
                         Parent Items by Location
                       </Typography>
-                      <Box sx={{ height: 300 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={inventoryChartData}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                            >
-                              {inventoryChartData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        Parent Items by Type
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Stacked by item type
                       </Typography>
-                      <Box sx={{ height: 300 }}>
+                      <Box sx={{ height: 400, mt: 2 }}>
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={parentItemTypeChartData}>
+                          <BarChart data={parentItemsChartData}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
+                            <XAxis dataKey="location" />
                             <YAxis />
                             <Tooltip />
-                            <Bar dataKey="value" fill="#1976d2" />
+                            <Legend />
+                            {itemTypes.map((itemType, index) => (
+                              <Bar
+                                key={itemType}
+                                dataKey={itemType}
+                                stackId="a"
+                                fill={COLORS[index % COLORS.length]}
+                              />
+                            ))}
                           </BarChart>
                         </ResponsiveContainer>
                       </Box>
                     </CardContent>
                   </Card>
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} md={6}>
                   <Card>
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
-                        Child Items by Type
+                        Child Items by Location
                       </Typography>
-                      <Box sx={{ height: 300 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Stacked by item type
+                      </Typography>
+                      <Box sx={{ height: 400, mt: 2 }}>
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={childItemTypeChartData}>
+                          <BarChart data={childItemsChartData}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
+                            <XAxis dataKey="location" />
                             <YAxis />
                             <Tooltip />
-                            <Bar dataKey="value" fill="#00C49F" />
+                            <Legend />
+                            {itemTypes.map((itemType, index) => (
+                              <Bar
+                                key={itemType}
+                                dataKey={itemType}
+                                stackId="a"
+                                fill={COLORS[index % COLORS.length]}
+                              />
+                            ))}
                           </BarChart>
                         </ResponsiveContainer>
                       </Box>
