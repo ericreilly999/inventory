@@ -25,8 +25,8 @@ interface ParentItem {
   id: string;
   sku: string;
   description: string;
-  item_type: { name: string };
-  current_location: { name: string };
+  item_type: { id: string; name: string };
+  current_location: { id: string; name: string; location_type: { name: string } };
   created_at: string;
 }
 
@@ -35,7 +35,7 @@ interface ChildItem {
   sku: string;
   description: string;
   item_type: { name: string };
-  parent_item: { sku: string } | null;
+  parent_item: { id: string; sku: string; item_type: { name: string } } | null;
   created_at: string;
 }
 
@@ -52,6 +52,7 @@ interface ItemTypes {
 interface Location {
   id: string;
   name: string;
+  location_type?: { name: string };
 }
 
 const Inventory: React.FC = () => {
@@ -206,23 +207,29 @@ const Inventory: React.FC = () => {
   };
 
   const parentColumns: GridColDef[] = [
-    { field: 'sku', headerName: 'SKU', width: 250 },
+    { field: 'sku', headerName: 'SKU', width: 200 },
     { 
       field: 'item_type', 
       headerName: 'Type', 
-      width: 200,
+      width: 150,
       valueGetter: (params) => params.row.item_type?.name || '',
+    },
+    { 
+      field: 'location_type', 
+      headerName: 'Location Type', 
+      width: 150,
+      valueGetter: (params) => params.row.current_location?.location_type?.name || '',
     },
     { 
       field: 'current_location', 
       headerName: 'Location', 
-      width: 200,
+      width: 150,
       valueGetter: (params) => params.row.current_location?.name || '',
     },
     { 
       field: 'created_at', 
       headerName: 'Created', 
-      width: 180, 
+      width: 150, 
       type: 'dateTime',
       valueGetter: (params) => params.row.created_at ? new Date(params.row.created_at) : null,
     },
@@ -252,23 +259,29 @@ const Inventory: React.FC = () => {
   ];
 
   const childColumns: GridColDef[] = [
-    { field: 'sku', headerName: 'SKU', width: 250 },
+    { field: 'sku', headerName: 'SKU', width: 200 },
     { 
       field: 'item_type', 
       headerName: 'Type', 
-      width: 200,
+      width: 150,
       valueGetter: (params) => params.row.item_type?.name || '',
+    },
+    { 
+      field: 'parent_item_type', 
+      headerName: 'Parent Item Type', 
+      width: 150,
+      valueGetter: (params) => params.row.parent_item?.item_type?.name || 'N/A',
     },
     { 
       field: 'parent_item', 
       headerName: 'Parent Item', 
-      width: 200,
+      width: 150,
       valueGetter: (params) => params.row.parent_item?.sku || 'Unassigned',
     },
     { 
       field: 'created_at', 
       headerName: 'Created', 
-      width: 180, 
+      width: 150, 
       type: 'dateTime',
       valueGetter: (params) => params.row.created_at ? new Date(params.row.created_at) : null,
     },
@@ -421,7 +434,7 @@ const Inventory: React.FC = () => {
             >
               {locations.map((location) => (
                 <MenuItem key={location.id} value={location.id}>
-                  {location.name}
+                  {location.location_type?.name} - {location.name}
                 </MenuItem>
               ))}
             </Select>

@@ -92,7 +92,7 @@ async def move_parent_item(
 
     return MessageResponse(
         message=(
-            f"Item '{parent_item.name}' moved to " f"'{to_location.name}' successfully"
+            f"Item '{parent_item.sku}' moved to " f"'{to_location.name}' successfully"
         )
     )
 
