@@ -184,7 +184,7 @@ const Reports: React.FC = () => {
   // Transform data for charts
   const inventoryChartData = inventoryReport?.by_location_and_type.reduce((acc: any[], item) => {
     const existing = acc.find(x => x.name === item.location.name);
-    const count = item.parent_items_count + item.child_items_count;
+    const count = item.parent_items_count; // Only count parent items
     if (existing) {
       existing.value += count;
     } else {
@@ -248,7 +248,7 @@ const Reports: React.FC = () => {
                         <MenuItem value="">All Locations</MenuItem>
                         {locations.map((location) => (
                           <MenuItem key={location.id} value={location.id}>
-                            {location.name}
+                            {location.location_type?.name} - {location.name}
                           </MenuItem>
                         ))}
                       </Select>
@@ -292,7 +292,7 @@ const Reports: React.FC = () => {
                   <Card>
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
-                        Items by Location
+                        Parent Items by Location
                       </Typography>
                       <Box sx={{ height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -435,7 +435,7 @@ const Reports: React.FC = () => {
                         <MenuItem value="">All Locations</MenuItem>
                         {locations.map((location) => (
                           <MenuItem key={location.id} value={location.id}>
-                            {location.name}
+                            {location.location_type?.name} - {location.name}
                           </MenuItem>
                         ))}
                       </Select>
