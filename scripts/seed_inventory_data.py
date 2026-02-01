@@ -9,7 +9,7 @@ import time
 # API Configuration
 API_BASE_URL = "http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com"
 USERNAME = "admin"
-PASSWORD = "Admin123!"  # Update with actual admin password
+PASSWORD = "admin"  # Default admin password
 
 # Global session with auth token
 session = requests.Session()
@@ -20,8 +20,8 @@ def login():
     print("Logging in...")
     try:
         response = requests.post(
-            f"{API_BASE_URL}/api/v1/users/auth/login",
-            data={"username": USERNAME, "password": PASSWORD}
+            f"{API_BASE_URL}/api/v1/auth/login",
+            json={"username": USERNAME, "password": PASSWORD}
         )
         print(f"Login response status: {response.status_code}")
         print(f"Login response: {response.text[:500]}")
@@ -39,7 +39,7 @@ def login():
 def get_or_create_item_type(name: str, category: str, description: str = ""):
     """Get or create an item type."""
     # Try to find existing
-    response = session.get(f"{API_BASE_URL}/api/v1/inventory/item-types?category={category}")
+    response = session.get(f"{API_BASE_URL}/api/v1/items/types?category={category}")
     if response.status_code == 200:
         item_types = response.json()
         for item_type in item_types:
@@ -49,7 +49,7 @@ def get_or_create_item_type(name: str, category: str, description: str = ""):
     
     # Create new
     response = session.post(
-        f"{API_BASE_URL}/api/v1/inventory/item-types",
+        f"{API_BASE_URL}/api/v1/items/types",
         json={"name": name, "category": category, "description": description}
     )
     if response.status_code in [200, 201]:
@@ -87,7 +87,7 @@ def create_location(name: str, location_type_id: str, address: str = ""):
 def create_parent_item(sku: str, description: str, item_type_id: str, location_id: str):
     """Create a parent item."""
     response = session.post(
-        f"{API_BASE_URL}/api/v1/inventory/parent-items",
+        f"{API_BASE_URL}/api/v1/items/parent",
         json={
             "sku": sku,
             "description": description,
@@ -103,7 +103,7 @@ def create_parent_item(sku: str, description: str, item_type_id: str, location_i
 def create_child_item(sku: str, description: str, item_type_id: str, parent_item_id: str):
     """Create a child item."""
     response = session.post(
-        f"{API_BASE_URL}/api/v1/inventory/child-items",
+        f"{API_BASE_URL}/api/v1/items/child",
         json={
             "sku": sku,
             "description": description,
@@ -120,7 +120,7 @@ def create_child_item(sku: str, description: str, item_type_id: str, parent_item
 def move_parent_item(parent_item_id: str, to_location_id: str, notes: str = ""):
     """Move a parent item to a new location."""
     response = session.post(
-        f"{API_BASE_URL}/api/v1/inventory/movements",
+        f"{API_BASE_URL}/api/v1/movements",
         json={
             "parent_item_id": parent_item_id,
             "to_location_id": to_location_id,
@@ -134,11 +134,11 @@ def move_parent_item(parent_item_id: str, to_location_id: str, notes: str = ""):
         return None
 
 
-def create_parent_items_with_children(parent_type, child_types_config, count, locations):
+def create_parent_items_with_children(parent_type, child_types_config, count, locations, start_number=1):
     """Create parent items with their child items."""
     parent_items = []
     
-    for i in range(1, count + 1):
+    for i in range(start_number, start_number + count):
         # Create parent item SKU
         sku = f"{parent_type['name']} {i}"
         
@@ -317,9 +317,9 @@ def main():
         ]
         # 9 in warehouses, 1 at test client site
         if warehouse_locations:
-            sports_items = create_parent_items_with_children(sports_tower, sports_config, 9, warehouse_locations)
+            sports_items = create_parent_items_with_children(sports_tower, sports_config, 9, warehouse_locations, start_number=1)
             all_parent_items.extend(sports_items)
-        sports_items = create_parent_items_with_children(sports_tower, sports_config, 1, [test_client_site])
+        sports_items = create_parent_items_with_children(sports_tower, sports_config, 1, [test_client_site], start_number=10)
         all_parent_items.extend(sports_items)
         print()
         
@@ -333,9 +333,9 @@ def main():
             {'type': or_hub, 'optional': True}
         ]
         if warehouse_locations:
-            meded_1688_items = create_parent_items_with_children(meded_1688, meded_1688_config, 9, warehouse_locations)
+            meded_1688_items = create_parent_items_with_children(meded_1688, meded_1688_config, 9, warehouse_locations, start_number=1)
             all_parent_items.extend(meded_1688_items)
-        meded_1688_items = create_parent_items_with_children(meded_1688, meded_1688_config, 1, [test_client_site])
+        meded_1688_items = create_parent_items_with_children(meded_1688, meded_1688_config, 1, [test_client_site], start_number=10)
         all_parent_items.extend(meded_1688_items)
         print()
         
@@ -348,9 +348,9 @@ def main():
             {'type': or_hub, 'optional': True}
         ]
         if warehouse_locations:
-            meded_1788_items = create_parent_items_with_children(meded_1788, meded_1788_config, 9, warehouse_locations)
+            meded_1788_items = create_parent_items_with_children(meded_1788, meded_1788_config, 9, warehouse_locations, start_number=1)
             all_parent_items.extend(meded_1788_items)
-        meded_1788_items = create_parent_items_with_children(meded_1788, meded_1788_config, 1, [test_client_site])
+        meded_1788_items = create_parent_items_with_children(meded_1788, meded_1788_config, 1, [test_client_site], start_number=10)
         all_parent_items.extend(meded_1788_items)
         print()
         
@@ -365,9 +365,9 @@ def main():
             {'type': oled_monitor}
         ]
         if warehouse_locations:
-            clinical_1788_items = create_parent_items_with_children(clinical_1788, clinical_1788_config, 9, warehouse_locations)
+            clinical_1788_items = create_parent_items_with_children(clinical_1788, clinical_1788_config, 9, warehouse_locations, start_number=1)
             all_parent_items.extend(clinical_1788_items)
-        clinical_1788_items = create_parent_items_with_children(clinical_1788, clinical_1788_config, 1, [test_client_site])
+        clinical_1788_items = create_parent_items_with_children(clinical_1788, clinical_1788_config, 1, [test_client_site], start_number=10)
         all_parent_items.extend(clinical_1788_items)
         print()
         
@@ -381,9 +381,9 @@ def main():
             {'type': pinpoint}
         ]
         if warehouse_locations:
-            rise_items = create_parent_items_with_children(rise_tower, clinical_1688_config, 9, warehouse_locations)
+            rise_items = create_parent_items_with_children(rise_tower, clinical_1688_config, 9, warehouse_locations, start_number=1)
             all_parent_items.extend(rise_items)
-        rise_items = create_parent_items_with_children(rise_tower, clinical_1688_config, 1, [test_client_site])
+        rise_items = create_parent_items_with_children(rise_tower, clinical_1688_config, 1, [test_client_site], start_number=10)
         all_parent_items.extend(rise_items)
         print()
         
@@ -395,9 +395,9 @@ def main():
             {'type': oled_monitor}
         ]
         if warehouse_locations:
-            roll_1788_items = create_parent_items_with_children(roll_stand_1788, roll_1788_config, 9, warehouse_locations)
+            roll_1788_items = create_parent_items_with_children(roll_stand_1788, roll_1788_config, 9, warehouse_locations, start_number=1)
             all_parent_items.extend(roll_1788_items)
-        roll_1788_items = create_parent_items_with_children(roll_stand_1788, roll_1788_config, 1, [test_client_site])
+        roll_1788_items = create_parent_items_with_children(roll_stand_1788, roll_1788_config, 1, [test_client_site], start_number=10)
         all_parent_items.extend(roll_1788_items)
         print()
         
@@ -408,9 +408,9 @@ def main():
             {'type': base}
         ]
         if warehouse_locations:
-            roll_1688_items = create_parent_items_with_children(roll_stand_1688, roll_1688_config, 9, warehouse_locations)
+            roll_1688_items = create_parent_items_with_children(roll_stand_1688, roll_1688_config, 9, warehouse_locations, start_number=1)
             all_parent_items.extend(roll_1688_items)
-        roll_1688_items = create_parent_items_with_children(roll_stand_1688, roll_1688_config, 1, [test_client_site])
+        roll_1688_items = create_parent_items_with_children(roll_stand_1688, roll_1688_config, 1, [test_client_site], start_number=10)
         all_parent_items.extend(roll_1688_items)
         print()
         
@@ -418,18 +418,18 @@ def main():
         if quarantine_locations:
             print("Placing one of each type in quarantine locations...")
             quarantine_types = [
-                (sports_tower, sports_config),
-                (meded_1688, meded_1688_config),
-                (meded_1788, meded_1788_config),
-                (clinical_1788, clinical_1788_config),
-                (rise_tower, clinical_1688_config),
-                (roll_stand_1788, roll_1788_config),
-                (roll_stand_1688, roll_1688_config)
+                (sports_tower, sports_config, 11),
+                (meded_1688, meded_1688_config, 11),
+                (meded_1788, meded_1788_config, 11),
+                (clinical_1788, clinical_1788_config, 11),
+                (rise_tower, clinical_1688_config, 11),
+                (roll_stand_1788, roll_1788_config, 11),
+                (roll_stand_1688, roll_1688_config, 11)
             ]
             
-            for parent_type, config in quarantine_types:
+            for parent_type, config, start_num in quarantine_types:
                 quarantine_location = random.choice(quarantine_locations)
-                items = create_parent_items_with_children(parent_type, config, 1, [quarantine_location])
+                items = create_parent_items_with_children(parent_type, config, 1, [quarantine_location], start_number=start_num)
                 all_parent_items.extend(items)
             print()
         
