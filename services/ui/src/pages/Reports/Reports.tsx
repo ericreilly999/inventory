@@ -70,20 +70,6 @@ interface InventoryReport {
     location_type: string;
   }>;
 }
-    location: {
-      id: string;
-      name: string;
-      location_type: string;
-    };
-    item_type: {
-      id: string;
-      name: string;
-      category: string;
-    };
-    parent_items_count: number;
-    child_items_count: number;
-  }>;
-}
 
 interface MovementReport {
   generated_at: string;

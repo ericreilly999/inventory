@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -49,12 +49,6 @@ const Dashboard: React.FC = () => {
     fetchLocationTypes();
   }, []);
 
-  useEffect(() => {
-    if (selectedLocationType) {
-      fetchDashboardData();
-    }
-  }, [selectedLocationType, startDate, endDate]);
-
   const fetchLocationTypes = async () => {
     try {
       const response = await apiService.get('/api/v1/locations/types');
@@ -68,7 +62,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     if (!selectedLocationType) return;
 
     setLoading(true);
@@ -87,7 +81,13 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedLocationType, startDate, endDate]);
+
+  useEffect(() => {
+    if (selectedLocationType) {
+      fetchDashboardData();
+    }
+  }, [selectedLocationType, startDate, endDate, fetchDashboardData]);
 
   // Transform data for stacked bar charts
   const transformDataForChart = (data: Array<{ location_name: string; item_type_name: string; count: number }>) => {
