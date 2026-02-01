@@ -62,7 +62,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
         )
 
         # Check if endpoint requires authentication
-        if path not in self.PUBLIC_ENDPOINTS and not path.startswith("/api/user/auth/") and not path.startswith("/api/v1/auth/"):
+        if (
+            path not in self.PUBLIC_ENDPOINTS
+            and not path.startswith("/api/user/auth/")
+            and not path.startswith("/api/v1/auth/")
+        ):
             # Extract and verify JWT token
             authorization = request.headers.get("Authorization")
             if not authorization or not authorization.startswith("Bearer "):
