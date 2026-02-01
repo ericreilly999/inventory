@@ -53,7 +53,7 @@ async def move_item(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=(
-                    f"Item '{parent_item.name}' is already at location "
+                    f"Item '{parent_item.sku}' is already at location "
                     f"'{to_location.name}'"
                 ),
             )
@@ -86,7 +86,7 @@ async def move_item(
 
         return MessageResponse(
             message=(
-                f"Item '{parent_item.name}' moved to location "
+                f"Item '{parent_item.sku}' moved to location "
                 f"'{to_location.name}' successfully"
             )
         )
