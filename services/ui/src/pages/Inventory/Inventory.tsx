@@ -23,7 +23,7 @@ import { useApiError } from '../../hooks/useApiError';
 
 interface ParentItem {
   id: string;
-  name: string;
+  sku: string;
   description: string;
   item_type: { name: string };
   current_location: { name: string };
@@ -32,10 +32,10 @@ interface ParentItem {
 
 interface ChildItem {
   id: string;
-  name: string;
+  sku: string;
   description: string;
   item_type: { name: string };
-  parent_item: { name: string } | null;
+  parent_item: { sku: string } | null;
   created_at: string;
 }
 
