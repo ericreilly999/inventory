@@ -44,6 +44,11 @@ interface ItemType {
   name: string;
 }
 
+interface ItemTypes {
+  parent: ItemType[];
+  child: ItemType[];
+}
+
 interface Location {
   id: string;
   name: string;
@@ -53,7 +58,7 @@ const Inventory: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [parentItems, setParentItems] = useState<ParentItem[]>([]);
   const [childItems, setChildItems] = useState<ChildItem[]>([]);
-  const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
+  const [itemTypes, setItemTypes] = useState<ItemTypes>({ parent: [], child: [] });
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -62,7 +67,7 @@ const Inventory: React.FC = () => {
   const [movingItem, setMovingItem] = useState<any>(null);
   const { errorState, setError, clearError } = useApiError();
   const [formData, setFormData] = useState({
-    name: '',
+    sku: '',
     description: '',
     item_type_id: '',
     current_location_id: '',
@@ -71,16 +76,21 @@ const Inventory: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      const [parentResponse, childResponse, typesResponse, locationsResponse] = await Promise.all([
+      const [parentResponse, childResponse, parentTypesResponse, childTypesResponse, locationsResponse] = await Promise.all([
         apiService.get('/api/v1/items/parent'),
         apiService.get('/api/v1/items/child'),
-        apiService.get('/api/v1/items/types'),
+        apiService.get('/api/v1/items/types?category=parent'),
+        apiService.get('/api/v1/items/types?category=child'),
         apiService.get('/api/v1/locations/locations'),
       ]);
 
       setParentItems(parentResponse.data);
       setChildItems(childResponse.data);
-      setItemTypes(typesResponse.data);
+      // Store both parent and child types separately
+      setItemTypes({
+        parent: parentTypesResponse.data,
+        child: childTypesResponse.data,
+      });
       setLocations(locationsResponse.data);
     } catch (error: any) {
       setError(error, {
@@ -99,7 +109,7 @@ const Inventory: React.FC = () => {
   const handleAddItem = () => {
     setEditingItem(null);
     setFormData({
-      name: '',
+      sku: '',
       description: '',
       item_type_id: '',
       current_location_id: '',
@@ -111,7 +121,7 @@ const Inventory: React.FC = () => {
   const handleEditItem = (item: any) => {
     setEditingItem(item);
     setFormData({
-      name: item.sku,
+      sku: item.sku,
       description: item.description,
       item_type_id: item.item_type?.id || '',
       current_location_id: item.current_location?.id || '',
@@ -129,13 +139,13 @@ const Inventory: React.FC = () => {
     const endpoint = tabValue === 0 ? '/api/v1/items/parent' : '/api/v1/items/child';
     const data = tabValue === 0 
       ? {
-          sku: formData.name,
+          sku: formData.sku,
           description: formData.description,
           item_type_id: formData.item_type_id,
           current_location_id: formData.current_location_id,
         }
       : {
-          sku: formData.name,
+          sku: formData.sku,
           description: formData.description,
           item_type_id: formData.item_type_id,
           parent_item_id: formData.parent_item_id,
@@ -196,7 +206,7 @@ const Inventory: React.FC = () => {
   };
 
   const parentColumns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', width: 200 },
+    { field: 'sku', headerName: 'SKU', width: 200 },
     { field: 'description', headerName: 'Description', width: 250 },
     { 
       field: 'item_type', 
@@ -243,7 +253,7 @@ const Inventory: React.FC = () => {
   ];
 
   const childColumns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', width: 200 },
+    { field: 'sku', headerName: 'SKU', width: 200 },
     { field: 'description', headerName: 'Description', width: 250 },
     { 
       field: 'item_type', 
@@ -336,8 +346,8 @@ const Inventory: React.FC = () => {
             label="SKU"
             fullWidth
             variant="outlined"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={formData.sku}
+            onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
           />
           <TextField
             margin="dense"
@@ -355,7 +365,7 @@ const Inventory: React.FC = () => {
               value={formData.item_type_id}
               onChange={(e) => setFormData({ ...formData, item_type_id: e.target.value })}
             >
-              {itemTypes.map((type) => (
+              {(tabValue === 0 ? itemTypes.parent : itemTypes.child).map((type) => (
                 <MenuItem key={type.id} value={type.id}>
                   {type.name}
                 </MenuItem>
