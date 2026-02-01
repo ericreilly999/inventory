@@ -472,7 +472,9 @@ async def get_inventory_count_report(
                 ChildItem.sku,
                 ItemType.name.label("child_item_type"),
                 ParentItem.sku.label("parent_item_sku"),
-                ParentItem.item_type.has(name=ItemType.name).label("parent_item_type_name"),
+                ParentItem.item_type.has(name=ItemType.name).label(
+                    "parent_item_type_name"
+                ),
                 Location.name.label("location_name"),
                 LocationType.name.label("location_type"),
             )
@@ -508,7 +510,9 @@ async def get_inventory_count_report(
                 .first()
             )
             parent_item_type_name = (
-                parent_item.item_type.name if parent_item and parent_item.item_type else ""
+                parent_item.item_type.name
+                if parent_item and parent_item.item_type
+                else ""
             )
 
             child_items_detail.append(
@@ -671,14 +675,20 @@ async def export_inventory_data(
     dependencies=[Depends(require_reports_read)],
 )
 async def get_dashboard_data(
-    location_type_id: UUID = Query(..., description="Filter by location type (required)"),
-    start_date: Optional[str] = Query(None, description="Start date for throughput (YYYY-MM-DD)"),
-    end_date: Optional[str] = Query(None, description="End date for throughput (YYYY-MM-DD)"),
+    location_type_id: UUID = Query(
+        ..., description="Filter by location type (required)"
+    ),
+    start_date: Optional[str] = Query(
+        None, description="Start date for throughput (YYYY-MM-DD)"
+    ),
+    end_date: Optional[str] = Query(
+        None, description="End date for throughput (YYYY-MM-DD)"
+    ),
     db: Session = Depends(get_db),
 ):
     """
     Generate dashboard data with inventory and throughput by location.
-    
+
     Requires location_type_id filter.
     """
     logger.info(
@@ -768,7 +778,9 @@ async def get_dashboard_data(
         )
 
         if start_datetime:
-            outbound_query = outbound_query.filter(MoveHistory.moved_at >= start_datetime)
+            outbound_query = outbound_query.filter(
+                MoveHistory.moved_at >= start_datetime
+            )
         if end_datetime:
             outbound_query = outbound_query.filter(MoveHistory.moved_at <= end_datetime)
 
