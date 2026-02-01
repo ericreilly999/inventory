@@ -124,10 +124,38 @@ class ChildItemResponse(ChildItemBase):
 
     id: UUID
     item_type: ItemTypeResponse
-    parent_item: Optional["ParentItemResponse"] = None
     created_at: datetime
     updated_at: datetime
     creator: Optional[UserResponse] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ChildItemWithParentResponse(ChildItemBase):
+    """Schema for child item response with parent item details."""
+
+    id: UUID
+    item_type: ItemTypeResponse
+    parent_item: Optional["ParentItemSummaryResponse"] = None
+    created_at: datetime
+    updated_at: datetime
+    creator: Optional[UserResponse] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ParentItemSummaryResponse(BaseModel):
+    """Schema for parent item summary (without child items to avoid circular reference)."""
+
+    id: UUID
+    sku: str
+    description: Optional[str] = None
+    item_type: ItemTypeResponse
+    current_location: LocationResponse
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True

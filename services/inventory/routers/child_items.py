@@ -29,6 +29,7 @@ from ..schemas import (
     ChildItemCreate,
     ChildItemResponse,
     ChildItemUpdate,
+    ChildItemWithParentResponse,
     MessageResponse,
 )
 
@@ -38,7 +39,7 @@ router = APIRouter()
 
 @router.post(
     "/",
-    response_model=ChildItemResponse,
+    response_model=ChildItemWithParentResponse,
     dependencies=[Depends(require_inventory_write)],
 )
 async def create_child_item(
@@ -89,12 +90,12 @@ async def create_child_item(
         created_by=str(current_user.id),
     )
 
-    return ChildItemResponse.from_orm(child_item)
+    return ChildItemWithParentResponse.from_orm(child_item)
 
 
 @router.get(
     "/",
-    response_model=List[ChildItemResponse],
+    response_model=List[ChildItemWithParentResponse],
     dependencies=[Depends(require_inventory_read)],
 )
 async def list_child_items(
@@ -130,24 +131,24 @@ async def list_child_items(
     # Apply pagination
     child_items = query.offset(skip).limit(limit).all()
 
-    return [ChildItemResponse.from_orm(item) for item in child_items]
+    return [ChildItemWithParentResponse.from_orm(item) for item in child_items]
 
 
 @router.get(
     "/{item_id}",
-    response_model=ChildItemResponse,
+    response_model=ChildItemWithParentResponse,
     dependencies=[Depends(require_inventory_read)],
 )
 async def get_child_item(
     child_item: ChildItem = Depends(get_child_item_or_404),
 ):
     """Get child item by ID."""
-    return ChildItemResponse.from_orm(child_item)
+    return ChildItemWithParentResponse.from_orm(child_item)
 
 
 @router.put(
     "/{item_id}",
-    response_model=ChildItemResponse,
+    response_model=ChildItemWithParentResponse,
     dependencies=[Depends(require_inventory_write)],
 )
 async def update_child_item(
@@ -210,7 +211,7 @@ async def update_child_item(
         updated_by=str(current_user.id),
     )
 
-    return ChildItemResponse.from_orm(child_item)
+    return ChildItemWithParentResponse.from_orm(child_item)
 
 
 @router.delete(
@@ -270,7 +271,7 @@ async def get_child_item_assignment_history(
 
 @router.post(
     "/{item_id}/reassign/{new_parent_id}",
-    response_model=ChildItemResponse,
+    response_model=ChildItemWithParentResponse,
     dependencies=[Depends(require_inventory_write)],
 )
 async def reassign_child_item(
@@ -310,4 +311,4 @@ async def reassign_child_item(
         reassigned_by=str(current_user.id),
     )
 
-    return ChildItemResponse.from_orm(child_item)
+    return ChildItemWithParentResponse.from_orm(child_item)
