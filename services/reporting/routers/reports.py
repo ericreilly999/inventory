@@ -12,11 +12,12 @@ from sqlalchemy.orm import Session, joinedload
 
 from shared.database.config import get_db
 from shared.models.item import ChildItem, ItemCategory, ItemType, ParentItem
-from shared.models.location import Location
+from shared.models.location import Location, LocationType
 from shared.models.move_history import MoveHistory
 
 from ..dependencies import require_reports_read
 from ..schemas import (
+    ChildItemDetail,
     InventoryCountByChildType,
     InventoryCountByLocationAndType,
     InventoryCountByParentType,
@@ -461,11 +462,70 @@ async def get_inventory_count_report(
                     )
                 )
 
+        # Get detailed child item information
+        child_items_query = (
+            db.query(
+                ChildItem.id,
+                ChildItem.sku,
+                ItemType.name.label("child_item_type"),
+                ParentItem.sku.label("parent_item_sku"),
+                ParentItem.item_type.has(name=ItemType.name).label("parent_item_type_name"),
+                Location.name.label("location_name"),
+                LocationType.name.label("location_type"),
+            )
+            .join(ItemType, ChildItem.item_type_id == ItemType.id)
+            .join(ParentItem, ChildItem.parent_item_id == ParentItem.id)
+            .join(Location, ParentItem.current_location_id == Location.id)
+            .join(LocationType, Location.location_type_id == LocationType.id)
+        )
+
+        # Apply filters to child items query
+        if location_ids:
+            child_items_query = child_items_query.filter(Location.id.in_(location_ids))
+
+        if location_type_ids:
+            child_items_query = child_items_query.filter(
+                Location.location_type_id.in_(location_type_ids)
+            )
+
+        if item_type_ids:
+            child_items_query = child_items_query.filter(
+                ChildItem.item_type_id.in_(item_type_ids)
+            )
+
+        child_items_results = child_items_query.all()
+
+        # Build child items detail list
+        child_items_detail = []
+        for result in child_items_results:
+            # Get parent item type name
+            parent_item = (
+                db.query(ParentItem)
+                .filter(ParentItem.sku == result.parent_item_sku)
+                .first()
+            )
+            parent_item_type_name = (
+                parent_item.item_type.name if parent_item and parent_item.item_type else ""
+            )
+
+            child_items_detail.append(
+                ChildItemDetail(
+                    id=result.id,
+                    sku=result.sku,
+                    child_item_type=result.child_item_type,
+                    parent_item_sku=result.parent_item_sku,
+                    parent_item_type=parent_item_type_name,
+                    location_name=result.location_name,
+                    location_type=result.location_type,
+                )
+            )
+
         return InventoryCountReport(
             generated_at=datetime.now(timezone.utc),
             by_parent_item_type=by_parent_item_type,
             by_child_item_type=by_child_item_type,
             by_location_and_type=by_location_and_type,
+            child_items_detail=child_items_detail,
         )
 
     except HTTPException:

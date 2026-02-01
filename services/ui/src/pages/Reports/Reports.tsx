@@ -60,6 +60,29 @@ interface InventoryReport {
     parent_items_count: number;
     child_items_count: number;
   }>;
+  child_items_detail: Array<{
+    id: string;
+    sku: string;
+    child_item_type: string;
+    parent_item_sku: string;
+    parent_item_type: string;
+    location_name: string;
+    location_type: string;
+  }>;
+}
+    location: {
+      id: string;
+      name: string;
+      location_type: string;
+    };
+    item_type: {
+      id: string;
+      name: string;
+      category: string;
+    };
+    parent_items_count: number;
+    child_items_count: number;
+  }>;
 }
 
 interface MovementReport {
@@ -382,34 +405,34 @@ const Reports: React.FC = () => {
               </Grid>
             )}
 
-            {/* Inventory Table */}
-            {inventoryReport && inventoryReport.by_location_and_type.length > 0 && (
+            {/* Inventory Table - Child Items Detail */}
+            {inventoryReport && inventoryReport.child_items_detail && inventoryReport.child_items_detail.length > 0 && (
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Detailed Inventory Report
+                    Detailed Inventory Report - Child Items
                   </Typography>
                   <TableContainer>
                     <Table>
                       <TableHead>
                         <TableRow>
+                          <TableCell>Child Item SKU</TableCell>
+                          <TableCell>Child Item Type</TableCell>
+                          <TableCell>Parent Item SKU</TableCell>
+                          <TableCell>Parent Item Type</TableCell>
                           <TableCell>Location</TableCell>
                           <TableCell>Location Type</TableCell>
-                          <TableCell>Item Type</TableCell>
-                          <TableCell align="right">Parent Items</TableCell>
-                          <TableCell align="right">Child Items</TableCell>
-                          <TableCell align="right">Total Items</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {inventoryReport.by_location_and_type.map((item, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{item.location.name}</TableCell>
-                            <TableCell>{item.location.location_type}</TableCell>
-                            <TableCell>{item.item_type.name}</TableCell>
-                            <TableCell align="right">{item.parent_items_count}</TableCell>
-                            <TableCell align="right">{item.child_items_count}</TableCell>
-                            <TableCell align="right">{item.parent_items_count + item.child_items_count}</TableCell>
+                        {inventoryReport.child_items_detail.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>{item.sku}</TableCell>
+                            <TableCell>{item.child_item_type}</TableCell>
+                            <TableCell>{item.parent_item_sku}</TableCell>
+                            <TableCell>{item.parent_item_type}</TableCell>
+                            <TableCell>{item.location_name}</TableCell>
+                            <TableCell>{item.location_type}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

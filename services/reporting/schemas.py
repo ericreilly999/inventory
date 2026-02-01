@@ -40,6 +40,21 @@ class UserSummary(BaseModel):
         from_attributes = True
 
 
+class ChildItemDetail(BaseModel):
+    """Detailed child item information for reports."""
+
+    id: UUID
+    sku: str
+    child_item_type: str
+    parent_item_sku: str
+    parent_item_type: str
+    location_name: str
+    location_type: str
+
+    class Config:
+        from_attributes = True
+
+
 # Inventory status report schemas
 class InventoryStatusByLocation(BaseModel):
     """Inventory status by location."""
@@ -118,6 +133,7 @@ class InventoryCountReport(BaseModel):
     by_parent_item_type: List[InventoryCountByParentType]
     by_child_item_type: List[InventoryCountByChildType]
     by_location_and_type: List[InventoryCountByLocationAndType]
+    child_items_detail: List[ChildItemDetail] = []
 
 
 # Request schemas
