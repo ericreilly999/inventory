@@ -22,7 +22,7 @@ class TestMoveHistoryRecording:
         # Create test data
         role = Role(
             id=uuid4(),
-            sku="inventory_manager",
+            name="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -123,7 +123,7 @@ class TestMoveHistoryRecording:
         # Create test data
         role = Role(
             id=uuid4(),
-            sku="inventory_manager",
+            name="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -204,7 +204,7 @@ class TestMoveHistoryQuerying:
         # Create test data
         role = Role(
             id=uuid4(),
-            sku="inventory_manager",
+            name="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -324,7 +324,7 @@ class TestMoveHistoryQuerying:
         # Create test data
         role = Role(
             id=uuid4(),
-            sku="inventory_manager",
+            name="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -448,7 +448,7 @@ class TestMoveHistoryFiltering:
         # Create test data
         role = Role(
             id=uuid4(),
-            sku="inventory_manager",
+            name="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -572,7 +572,7 @@ class TestMoveHistoryFiltering:
         # Create test data
         role = Role(
             id=uuid4(),
-            sku="inventory_manager",
+            name="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -720,7 +720,7 @@ class TestAssignmentHistoryIntegration:
         # Create test data
         role = Role(
             id=uuid4(),
-            sku="inventory_manager",
+            name="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
@@ -851,7 +851,7 @@ class TestAssignmentHistoryIntegration:
         # Create test data
         role = Role(
             id=uuid4(),
-            sku="inventory_manager",
+            name="inventory_manager",
             description="Inventory Manager Role",
             permissions={"inventory": ["read", "write"]},
         )
