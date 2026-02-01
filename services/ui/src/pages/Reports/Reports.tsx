@@ -89,12 +89,14 @@ const Reports: React.FC = () => {
   const [inventoryReport, setInventoryReport] = useState<InventoryReport | null>(null);
   const [movementReport, setMovementReport] = useState<MovementReport | null>(null);
   const [locations, setLocations] = useState<any[]>([]);
+  const [locationTypes, setLocationTypes] = useState<any[]>([]);
   const [itemTypes, setItemTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
   // Filters
   const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedLocationType, setSelectedLocationType] = useState('');
   const [selectedItemType, setSelectedItemType] = useState('');
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().subtract(30, 'day'));
   const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
@@ -105,12 +107,14 @@ const Reports: React.FC = () => {
 
   const fetchMetadata = async () => {
     try {
-      const [locationsResponse, itemTypesResponse] = await Promise.all([
+      const [locationsResponse, locationTypesResponse, itemTypesResponse] = await Promise.all([
         apiService.get('/api/v1/locations/locations'),
+        apiService.get('/api/v1/locations/types'),
         apiService.get('/api/v1/items/types'),
       ]);
 
       setLocations(locationsResponse.data);
+      setLocationTypes(locationTypesResponse.data);
       setItemTypes(itemTypesResponse.data);
     } catch (error) {
       setError('Failed to fetch metadata');
@@ -124,6 +128,7 @@ const Reports: React.FC = () => {
     try {
       const params = new URLSearchParams();
       if (selectedLocation) params.append('location_ids', selectedLocation);
+      if (selectedLocationType) params.append('location_type_ids', selectedLocationType);
       if (selectedItemType) params.append('item_type_ids', selectedItemType);
 
       const response = await apiService.get(`/api/v1/reports/inventory/counts?${params}`);
@@ -238,7 +243,7 @@ const Reports: React.FC = () => {
                   Inventory Report Filters
                 </Typography>
                 <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={3}>
                     <FormControl fullWidth>
                       <InputLabel>Location</InputLabel>
                       <Select
@@ -254,7 +259,23 @@ const Reports: React.FC = () => {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={3}>
+                    <FormControl fullWidth>
+                      <InputLabel>Location Type</InputLabel>
+                      <Select
+                        value={selectedLocationType}
+                        onChange={(e) => setSelectedLocationType(e.target.value)}
+                      >
+                        <MenuItem value="">All Location Types</MenuItem>
+                        {locationTypes.map((type) => (
+                          <MenuItem key={type.id} value={type.id}>
+                            {type.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={3}>
                     <FormControl fullWidth>
                       <InputLabel>Item Type</InputLabel>
                       <Select
@@ -270,7 +291,7 @@ const Reports: React.FC = () => {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={3}>
                     <Button
                       variant="contained"
                       startIcon={<AssessmentIcon />}

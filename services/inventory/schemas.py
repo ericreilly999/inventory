@@ -98,12 +98,24 @@ class ItemTypeResponse(ItemTypeBase):
         from_attributes = True
 
 
+class LocationTypeResponse(BaseModel):
+    """Schema for location type response (minimal)."""
+
+    id: UUID
+    name: str
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class LocationResponse(BaseModel):
     """Schema for location response (minimal)."""
 
     id: UUID
     name: str
     description: Optional[str] = None
+    location_type: Optional[LocationTypeResponse] = None
 
     class Config:
         from_attributes = True

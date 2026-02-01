@@ -5,11 +5,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from shared.database.config import get_db
 from shared.logging.config import get_logger
 from shared.models.item import ParentItem
+from shared.models.location import Location
 from shared.models.user import User
 
 from ..dependencies import (
@@ -92,7 +93,9 @@ async def list_parent_items(
 ):
     """List parent items with optional filtering."""
 
-    query = db.query(ParentItem)
+    query = db.query(ParentItem).options(
+        joinedload(ParentItem.current_location).joinedload(Location.location_type)
+    )
 
     # Filter by location
     if location_id:
