@@ -113,6 +113,12 @@ async def list_parent_items(
     # Apply pagination
     parent_items = query.offset(skip).limit(limit).all()
 
+    logger.info(
+        "Listing parent items",
+        count=len(parent_items),
+        sample_item={"id": str(parent_items[0].id), "sku": parent_items[0].sku, "description": parent_items[0].description} if parent_items else None,
+    )
+
     return [ParentItemResponse.from_orm(item) for item in parent_items]
 
 
