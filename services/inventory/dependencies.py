@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from shared.auth.utils import verify_token
 from shared.database.config import get_db
@@ -125,7 +125,12 @@ async def get_child_item_or_404(
     item_id: UUID, db: Session = Depends(get_db)
 ) -> ChildItem:
     """Get child item by ID or raise 404."""
-    item = db.query(ChildItem).filter(ChildItem.id == item_id).first()
+    item = (
+        db.query(ChildItem)
+        .options(joinedload(ChildItem.parent_item).joinedload(ParentItem.item_type))
+        .filter(ChildItem.id == item_id)
+        .first()
+    )
     if not item:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

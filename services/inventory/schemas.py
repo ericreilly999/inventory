@@ -124,6 +124,7 @@ class ChildItemResponse(ChildItemBase):
 
     id: UUID
     item_type: ItemTypeResponse
+    parent_item: Optional["ParentItemResponse"] = None
     created_at: datetime
     updated_at: datetime
     creator: Optional[UserResponse] = None

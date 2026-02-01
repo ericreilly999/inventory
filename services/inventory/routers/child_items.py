@@ -6,12 +6,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from shared.database.config import get_db
 from shared.logging.config import get_logger
 from shared.models.assignment_history import AssignmentHistory
-from shared.models.item import ChildItem
+from shared.models.item import ChildItem, ParentItem
 from shared.models.user import User
 
 from ..dependencies import (
@@ -107,7 +107,9 @@ async def list_child_items(
 ):
     """List child items with optional filtering."""
 
-    query = db.query(ChildItem)
+    query = db.query(ChildItem).options(
+        joinedload(ChildItem.parent_item).joinedload(ParentItem.item_type)
+    )
 
     # Filter by parent item
     if parent_item_id:
