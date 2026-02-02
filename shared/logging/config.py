@@ -84,9 +84,10 @@ def setup_file_logging() -> None:
 def configure_logging() -> None:
     """Configure structured logging for the application."""
 
-    # Set up file logging for Docker containers
-    if os.getenv("ENVIRONMENT") in ["production", "staging"]:
-        setup_file_logging()
+    # NOTE: Always log to stdout for CloudWatch compatibility
+    # File logging is disabled to ensure logs are captured by CloudWatch
+    # if os.getenv("ENVIRONMENT") in ["production", "staging"]:
+    #     setup_file_logging()
 
     # Configure structlog processors based on environment
     processors = [
@@ -127,11 +128,12 @@ def configure_logging() -> None:
         cache_logger_on_first_use=True,
     )
 
-    # Configure standard library logging
+    # Configure standard library logging - ALWAYS to stdout for CloudWatch
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
         level=getattr(logging, settings.logging.level.upper()),
+        force=True,  # Force reconfiguration
     )
 
     # Set log levels for third-party libraries
