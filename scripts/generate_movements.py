@@ -10,7 +10,7 @@ import os
 # Environment-specific configuration
 ENVIRONMENTS = {
     "dev": "http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com",
-    "staging": "http://staging-inventory-alb.us-east-1.elb.amazonaws.com"  # Will be updated after deployment
+    "staging": "http://staging-inventory-alb-349623539.us-east-1.elb.amazonaws.com"
 }
 
 API_BASE_URL = ENVIRONMENTS.get(os.environ.get("ENVIRONMENT", "dev"))
