@@ -13,9 +13,11 @@ import {
   ExpandLess as ExpandLessIcon,
   ContentCopy as ContentCopyIcon,
 } from '@mui/icons-material';
+import { getErrorMessage } from '../utils/errorHandler';
 
 interface ErrorDetailsProps {
   error: any;
+  message?: string;
   requestPayload?: any;
   endpoint?: string;
   method?: string;
@@ -24,6 +26,7 @@ interface ErrorDetailsProps {
 
 const ErrorDetails: React.FC<ErrorDetailsProps> = ({
   error,
+  message,
   requestPayload,
   endpoint,
   method,
@@ -32,11 +35,8 @@ const ErrorDetails: React.FC<ErrorDetailsProps> = ({
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Extract error information
-  const errorMessage = error?.response?.data?.detail || 
-                       error?.response?.data?.error?.message || 
-                       error?.message || 
-                       'An unknown error occurred';
+  // Use provided message or extract from error
+  const errorMessage = message || getErrorMessage(error, 'An unknown error occurred');
   
   const statusCode = error?.response?.status;
   const statusText = error?.response?.statusText;

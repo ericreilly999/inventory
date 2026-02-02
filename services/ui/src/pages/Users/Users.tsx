@@ -19,6 +19,7 @@ import {
 import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { apiService } from '../../services/api';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 interface User {
   id: string;
@@ -62,8 +63,9 @@ const Users: React.FC = () => {
 
       setUsers(usersResponse.data);
       setRoles(rolesResponse.data);
+      setError('');
     } catch (error) {
-      setError('Failed to fetch users data');
+      setError(getErrorMessage(error, 'Failed to fetch users data'));
     } finally {
       setLoading(false);
     }
@@ -95,6 +97,17 @@ const Users: React.FC = () => {
 
   const handleSaveUser = async () => {
     try {
+      // Validate required fields
+      if (!formData.username || !formData.email || !formData.role_id) {
+        setError('Please fill in all required fields');
+        return;
+      }
+
+      if (!editingUser && !formData.password) {
+        setError('Password is required for new users');
+        return;
+      }
+
       const data: any = {
         username: formData.username,
         email: formData.email,
@@ -113,9 +126,10 @@ const Users: React.FC = () => {
       }
 
       setDialogOpen(false);
+      setError('');
       fetchData();
     } catch (error: any) {
-      setError(error.response?.data?.error?.message || 'Failed to save user');
+      setError(getErrorMessage(error, 'Failed to save user'));
     }
   };
 
@@ -124,9 +138,10 @@ const Users: React.FC = () => {
 
     try {
       await apiService.delete(`/api/v1/users/${id}`);
+      setError('');
       fetchData();
     } catch (error: any) {
-      setError(error.response?.data?.error?.message || 'Failed to delete user');
+      setError(getErrorMessage(error, 'Failed to delete user'));
     }
   };
 

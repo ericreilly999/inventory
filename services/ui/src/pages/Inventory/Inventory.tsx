@@ -321,6 +321,7 @@ const Inventory: React.FC = () => {
       {errorState && (
         <ErrorDetails
           error={errorState.error}
+          message={errorState.message}
           requestPayload={errorState.requestPayload}
           endpoint={errorState.endpoint}
           method={errorState.method}

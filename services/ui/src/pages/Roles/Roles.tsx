@@ -18,6 +18,7 @@ import {
 import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { apiService } from '../../services/api';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 interface Role {
   id: string;
@@ -101,8 +102,9 @@ const Roles: React.FC = () => {
     try {
       const response = await apiService.get('/api/v1/roles');
       setRoles(response.data);
+      setError('');
     } catch (error) {
-      setError('Failed to fetch roles');
+      setError(getErrorMessage(error, 'Failed to fetch roles'));
     } finally {
       setLoading(false);
     }
@@ -158,7 +160,7 @@ const Roles: React.FC = () => {
       fetchRoles();
       setError('');
     } catch (error: any) {
-      setError(error.response?.data?.detail || 'Failed to save role');
+      setError(getErrorMessage(error, 'Failed to save role'));
     }
   };
 
@@ -170,7 +172,7 @@ const Roles: React.FC = () => {
       fetchRoles();
       setError('');
     } catch (error: any) {
-      setError(error.response?.data?.detail || 'Failed to delete role');
+      setError(getErrorMessage(error, 'Failed to delete role'));
     }
   };
 
