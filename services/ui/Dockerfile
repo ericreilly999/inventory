@@ -34,6 +34,10 @@ COPY --from=build /app/build /usr/share/nginx/html
 # Copy nginx configuration
 COPY services/ui/nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy entrypoint script
+COPY services/ui/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Create log directory
 RUN mkdir -p /var/log/nginx && chown -R nginx:nginx /var/log/nginx
 
@@ -44,5 +48,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:80/ || exit 1
 
-# Start nginx with proper logging
-CMD ["nginx", "-g", "daemon off;"]
+# Use entrypoint script to configure nginx based on environment
+ENTRYPOINT ["/docker-entrypoint.sh"]
