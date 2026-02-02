@@ -122,10 +122,106 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION_STAGING }}
 
+    - name: Update migration task definition
+      run: |
+        echo "========================================="
+        echo "Updating Migration Task Definition"
+        echo "========================================="
+        VERSION="${{ steps.version.outputs.version }}"
+        
+        # Get current migration task definition
+        TASK_DEF=$(aws ecs describe-task-definition \
+          --task-definition staging-migration-task \
+          --region ${{ env.AWS_REGION_STAGING }} \
+          --query 'taskDefinition' \
+          --output json 2>/dev/null || echo "{}")
+        
+        if [ "$TASK_DEF" == "{}" ]; then
+          echo "⚠️  Migration task definition not found. Skipping migration task update."
+        else
+          # Update image tag to use version (use inventory-service image which has alembic)
+          NEW_IMAGE="${{ env.ECR_REGISTRY_STAGING }}/inventory-management/inventory-service:$VERSION"
+          echo "New migration image: $NEW_IMAGE"
+          
+          # Create new task definition with updated image
+          NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "$NEW_IMAGE" \
+            '.containerDefinitions[0].image = $IMAGE | 
+             del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+          
+          # Register new task definition
+          NEW_TASK_INFO=$(aws ecs register-task-definition \
+            --cli-input-json "$NEW_TASK_DEF" \
+            --region ${{ env.AWS_REGION_STAGING }})
+          
+          NEW_REVISION=$(echo $NEW_TASK_INFO | jq -r '.taskDefinition.revision')
+          echo "✅ New migration task definition revision: $NEW_REVISION"
+        fi
+
     - name: Run database migrations
       run: |
-        echo "Database migrations will be run via admin endpoint after deployment"
-        echo "Endpoint: /api/v1/user/admin/run-migrations"
+        echo "========================================="
+        echo "Running Database Migrations"
+        echo "========================================="
+        
+        # Get the latest migration task definition
+        TASK_DEF_ARN=$(aws ecs describe-task-definition \
+          --task-definition staging-migration-task \
+          --region ${{ env.AWS_REGION_STAGING }} \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text 2>/dev/null || echo "")
+        
+        if [ -z "$TASK_DEF_ARN" ]; then
+          echo "⚠️  Migration task definition not found. Skipping migrations."
+          echo "Note: Migrations can be run manually via ECS task or admin endpoint"
+        else
+          echo "Found migration task: $TASK_DEF_ARN"
+          
+          # Get VPC configuration from user service
+          VPC_CONFIG=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER_STAGING }} \
+            --services staging-user-service \
+            --region ${{ env.AWS_REGION_STAGING }} \
+            --query 'services[0].networkConfiguration.awsvpcConfiguration' \
+            --output json)
+          
+          SUBNETS=$(echo $VPC_CONFIG | jq -r '.subnets | join(",")')
+          SECURITY_GROUPS=$(echo $VPC_CONFIG | jq -r '.securityGroups | join(",")')
+          
+          echo "Running migration task..."
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER_STAGING }} \
+            --task-definition staging-migration-task \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SECURITY_GROUPS],assignPublicIp=DISABLED}" \
+            --region ${{ env.AWS_REGION_STAGING }} \
+            --query 'tasks[0].taskArn' \
+            --output text)
+          
+          echo "Migration task started: $TASK_ARN"
+          
+          # Wait for migration task to complete
+          echo "Waiting for migration task to complete..."
+          aws ecs wait tasks-stopped \
+            --cluster ${{ env.ECS_CLUSTER_STAGING }} \
+            --tasks $TASK_ARN \
+            --region ${{ env.AWS_REGION_STAGING }}
+          
+          # Check exit code
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster ${{ env.ECS_CLUSTER_STAGING }} \
+            --tasks $TASK_ARN \
+            --region ${{ env.AWS_REGION_STAGING }} \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+          
+          if [ "$EXIT_CODE" == "0" ]; then
+            echo "✅ Database migrations completed successfully"
+          else
+            echo "❌ Database migrations failed with exit code: $EXIT_CODE"
+            echo "Check CloudWatch logs: /ecs/staging/migration-task"
+            exit 1
+          fi
+        fi
 
     - name: Update ECS task definitions and deploy
       run: |
