@@ -137,7 +137,10 @@ async def create_location(
         if "uq_location_name_type" in str(e) or "duplicate key" in str(e).lower():
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Location with name '{location_data.name}' already exists for this location type",
+                detail=(
+                    f"Location with name '{location_data.name}' already exists "
+                    f"for this location type"
+                ),
             )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
