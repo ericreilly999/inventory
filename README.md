@@ -4,11 +4,29 @@ A comprehensive microservices-based inventory management system built with Pytho
 
 ## 🚀 Live Demo
 
-**Production URL**: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com/
+**Development Environment**: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com/
+**Staging Environment**: Available after deployment (see [Staging Deployment Guide](docs/STAGING_DEPLOYMENT.md))
 
 **Demo Credentials**:
 - Username: `admin`
 - Password: `admin`
+
+## 🌍 Environments
+
+### Development (us-west-2)
+- **Purpose**: Active development and testing
+- **URL**: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com/
+- **Deployment**: Automatic on push to `main` branch
+- **Task Count**: 1 task per service (cost-optimized)
+- **Database**: db.t3.micro
+
+### Staging (us-east-1)
+- **Purpose**: Demo environment for stakeholders
+- **URL**: Check Terraform outputs after deployment
+- **Deployment**: Manual via semantic version tags (v1.0.0, v1.1.0, etc.)
+- **Task Count**: 2 tasks per service (high availability)
+- **Database**: db.t3.small
+- **Documentation**: [Staging Deployment Guide](docs/STAGING_DEPLOYMENT.md)
 
 ## ✨ Features
 
@@ -80,9 +98,11 @@ The system consists of the following microservices:
 ## 🚀 Quick Start
 
 ### Option 1: Use Live Demo
-Visit the live demo at: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com/
+Visit the development environment at: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com/
 - Username: `admin`
 - Password: `admin`
+
+For staging environment access, see the [Staging Deployment Guide](docs/STAGING_DEPLOYMENT.md).
 
 ### Option 2: Local Development Setup
 
@@ -280,7 +300,11 @@ inventory-management-system/
 ### Interactive API Documentation
 Once the services are running, access the interactive API documentation:
 
-- **API Gateway**: http://localhost:8000/docs (or live: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com/docs)
+- **Dev API Gateway**: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com/docs
+- **Staging API Gateway**: Available after deployment (see [Staging Deployment Guide](docs/STAGING_DEPLOYMENT.md))
+- **Local API Gateway**: http://localhost:8000/docs
+
+Individual service docs (local development):
 - **User Service**: http://localhost:8003/docs
 - **Inventory Service**: http://localhost:8001/docs
 - **Location Service**: http://localhost:8002/docs
@@ -352,22 +376,71 @@ docker-compose logs -f
 
 ## 🚀 Deployment
 
+### Environments
+
+The system supports multiple deployment environments:
+
+#### Development Environment (us-west-2)
+- **Automatic deployment** on push to `main` branch
+- **1 task per service** for cost optimization
+- **Purpose**: Active development and testing
+- **URL**: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com/
+
+#### Staging Environment (us-east-1)
+- **Tag-based deployment** using semantic versioning (v1.0.0, v1.1.0, etc.)
+- **2 tasks per service** for high availability
+- **Purpose**: Demo environment for stakeholders
+- **Documentation**: See [Staging Deployment Guide](docs/STAGING_DEPLOYMENT.md)
+
+### Deploying to Staging
+
+To deploy to staging, create and push a semantic version tag:
+
+```bash
+# Create a version tag
+git tag v1.0.0
+
+# Push the tag to trigger deployment
+git push origin v1.0.0
+```
+
+This will automatically:
+1. Run all tests (unit, integration, property-based)
+2. Build Docker images with the version tag
+3. Push images to ECR (us-east-1)
+4. Deploy to staging ECS cluster
+5. Run health checks
+
+For detailed deployment instructions, see:
+- [Staging Deployment Guide](docs/STAGING_DEPLOYMENT.md)
+- [Deployment Runbook](docs/RUNBOOK.md)
+- [Seeding Guide](docs/SEEDING_GUIDE.md)
+
 ### AWS Infrastructure
 The system is deployed on AWS using Terraform for Infrastructure as Code:
 
-#### Current Deployment
-- **Environment**: Development
-- **URL**: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com/
-- **Region**: us-west-2
-- **Compute**: AWS Fargate (serverless containers)
-- **Database**: Amazon RDS PostgreSQL
-- **Cache**: Amazon ElastiCache Redis
-- **Load Balancer**: Application Load Balancer
+#### Current Deployments
+- **Development**: us-west-2 (http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com/)
+- **Staging**: us-east-1 (URL available after deployment)
 
 #### Infrastructure Components
+- **Compute**: AWS Fargate (serverless containers)
+- **Database**: Amazon RDS PostgreSQL (db.t3.micro for dev, db.t3.small for staging)
+- **Cache**: Amazon ElastiCache Redis
+- **Load Balancer**: Application Load Balancer
+- **Container Registry**: Amazon ECR (region-specific)
+- **Networking**: VPC with public/private subnets, NAT Gateway
+
+#### Managing Infrastructure
 ```bash
-# Deploy infrastructure
+# Deploy dev environment
 cd terraform/environments/dev
+terraform init
+terraform plan
+terraform apply
+
+# Deploy staging environment
+cd terraform/environments/staging
 terraform init
 terraform plan
 terraform apply
@@ -382,7 +455,15 @@ GitHub Actions automatically:
 2. **Quality**: Code formatting, linting, and type checking
 3. **Security**: Dependency vulnerability scanning
 4. **Build**: Create Docker images for all services
-5. **Deploy**: Push to ECR and update ECS services
+5. **Deploy**: 
+   - **Dev**: Automatic deployment on push to `main`
+   - **Staging**: Tag-based deployment (v*.*.*) to us-east-1
+
+### Workflows
+- **Continuous Integration** (`.github/workflows/ci.yml`): Tests and quality checks on all PRs
+- **Continuous Deployment** (`.github/workflows/cd.yml`): Deploys to dev on merge to main
+- **Deploy to Staging** (`.github/workflows/deploy-staging.yml`): Deploys to staging on version tag
+- **Seed Staging Data** (`.github/workflows/seed-staging-data.yml`): Manual data seeding workflow
 
 ### Environment Configuration
 
@@ -390,12 +471,22 @@ GitHub Actions automatically:
 - Local Docker Compose setup
 - SQLite/PostgreSQL database
 - Hot reloading for development
+- 1 task per service in AWS
 
-#### Production
-- AWS Fargate with auto-scaling
-- RDS PostgreSQL with backups
+#### Staging
+- AWS Fargate with 2 tasks per service
+- RDS PostgreSQL (db.t3.small) with backups
 - ElastiCache Redis cluster
 - CloudWatch logging and monitoring
+- Tag-based deployments
+- Manual data seeding
+
+#### Production (Future)
+- AWS Fargate with auto-scaling
+- RDS PostgreSQL with Multi-AZ
+- ElastiCache Redis cluster
+- CloudWatch logging and monitoring
+- Blue/green deployments
 
 ## 🧪 Testing Strategy
 
@@ -510,6 +601,8 @@ For feature requests, please:
 - [x] AWS deployment with Terraform
 - [x] CI/CD pipeline
 - [x] Comprehensive testing framework
+- [x] Staging environment with tag-based deployments
+- [x] Role-based access control with granular permissions
 
 ### Phase 2: Core Inventory (In Progress) 🚧
 - [ ] Parent/child item management

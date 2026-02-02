@@ -7,9 +7,15 @@ import requests
 import random
 from datetime import datetime
 import time
+import os
 
-# API Configuration
-API_BASE_URL = "http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com"
+# Environment-specific configuration
+ENVIRONMENTS = {
+    "dev": "http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com",
+    "staging": "http://staging-inventory-alb.us-east-1.elb.amazonaws.com"  # Will be updated after deployment
+}
+
+API_BASE_URL = ENVIRONMENTS.get(os.environ.get("ENVIRONMENT", "dev"))
 USERNAME = "admin"
 PASSWORD = "admin"
 
@@ -209,8 +215,10 @@ def create_parent_with_children(parent_type, child_configs, location):
 def main():
     """Main seeding function."""
     try:
+        environment = os.environ.get("ENVIRONMENT", "dev")
         print("="*70)
-        print("COMPLETE INVENTORY RESEEDING")
+        print(f"COMPLETE INVENTORY RESEEDING - {environment.upper()} ENVIRONMENT")
+        print(f"API URL: {API_BASE_URL}")
         print("="*70)
         
         # Login

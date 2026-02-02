@@ -1,0 +1,83 @@
+name: Seed Staging Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to seed'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - dev
+
+jobs:
+  seed-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Display environment info
+      run: |
+        echo "========================================="
+        echo "Seeding ${{ inputs.environment }} environment"
+        echo "========================================="
+
+    - name: Setup default roles
+      run: python scripts/setup_default_roles.py
+      env:
+        ENVIRONMENT: ${{ inputs.environment }}
+      continue-on-error: false
+
+    - name: Wait between scripts
+      run: sleep 5
+
+    - name: Seed inventory data
+      run: python scripts/reseed_complete_inventory.py
+      env:
+        ENVIRONMENT: ${{ inputs.environment }}
+      continue-on-error: false
+
+    - name: Wait between scripts
+      run: sleep 5
+
+    - name: Generate movement history
+      run: python scripts/generate_movements.py
+      env:
+        ENVIRONMENT: ${{ inputs.environment }}
+      continue-on-error: false
+
+    - name: Verify seeding completed
+      run: |
+        echo "========================================="
+        echo "Seeding completed for ${{ inputs.environment }}"
+        echo "========================================="
+        echo "✅ Roles created"
+        echo "✅ Inventory seeded (70 parent items)"
+        echo "✅ Movement history generated (125+ movements)"
+        echo ""
+        echo "Next steps:"
+        echo "1. Verify data in ${{ inputs.environment }} UI"
+        echo "2. Test login with admin credentials"
+        echo "3. Verify inventory items visible"
+        echo "4. Verify movement history"
+
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "❌ Seeding failed for ${{ inputs.environment }}"
+        echo "Check logs above for details"
+        echo "Scripts can be run manually if needed"

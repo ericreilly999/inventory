@@ -154,7 +154,8 @@ module "api_gateway_service" {
   container_port  = 8000
   cpu             = 512
   memory          = 1024
-  desired_count   = 1
+  desired_count   = 2
+  enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
   subnet_ids         = module.networking.private_subnet_ids
@@ -218,7 +219,8 @@ module "user_service" {
   container_port  = 8001
   cpu             = 256
   memory          = 512
-  desired_count   = 1
+  desired_count   = 2
+  enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
   subnet_ids         = module.networking.private_subnet_ids
@@ -273,7 +275,8 @@ module "inventory_service" {
   container_port  = 8003
   cpu             = 512
   memory          = 1024
-  desired_count   = 1
+  desired_count   = 2
+  enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
   subnet_ids         = module.networking.private_subnet_ids
@@ -328,7 +331,8 @@ module "location_service" {
   container_port  = 8002
   cpu             = 512
   memory          = 1024
-  desired_count   = 1
+  desired_count   = 2
+  enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
   subnet_ids         = module.networking.private_subnet_ids
@@ -383,7 +387,8 @@ module "reporting_service" {
   container_port  = 8004
   cpu             = 256
   memory          = 512
-  desired_count   = 1
+  desired_count   = 2
+  enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
   subnet_ids         = module.networking.private_subnet_ids
@@ -438,7 +443,8 @@ module "ui_service" {
   container_port  = 80
   cpu             = 256
   memory          = 512
-  desired_count   = 1
+  desired_count   = 2
+  enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
   subnet_ids         = module.networking.private_subnet_ids

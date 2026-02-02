@@ -1,7 +1,14 @@
 """Setup default roles with granular permissions."""
 import requests
+import os
 
-API_BASE_URL = "http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com"
+# Environment-specific configuration
+ENVIRONMENTS = {
+    "dev": "http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com",
+    "staging": "http://staging-inventory-alb.us-east-1.elb.amazonaws.com"  # Will be updated after deployment
+}
+
+API_BASE_URL = ENVIRONMENTS.get(os.environ.get("ENVIRONMENT", "dev"))
 USERNAME = "admin"
 PASSWORD = "admin"
 
@@ -53,8 +60,10 @@ def create_role(token, name, description, permissions):
 
 def main():
     """Main function."""
+    environment = os.environ.get("ENVIRONMENT", "dev")
     print("="*70)
-    print("SETTING UP DEFAULT ROLES")
+    print(f"SETTING UP DEFAULT ROLES - {environment.upper()} ENVIRONMENT")
+    print(f"API URL: {API_BASE_URL}")
     print("="*70)
     
     token = login()

@@ -5,9 +5,15 @@ Each item will be moved 0-4 times randomly.
 import requests
 import random
 import time
+import os
 
-# API Configuration
-API_BASE_URL = "http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com"
+# Environment-specific configuration
+ENVIRONMENTS = {
+    "dev": "http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com",
+    "staging": "http://staging-inventory-alb.us-east-1.elb.amazonaws.com"  # Will be updated after deployment
+}
+
+API_BASE_URL = ENVIRONMENTS.get(os.environ.get("ENVIRONMENT", "dev"))
 USERNAME = "admin"
 PASSWORD = "admin"
 
@@ -65,8 +71,10 @@ def move_parent_item(parent_item_id: str, to_location_id: str, notes: str = ""):
 def main():
     """Main function."""
     try:
+        environment = os.environ.get("ENVIRONMENT", "dev")
         print("="*70)
-        print("GENERATING MOVEMENT HISTORY")
+        print(f"GENERATING MOVEMENT HISTORY - {environment.upper()} ENVIRONMENT")
+        print(f"API URL: {API_BASE_URL}")
         print("="*70)
         
         # Login
