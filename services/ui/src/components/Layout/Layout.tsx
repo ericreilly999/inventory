@@ -25,6 +25,7 @@ import {
   Category as CategoryIcon,
   Place as PlaceIcon,
   Logout as LogoutIcon,
+  Security as SecurityIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -53,6 +54,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { text: 'Item Types', icon: <CategoryIcon />, path: '/item-types', permission: 'inventory:read' },
     { text: 'Reports', icon: <ReportsIcon />, path: '/reports', permission: 'report:read' },
     { text: 'Users', icon: <UsersIcon />, path: '/users', permission: 'user:read' },
+    { text: 'Roles', icon: <SecurityIcon />, path: '/roles', permission: 'role:admin' },
   ];
 
   const filteredMenuItems = menuItems.filter(item => 

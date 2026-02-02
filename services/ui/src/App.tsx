@@ -9,6 +9,7 @@ import Inventory from './pages/Inventory/Inventory';
 import Locations from './pages/Locations/Locations';
 import Reports from './pages/Reports/Reports';
 import Users from './pages/Users/Users';
+import Roles from './pages/Roles/Roles';
 import ItemTypes from './pages/ItemTypes/ItemTypes';
 import LocationTypes from './pages/LocationTypes/LocationTypes';
 
@@ -43,6 +44,7 @@ const App: React.FC = () => {
         <Route path="/item-types" element={<ItemTypes />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/users" element={<Users />} />
+        <Route path="/roles" element={<Roles />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Layout>
