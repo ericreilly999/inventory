@@ -1,5 +1,6 @@
 """Main gateway router for request routing to microservices."""
 
+import os
 import time
 
 import httpx
@@ -14,12 +15,15 @@ logger = get_logger(__name__)
 
 router = APIRouter()
 
-# Service endpoints mapping
+# Get environment (default to dev)
+ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
+
+# Service endpoints mapping (environment-aware)
 SERVICE_ENDPOINTS = {
-    "inventory": "http://inventory-service.dev.inventory.local:8003",
-    "location": "http://location-service.dev.inventory.local:8002",
-    "user": "http://user-service.dev.inventory.local:8001",
-    "reporting": "http://reporting-service.dev.inventory.local:8004",
+    "inventory": f"http://inventory-service.{ENVIRONMENT}.inventory.local:8003",
+    "location": f"http://location-service.{ENVIRONMENT}.inventory.local:8002",
+    "user": f"http://user-service.{ENVIRONMENT}.inventory.local:8001",
+    "reporting": f"http://reporting-service.{ENVIRONMENT}.inventory.local:8004",
 }
 
 
