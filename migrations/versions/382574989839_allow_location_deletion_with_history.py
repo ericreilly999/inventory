@@ -20,15 +20,19 @@ def upgrade() -> None:
     """Upgrade database schema."""
     # Drop existing foreign key constraints
     op.drop_constraint(
-        "move_history_from_location_id_fkey", "move_history", type_="foreignkey"
+        op.f("fk_move_history_from_location_id_locations"),
+        "move_history",
+        type_="foreignkey",
     )
     op.drop_constraint(
-        "move_history_to_location_id_fkey", "move_history", type_="foreignkey"
+        op.f("fk_move_history_to_location_id_locations"),
+        "move_history",
+        type_="foreignkey",
     )
 
     # Recreate foreign key constraints with SET NULL on delete
     op.create_foreign_key(
-        "move_history_from_location_id_fkey",
+        op.f("fk_move_history_from_location_id_locations"),
         "move_history",
         "locations",
         ["from_location_id"],
@@ -36,7 +40,7 @@ def upgrade() -> None:
         ondelete="SET NULL",
     )
     op.create_foreign_key(
-        "move_history_to_location_id_fkey",
+        op.f("fk_move_history_to_location_id_locations"),
         "move_history",
         "locations",
         ["to_location_id"],
@@ -49,15 +53,19 @@ def downgrade() -> None:
     """Downgrade database schema."""
     # Drop SET NULL constraints
     op.drop_constraint(
-        "move_history_from_location_id_fkey", "move_history", type_="foreignkey"
+        op.f("fk_move_history_from_location_id_locations"),
+        "move_history",
+        type_="foreignkey",
     )
     op.drop_constraint(
-        "move_history_to_location_id_fkey", "move_history", type_="foreignkey"
+        op.f("fk_move_history_to_location_id_locations"),
+        "move_history",
+        type_="foreignkey",
     )
 
     # Recreate original RESTRICT constraints
     op.create_foreign_key(
-        "move_history_from_location_id_fkey",
+        op.f("fk_move_history_from_location_id_locations"),
         "move_history",
         "locations",
         ["from_location_id"],
@@ -65,7 +73,7 @@ def downgrade() -> None:
         ondelete="RESTRICT",
     )
     op.create_foreign_key(
-        "move_history_to_location_id_fkey",
+        op.f("fk_move_history_to_location_id_locations"),
         "move_history",
         "locations",
         ["to_location_id"],
