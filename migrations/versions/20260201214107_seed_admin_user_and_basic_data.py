@@ -51,7 +51,7 @@ def upgrade() -> None:
     
     # Create admin user with password 'admin'
     # Password hash generated with bcrypt for 'admin' (cost factor 12)
-    # Hash: $2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW
+    # Hash: $2b$12$SD4NhDwd632jUZahyAguMu8BdxCXZGUhwbB.uWTln/KDFTsnYaXay
     conn.execute(
         sa.text("""
             INSERT INTO users (id, username, email, password_hash, active, role_id, created_at, updated_at)
@@ -67,7 +67,7 @@ def upgrade() -> None:
             "id": str(uuid.uuid4()),
             "username": "admin",
             "email": "admin@inventory.local",
-            "password_hash": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
+            "password_hash": "$2b$12$SD4NhDwd632jUZahyAguMu8BdxCXZGUhwbB.uWTln/KDFTsnYaXay",
             "active": True,
             "role_id": admin_role_id,
             "created_at": datetime.now(timezone.utc),
