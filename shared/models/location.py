@@ -26,7 +26,7 @@ class Location(Base, UUIDMixin, TimestampMixin):
 
     __tablename__ = "locations"
     __table_args__ = (
-        UniqueConstraint('name', 'location_type_id', name='uq_location_name_type'),
+        UniqueConstraint("name", "location_type_id", name="uq_location_name_type"),
     )
 
     name = Column(String(200), nullable=False, index=True)

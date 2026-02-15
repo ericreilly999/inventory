@@ -150,11 +150,11 @@ module "api_gateway_service" {
   log_group_name                 = module.ecs_cluster.log_group_name
   service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
-  container_image = var.api_gateway_image
-  container_port  = 8000
-  cpu             = 512
-  memory          = 1024
-  desired_count   = 2
+  container_image     = var.api_gateway_image
+  container_port      = 8000
+  cpu                 = 512
+  memory              = 1024
+  desired_count       = 2
   enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
@@ -215,11 +215,11 @@ module "user_service" {
   log_group_name                 = module.ecs_cluster.log_group_name
   service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
-  container_image = var.user_service_image
-  container_port  = 8001
-  cpu             = 256
-  memory          = 512
-  desired_count   = 2
+  container_image     = var.user_service_image
+  container_port      = 8001
+  cpu                 = 256
+  memory              = 512
+  desired_count       = 2
   enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
@@ -271,11 +271,11 @@ module "inventory_service" {
   log_group_name                 = module.ecs_cluster.log_group_name
   service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
-  container_image = var.inventory_service_image
-  container_port  = 8003
-  cpu             = 512
-  memory          = 1024
-  desired_count   = 2
+  container_image     = var.inventory_service_image
+  container_port      = 8003
+  cpu                 = 512
+  memory              = 1024
+  desired_count       = 2
   enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
@@ -327,11 +327,11 @@ module "location_service" {
   log_group_name                 = module.ecs_cluster.log_group_name
   service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
-  container_image = var.location_service_image
-  container_port  = 8002
-  cpu             = 512
-  memory          = 1024
-  desired_count   = 2
+  container_image     = var.location_service_image
+  container_port      = 8002
+  cpu                 = 512
+  memory              = 1024
+  desired_count       = 2
   enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
@@ -383,11 +383,11 @@ module "reporting_service" {
   log_group_name                 = module.ecs_cluster.log_group_name
   service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
-  container_image = var.reporting_service_image
-  container_port  = 8004
-  cpu             = 256
-  memory          = 512
-  desired_count   = 2
+  container_image     = var.reporting_service_image
+  container_port      = 8004
+  cpu                 = 256
+  memory              = 512
+  desired_count       = 2
   enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
@@ -439,11 +439,11 @@ module "ui_service" {
   log_group_name                 = module.ecs_cluster.log_group_name
   service_discovery_namespace_id = module.ecs_cluster.service_discovery_namespace_id
 
-  container_image = var.ui_service_image
-  container_port  = 80
-  cpu             = 256
-  memory          = 512
-  desired_count   = 2
+  container_image     = var.ui_service_image
+  container_port      = 80
+  cpu                 = 256
+  memory              = 512
+  desired_count       = 2
   enable_auto_scaling = false
 
   security_group_ids = [module.security.ecs_security_group_id]
