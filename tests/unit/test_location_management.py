@@ -74,7 +74,8 @@ class TestLocationValidation:
 
         # Mock query to return 2 locations using this type
         mock_db.query.return_value.filter.return_value.count.return_value = 2
-        mock_db.query.return_value.filter.return_value.limit.return_value.all.return_value = [
+        mock_query = mock_db.query.return_value.filter.return_value
+        mock_query.limit.return_value.all.return_value = [
             mock_location1,
             mock_location2,
         ]
@@ -346,7 +347,8 @@ class TestLocationDeletionScenarios:
 
         # Mock query to return 3 locations
         mock_db.query.return_value.filter.return_value.count.return_value = 3
-        mock_db.query.return_value.filter.return_value.limit.return_value.all.return_value = [
+        mock_query = mock_db.query.return_value.filter.return_value
+        mock_query.limit.return_value.all.return_value = [
             mock_location1,
             mock_location2,
             mock_location3,
