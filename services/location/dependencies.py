@@ -172,6 +172,8 @@ async def get_parent_item_by_id(
 
 def validate_location_deletion(location: Location, db: Session) -> None:
     """Validate that a location can be deleted (no items assigned)."""
+    from shared.models.move_history import MoveHistory
+    
     # Check if any parent items are currently at this location
     items_count = (
         db.query(ParentItem)
@@ -184,23 +186,60 @@ def validate_location_deletion(location: Location, db: Session) -> None:
             status_code=status.HTTP_409_CONFLICT,
             detail=(
                 f"Cannot delete location '{location.name}' - {items_count} "
-                f"items are currently assigned to it"
+                f"item(s) are currently assigned to it. Move all items to another location first."
+            ),
+        )
+    
+    # Check if location is referenced in move history
+    history_count = (
+        db.query(MoveHistory)
+        .filter(
+            (MoveHistory.from_location_id == location.id) |
+            (MoveHistory.to_location_id == location.id)
+        )
+        .count()
+    )
+    
+    if history_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Cannot delete location '{location.name}' - it is referenced in "
+                f"{history_count} historical movement record(s). Locations with movement "
+                f"history cannot be deleted to maintain audit trail integrity."
             ),
         )
 
 
 def validate_location_type_deletion(location_type: LocationType, db: Session) -> None:
     """Validate that a location type can be deleted (no locations using it)."""
+    from shared.models.move_history import MoveHistory
+    
     # Check if any locations are using this location type
     locations_count = (
         db.query(Location).filter(Location.location_type_id == location_type.id).count()
     )
 
     if locations_count > 0:
+        # Get the location names for better error message
+        locations = (
+            db.query(Location)
+            .filter(Location.location_type_id == location_type.id)
+            .limit(5)
+            .all()
+        )
+        location_names = [loc.name for loc in locations]
+        
+        if locations_count > 5:
+            location_list = ", ".join(location_names) + f", and {locations_count - 5} more"
+        else:
+            location_list = ", ".join(location_names)
+        
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=(
                 f"Cannot delete location type '{location_type.name}' - "
-                f"{locations_count} locations are using it"
+                f"{locations_count} location(s) are using it: {location_list}. "
+                f"Delete or reassign these locations first."
             ),
         )

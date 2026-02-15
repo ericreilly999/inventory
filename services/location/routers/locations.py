@@ -209,12 +209,21 @@ async def delete_location(
             message=f"Location '{location_name}' deleted successfully"
         )
 
-    except IntegrityError:
+    except IntegrityError as e:
         db.rollback()
-        detail = (
-            "Cannot delete location - it may be referenced by "
-            "existing items or move history"
-        )
+        # This should not happen if validation passed, but handle it anyway
+        error_msg = str(e).lower()
+        if "move_history" in error_msg or "foreign key" in error_msg:
+            detail = (
+                f"Cannot delete location '{location.name}' - it is referenced in "
+                "historical movement records. Locations with movement history cannot "
+                "be deleted to maintain audit trail integrity."
+            )
+        else:
+            detail = (
+                f"Cannot delete location '{location.name}' - it may be referenced by "
+                "existing items or move history"
+            )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=detail,

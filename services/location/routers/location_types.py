@@ -166,19 +166,28 @@ async def delete_location_type(
     validate_location_type_deletion(location_type, db)
 
     try:
+        location_type_name = location_type.name
         db.delete(location_type)
         db.commit()
 
         return MessageResponse(
-            message=f"Location type '{location_type.name}' deleted successfully"
+            message=f"Location type '{location_type_name}' deleted successfully"
         )
 
-    except IntegrityError:
+    except IntegrityError as e:
         db.rollback()
-        detail = (
-            "Cannot delete location type - it may be referenced by "
-            "existing locations"
-        )
+        # This should not happen if validation passed, but handle it anyway
+        error_msg = str(e).lower()
+        if "location" in error_msg or "foreign key" in error_msg:
+            detail = (
+                f"Cannot delete location type '{location_type.name}' - it is still "
+                "referenced by existing locations. Delete or reassign those locations first."
+            )
+        else:
+            detail = (
+                f"Cannot delete location type '{location_type.name}' - it may be "
+                "referenced by existing locations"
+            )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=detail,
