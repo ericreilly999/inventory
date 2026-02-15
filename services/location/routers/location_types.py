@@ -180,13 +180,14 @@ async def delete_location_type(
         error_msg = str(e).lower()
         if "location" in error_msg or "foreign key" in error_msg:
             detail = (
-                f"Cannot delete location type '{location_type.name}' - it is still "
-                "referenced by existing locations. Delete or reassign those locations first."
+                f"Cannot delete location type '{location_type.name}' - it is "
+                "still referenced by existing locations. Delete or reassign "
+                "those locations first."
             )
         else:
             detail = (
-                f"Cannot delete location type '{location_type.name}' - it may be "
-                "referenced by existing locations"
+                f"Cannot delete location type '{location_type.name}' - it may "
+                "be referenced by existing locations"
             )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
