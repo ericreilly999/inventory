@@ -21,20 +21,22 @@ depends_on = None
 def upgrade() -> None:
     """Update admin user password hash to correct value."""
     conn = op.get_bind()
-    
+
     # Update admin user password hash
     # Correct bcrypt hash for password 'admin'
     conn.execute(
-        sa.text("""
+        sa.text(
+            """
             UPDATE users 
             SET password_hash = :password_hash,
                 updated_at = :updated_at
             WHERE username = 'admin'
-        """),
+        """
+        ),
         {
             "password_hash": "$2b$12$SD4NhDwd632jUZahyAguMu8BdxCXZGUhwbB.uWTln/KDFTsnYaXay",
             "updated_at": datetime.now(timezone.utc),
-        }
+        },
     )
 
 

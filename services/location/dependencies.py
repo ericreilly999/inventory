@@ -172,8 +172,6 @@ async def get_parent_item_by_id(
 
 def validate_location_deletion(location: Location, db: Session) -> None:
     """Validate that a location can be deleted (no items assigned)."""
-    from shared.models.move_history import MoveHistory
-
     # Check if any parent items are currently at this location
     items_count = (
         db.query(ParentItem)
@@ -187,26 +185,6 @@ def validate_location_deletion(location: Location, db: Session) -> None:
             detail=(
                 f"Cannot delete location '{location.name}' - {items_count} "
                 f"item(s) are currently assigned to it. Move all items to another location first."
-            ),
-        )
-
-    # Check if location is referenced in move history
-    history_count = (
-        db.query(MoveHistory)
-        .filter(
-            (MoveHistory.from_location_id == location.id)
-            | (MoveHistory.to_location_id == location.id)
-        )
-        .count()
-    )
-
-    if history_count > 0:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=(
-                f"Cannot delete location '{location.name}' - it is referenced in "
-                f"{history_count} historical movement record(s). Locations with movement "
-                f"history cannot be deleted to maintain audit trail integrity."
             ),
         )
 

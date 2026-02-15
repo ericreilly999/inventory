@@ -30,14 +30,14 @@ class MoveHistory(Base, UUIDMixin):
     )
     from_location_id = Column(
         GUID(),
-        ForeignKey("locations.id", ondelete="RESTRICT"),
-        nullable=True,  # Allow null for initial placement
+        ForeignKey("locations.id", ondelete="SET NULL"),
+        nullable=True,  # Allow null for initial placement and deleted locations
         index=True,
     )
     to_location_id = Column(
         GUID(),
-        ForeignKey("locations.id", ondelete="RESTRICT"),
-        nullable=False,
+        ForeignKey("locations.id", ondelete="SET NULL"),
+        nullable=True,  # Allow null for deleted locations
         index=True,
     )
     moved_by = Column(

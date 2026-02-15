@@ -213,16 +213,15 @@ async def delete_location(
         db.rollback()
         # This should not happen if validation passed, but handle it anyway
         error_msg = str(e).lower()
-        if "move_history" in error_msg or "foreign key" in error_msg:
+        if "parent_items" in error_msg or "current_location" in error_msg:
             detail = (
-                f"Cannot delete location '{location.name}' - it is referenced in "
-                "historical movement records. Locations with movement history cannot "
-                "be deleted to maintain audit trail integrity."
+                f"Cannot delete location '{location.name}' - items are still "
+                "assigned to it. Move all items to another location first."
             )
         else:
             detail = (
                 f"Cannot delete location '{location.name}' - it may be referenced by "
-                "existing items or move history"
+                "existing items"
             )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
