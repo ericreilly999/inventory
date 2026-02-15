@@ -66,7 +66,7 @@ def upgrade() -> None:
         {
             "id": str(uuid.uuid4()),
             "username": "admin",
-            "email": "admin@inventory.local",
+            "email": "admin@example.com",
             "password_hash": "$2b$12$SD4NhDwd632jUZahyAguMu8BdxCXZGUhwbB.uWTln/KDFTsnYaXay",
             "active": True,
             "role_id": admin_role_id,
