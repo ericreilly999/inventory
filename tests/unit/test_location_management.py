@@ -40,7 +40,7 @@ class TestLocationValidation:
 
         assert exc_info.value.status_code == 409
         assert "Cannot delete location" in exc_info.value.detail
-        assert "1 items are currently assigned" in exc_info.value.detail
+        assert "1 item(s) are currently assigned" in exc_info.value.detail
 
     def test_validate_location_deletion_without_items_should_pass(self):
         """Test that location deletion validation passes when no items are assigned."""
@@ -66,8 +66,18 @@ class TestLocationValidation:
         mock_location_type.id = uuid.uuid4()
         mock_location_type.name = "Test Location Type"
 
+        # Mock locations that use this type
+        mock_location1 = Mock(spec=Location)
+        mock_location1.name = "Location 1"
+        mock_location2 = Mock(spec=Location)
+        mock_location2.name = "Location 2"
+
         # Mock query to return 2 locations using this type
         mock_db.query.return_value.filter.return_value.count.return_value = 2
+        mock_db.query.return_value.filter.return_value.limit.return_value.all.return_value = [
+            mock_location1,
+            mock_location2,
+        ]
 
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
@@ -75,7 +85,9 @@ class TestLocationValidation:
 
         assert exc_info.value.status_code == 409
         assert "Cannot delete location type" in exc_info.value.detail
-        assert "2 locations are using it" in exc_info.value.detail
+        assert "2 location(s) are using it" in exc_info.value.detail
+        assert "Location 1" in exc_info.value.detail
+        assert "Location 2" in exc_info.value.detail
 
     def test_validate_location_type_deletion_without_locations_pass(
         self,
@@ -314,7 +326,7 @@ class TestLocationDeletionScenarios:
             validate_location_deletion(mock_location, mock_db)
 
         assert exc_info.value.status_code == 409
-        assert "5 items are currently assigned" in exc_info.value.detail
+        assert "5 item(s) are currently assigned" in exc_info.value.detail
 
     def test_location_type_deletion_constraint_with_multiple_locations(self):
         """Test location type deletion validation with multiple locations using it."""
@@ -324,15 +336,31 @@ class TestLocationDeletionScenarios:
         mock_location_type.id = uuid.uuid4()
         mock_location_type.name = "Popular Type"
 
+        # Mock locations that use this type
+        mock_location1 = Mock(spec=Location)
+        mock_location1.name = "Location A"
+        mock_location2 = Mock(spec=Location)
+        mock_location2.name = "Location B"
+        mock_location3 = Mock(spec=Location)
+        mock_location3.name = "Location C"
+
         # Mock query to return 3 locations
         mock_db.query.return_value.filter.return_value.count.return_value = 3
+        mock_db.query.return_value.filter.return_value.limit.return_value.all.return_value = [
+            mock_location1,
+            mock_location2,
+            mock_location3,
+        ]
 
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
             validate_location_type_deletion(mock_location_type, mock_db)
 
         assert exc_info.value.status_code == 409
-        assert "3 locations are using it" in exc_info.value.detail
+        assert "3 location(s) are using it" in exc_info.value.detail
+        assert "Location A" in exc_info.value.detail
+        assert "Location B" in exc_info.value.detail
+        assert "Location C" in exc_info.value.detail
 
 
 class TestLocationEdgeCases:
