@@ -184,15 +184,14 @@ def validate_location_deletion(location: Location, db: Session) -> None:
             status_code=status.HTTP_409_CONFLICT,
             detail=(
                 f"Cannot delete location '{location.name}' - {items_count} "
-                f"item(s) are currently assigned to it. Move all items to another location first."
+                f"item(s) are currently assigned to it. Move all items to "
+                f"another location first."
             ),
         )
 
 
 def validate_location_type_deletion(location_type: LocationType, db: Session) -> None:
     """Validate that a location type can be deleted (no locations using it)."""
-    from shared.models.move_history import MoveHistory
-
     # Check if any locations are using this location type
     locations_count = (
         db.query(Location).filter(Location.location_type_id == location_type.id).count()
