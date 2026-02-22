@@ -265,7 +265,7 @@ async def locations_routes(
 
 @router.api_route(
     "/location-types/{path:path}",
-    methods=["GET", "POST", "PUT", "DELETE"]
+    methods=["GET", "POST", "PUT", "DELETE"],
 )
 async def location_types_routes(
     request: Request,
@@ -276,7 +276,6 @@ async def location_types_routes(
     # Handle empty path (e.g., /api/v1/location-types -> /location-types)
     route_path = f"/location-types/{path}" if path else "/location-types"
     return await route_request(request, "location", route_path, client)
-
 
 @router.api_route("/movements/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def movements_routes(
