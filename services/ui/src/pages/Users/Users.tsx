@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -20,6 +20,7 @@ import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { apiService } from '../../services/api';
 import { getErrorMessage } from '../../utils/errorHandler';
+import DataGridFilters, { FilterConfig, FilterValue } from '../../components/DataGridFilters';
 
 interface User {
   id: string;
@@ -42,6 +43,7 @@ const Users: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [error, setError] = useState('');
+  const [filters, setFilters] = useState<FilterValue[]>([]);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -53,6 +55,39 @@ const Users: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const filterConfigs: FilterConfig[] = useMemo(() => [
+    { field: 'username', label: 'Username', type: 'text' },
+    { field: 'email', label: 'Email', type: 'text' },
+    {
+      field: 'role',
+      label: 'Role',
+      type: 'select',
+      options: roles.map((role) => ({ value: role.name, label: role.name })),
+    },
+    { field: 'active', label: 'Active', type: 'boolean' },
+  ], [roles]);
+
+  const filteredUsers = useMemo(() => {
+    if (filters.length === 0) return users;
+
+    return users.filter((user) => {
+      return filters.every((filter) => {
+        switch (filter.field) {
+          case 'username':
+            return user.username.toLowerCase().includes(filter.value.toLowerCase());
+          case 'email':
+            return user.email.toLowerCase().includes(filter.value.toLowerCase());
+          case 'role':
+            return user.role?.name === filter.value;
+          case 'active':
+            return user.active === (filter.value === 'true');
+          default:
+            return true;
+        }
+      });
+    });
+  }, [users, filters]);
 
   const fetchData = async () => {
     try {
@@ -206,9 +241,15 @@ const Users: React.FC = () => {
         </Alert>
       )}
 
+      <DataGridFilters
+        filters={filterConfigs}
+        activeFilters={filters}
+        onFilterChange={setFilters}
+      />
+
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid
-          rows={users}
+          rows={filteredUsers}
           columns={columns}
           loading={loading}
           pageSizeOptions={[25, 50, 100]}

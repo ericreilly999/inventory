@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -20,6 +20,7 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, MoveUp as MoveI
 import { apiService } from '../../services/api';
 import ErrorDetails from '../../components/ErrorDetails';
 import { useApiError } from '../../hooks/useApiError';
+import DataGridFilters, { FilterConfig, FilterValue } from '../../components/DataGridFilters';
 
 interface ParentItem {
   id: string;
@@ -68,6 +69,8 @@ const Inventory: React.FC = () => {
   const [movingItem, setMovingItem] = useState<any>(null);
   const [movingChildItem, setMovingChildItem] = useState<any>(null);
   const { errorState, setError, clearError } = useApiError();
+  const [parentFilters, setParentFilters] = useState<FilterValue[]>([]);
+  const [childFilters, setChildFilters] = useState<FilterValue[]>([]);
   const [formData, setFormData] = useState({
     sku: '',
     description: '',
@@ -107,6 +110,99 @@ const Inventory: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Filter configurations
+  const parentFilterConfigs: FilterConfig[] = useMemo(() => [
+    { field: 'sku', label: 'SKU', type: 'text' },
+    {
+      field: 'item_type',
+      label: 'Item Type',
+      type: 'select',
+      options: itemTypes.parent.map((type) => ({ value: type.name, label: type.name })),
+    },
+    {
+      field: 'location_type',
+      label: 'Location Type',
+      type: 'select',
+      options: Array.from(new Set(locations.map((loc) => loc.location_type?.name).filter(Boolean)))
+        .map((name) => ({ value: name!, label: name! })),
+    },
+    {
+      field: 'location',
+      label: 'Location',
+      type: 'select',
+      options: locations.map((loc) => ({ value: loc.name, label: loc.name })),
+    },
+  ], [itemTypes.parent, locations]);
+
+  const childFilterConfigs: FilterConfig[] = useMemo(() => [
+    { field: 'sku', label: 'SKU', type: 'text' },
+    {
+      field: 'item_type',
+      label: 'Item Type',
+      type: 'select',
+      options: itemTypes.child.map((type) => ({ value: type.name, label: type.name })),
+    },
+    {
+      field: 'parent_item_type',
+      label: 'Parent Item Type',
+      type: 'select',
+      options: itemTypes.parent.map((type) => ({ value: type.name, label: type.name })),
+    },
+    {
+      field: 'parent_item',
+      label: 'Parent Item',
+      type: 'select',
+      options: parentItems.map((item) => ({ value: item.sku, label: item.sku })),
+    },
+  ], [itemTypes.child, itemTypes.parent, parentItems]);
+
+  // Apply filters to data
+  const filteredParentItems = useMemo(() => {
+    if (parentFilters.length === 0) return parentItems;
+
+    return parentItems.filter((item) => {
+      return parentFilters.every((filter) => {
+        const value = filter.value.toLowerCase();
+        
+        switch (filter.field) {
+          case 'sku':
+            return item.sku.toLowerCase().includes(value);
+          case 'item_type':
+            return item.item_type?.name === filter.value;
+          case 'location_type':
+            return item.current_location?.location_type?.name === filter.value;
+          case 'location':
+            return item.current_location?.name === filter.value;
+          default:
+            return true;
+        }
+      });
+    });
+  }, [parentItems, parentFilters]);
+
+  const filteredChildItems = useMemo(() => {
+    if (childFilters.length === 0) return childItems;
+
+    return childItems.filter((item) => {
+      return childFilters.every((filter) => {
+        const value = filter.value.toLowerCase();
+        
+        switch (filter.field) {
+          case 'sku':
+            return item.sku.toLowerCase().includes(value);
+          case 'item_type':
+            return item.item_type?.name === filter.value;
+          case 'parent_item_type':
+            return item.parent_item?.item_type?.name === filter.value;
+          case 'parent_item':
+            return item.parent_item?.sku === filter.value;
+          default:
+            return true;
+        }
+      });
+    });
+  }, [childItems, childFilters]);
 
   const handleAddItem = () => {
     setEditingItem(null);
@@ -360,9 +456,23 @@ const Inventory: React.FC = () => {
         <Tab label="Child Items" />
       </Tabs>
 
+      {tabValue === 0 ? (
+        <DataGridFilters
+          filters={parentFilterConfigs}
+          activeFilters={parentFilters}
+          onFilterChange={setParentFilters}
+        />
+      ) : (
+        <DataGridFilters
+          filters={childFilterConfigs}
+          activeFilters={childFilters}
+          onFilterChange={setChildFilters}
+        />
+      )}
+
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid
-          rows={tabValue === 0 ? parentItems : childItems}
+          rows={tabValue === 0 ? filteredParentItems : filteredChildItems}
           columns={tabValue === 0 ? parentColumns : childColumns}
           loading={loading}
           pageSizeOptions={[25, 50, 100]}

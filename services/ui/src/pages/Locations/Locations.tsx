@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -17,6 +17,7 @@ import {
 import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { apiService } from '../../services/api';
+import DataGridFilters, { FilterConfig, FilterValue } from '../../components/DataGridFilters';
 
 interface Location {
   id: string;
@@ -38,6 +39,7 @@ const Locations: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [error, setError] = useState('');
+  const [filters, setFilters] = useState<FilterValue[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -47,6 +49,33 @@ const Locations: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const filterConfigs: FilterConfig[] = useMemo(() => [
+    { field: 'name', label: 'Name', type: 'text' },
+    {
+      field: 'location_type',
+      label: 'Location Type',
+      type: 'select',
+      options: locationTypes.map((type) => ({ value: type.name, label: type.name })),
+    },
+  ], [locationTypes]);
+
+  const filteredLocations = useMemo(() => {
+    if (filters.length === 0) return locations;
+
+    return locations.filter((location) => {
+      return filters.every((filter) => {
+        switch (filter.field) {
+          case 'name':
+            return location.name.toLowerCase().includes(filter.value.toLowerCase());
+          case 'location_type':
+            return location.location_type?.name === filter.value;
+          default:
+            return true;
+        }
+      });
+    });
+  }, [locations, filters]);
 
   const fetchData = async () => {
     try {
@@ -171,9 +200,15 @@ const Locations: React.FC = () => {
         </Alert>
       )}
 
+      <DataGridFilters
+        filters={filterConfigs}
+        activeFilters={filters}
+        onFilterChange={setFilters}
+      />
+
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid
-          rows={locations}
+          rows={filteredLocations}
           columns={columns}
           loading={loading}
           pageSizeOptions={[25, 50, 100]}

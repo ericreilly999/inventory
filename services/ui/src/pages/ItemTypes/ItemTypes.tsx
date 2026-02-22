@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -17,6 +17,7 @@ import {
 import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { apiService } from '../../services/api';
+import DataGridFilters, { FilterConfig, FilterValue } from '../../components/DataGridFilters';
 
 interface ItemType {
   id: string;
@@ -32,6 +33,7 @@ const ItemTypes: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItemType, setEditingItemType] = useState<ItemType | null>(null);
   const [error, setError] = useState('');
+  const [filters, setFilters] = useState<FilterValue[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -43,6 +45,33 @@ const ItemTypes: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const filterConfigs: FilterConfig[] = useMemo(() => [
+    { field: 'name', label: 'Name', type: 'text' },
+    {
+      field: 'category',
+      label: 'Category',
+      type: 'select',
+      options: categories.map((cat) => ({ value: cat, label: cat.charAt(0).toUpperCase() + cat.slice(1) })),
+    },
+  ], []);
+
+  const filteredItemTypes = useMemo(() => {
+    if (filters.length === 0) return itemTypes;
+
+    return itemTypes.filter((itemType) => {
+      return filters.every((filter) => {
+        switch (filter.field) {
+          case 'name':
+            return itemType.name.toLowerCase().includes(filter.value.toLowerCase());
+          case 'category':
+            return itemType.category === filter.value;
+          default:
+            return true;
+        }
+      });
+    });
+  }, [itemTypes, filters]);
 
   const fetchData = async () => {
     try {
@@ -157,9 +186,15 @@ const ItemTypes: React.FC = () => {
         </Alert>
       )}
 
+      <DataGridFilters
+        filters={filterConfigs}
+        activeFilters={filters}
+        onFilterChange={setFilters}
+      />
+
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid
-          rows={itemTypes}
+          rows={filteredItemTypes}
           columns={columns}
           loading={loading}
           pageSizeOptions={[25, 50, 100]}

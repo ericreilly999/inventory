@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -19,6 +19,7 @@ import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { apiService } from '../../services/api';
 import { getErrorMessage } from '../../utils/errorHandler';
+import DataGridFilters, { FilterConfig, FilterValue } from '../../components/DataGridFilters';
 
 interface Role {
   id: string;
@@ -88,6 +89,7 @@ const Roles: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [error, setError] = useState('');
+  const [filters, setFilters] = useState<FilterValue[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -97,6 +99,23 @@ const Roles: React.FC = () => {
   useEffect(() => {
     fetchRoles();
   }, []);
+
+  const filterConfigs: FilterConfig[] = useMemo(() => [
+    { field: 'name', label: 'Role Name', type: 'text' },
+  ], []);
+
+  const filteredRoles = useMemo(() => {
+    if (filters.length === 0) return roles;
+
+    return roles.filter((role) => {
+      return filters.every((filter) => {
+        if (filter.field === 'name') {
+          return role.name.toLowerCase().includes(filter.value.toLowerCase());
+        }
+        return true;
+      });
+    });
+  }, [roles, filters]);
 
   const fetchRoles = async () => {
     try {
@@ -249,9 +268,15 @@ const Roles: React.FC = () => {
         </Alert>
       )}
 
+      <DataGridFilters
+        filters={filterConfigs}
+        activeFilters={filters}
+        onFilterChange={setFilters}
+      />
+
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid
-          rows={roles}
+          rows={filteredRoles}
           columns={columns}
           loading={loading}
           pageSizeOptions={[25, 50, 100]}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -13,6 +13,7 @@ import {
 import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { apiService } from '../../services/api';
+import DataGridFilters, { FilterConfig, FilterValue } from '../../components/DataGridFilters';
 
 interface LocationType {
   id: string;
@@ -27,6 +28,7 @@ const LocationTypes: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingLocationType, setEditingLocationType] = useState<LocationType | null>(null);
   const [error, setError] = useState('');
+  const [filters, setFilters] = useState<FilterValue[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -35,6 +37,23 @@ const LocationTypes: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const filterConfigs: FilterConfig[] = useMemo(() => [
+    { field: 'name', label: 'Name', type: 'text' },
+  ], []);
+
+  const filteredLocationTypes = useMemo(() => {
+    if (filters.length === 0) return locationTypes;
+
+    return locationTypes.filter((locationType) => {
+      return filters.every((filter) => {
+        if (filter.field === 'name') {
+          return locationType.name.toLowerCase().includes(filter.value.toLowerCase());
+        }
+        return true;
+      });
+    });
+  }, [locationTypes, filters]);
 
   const fetchData = async () => {
     try {
@@ -145,9 +164,15 @@ const LocationTypes: React.FC = () => {
         </Alert>
       )}
 
+      <DataGridFilters
+        filters={filterConfigs}
+        activeFilters={filters}
+        onFilterChange={setFilters}
+      />
+
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid
-          rows={locationTypes}
+          rows={filteredLocationTypes}
           columns={columns}
           loading={loading}
           pageSizeOptions={[25, 50, 100]}
