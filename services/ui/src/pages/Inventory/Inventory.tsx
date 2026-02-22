@@ -71,6 +71,7 @@ const Inventory: React.FC = () => {
   const { errorState, setError, clearError } = useApiError();
   const [parentFilters, setParentFilters] = useState<FilterValue[]>([]);
   const [childFilters, setChildFilters] = useState<FilterValue[]>([]);
+  const [moveNotes, setMoveNotes] = useState('');
   const [formData, setFormData] = useState({
     sku: '',
     description: '',
@@ -232,6 +233,7 @@ const Inventory: React.FC = () => {
     setMovingItem(item);
     setMovingChildItem(null);
     setFormData({ ...formData, current_location_id: '', parent_item_id: '' });
+    setMoveNotes('');
     setMoveDialogOpen(true);
   };
 
@@ -239,6 +241,7 @@ const Inventory: React.FC = () => {
     setMovingChildItem(item);
     setMovingItem(null);
     setFormData({ ...formData, current_location_id: '', parent_item_id: '' });
+    setMoveNotes('');
     setMoveDialogOpen(true);
   };
 
@@ -283,17 +286,19 @@ const Inventory: React.FC = () => {
         const payload = {
           item_id: movingItem.id,
           to_location_id: formData.current_location_id,
-          notes: 'Moved via UI',
+          notes: moveNotes || 'Moved via UI',
         };
         await apiService.post(`/api/v1/movements/move`, payload);
       } else if (movingChildItem) {
         // Moving a child item to a new parent (which changes its location)
+        const notesParam = moveNotes ? `&notes=${encodeURIComponent(moveNotes)}` : '&notes=Moved via UI';
         await apiService.post(
-          `/api/v1/items/child/${movingChildItem.id}/move?new_parent_id=${formData.parent_item_id}&notes=Moved via UI`
+          `/api/v1/items/child/${movingChildItem.id}/move?new_parent_id=${formData.parent_item_id}${notesParam}`
         );
       }
 
       setMoveDialogOpen(false);
+      setMoveNotes('');
       fetchData();
     } catch (error: any) {
       setError(error, {
@@ -302,8 +307,8 @@ const Inventory: React.FC = () => {
         requestPayload: movingItem ? {
           item_id: movingItem.id,
           to_location_id: formData.current_location_id,
-          notes: 'Moved via UI',
-        } : { new_parent_id: formData.parent_item_id },
+          notes: moveNotes || 'Moved via UI',
+        } : { new_parent_id: formData.parent_item_id, notes: moveNotes || 'Moved via UI' },
       });
     }
   };
@@ -560,25 +565,38 @@ const Inventory: React.FC = () => {
       </Dialog>
 
       {/* Move Dialog */}
-      <Dialog open={moveDialogOpen} onClose={() => setMoveDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={moveDialogOpen} onClose={() => { setMoveDialogOpen(false); setMoveNotes(''); }} maxWidth="sm" fullWidth>
         <DialogTitle>
           {movingItem ? `Move Parent Item: ${movingItem?.sku}` : `Move Child Item: ${movingChildItem?.sku}`}
         </DialogTitle>
         <DialogContent>
           {movingItem ? (
-            <FormControl fullWidth margin="dense">
-              <InputLabel>New Location</InputLabel>
-              <Select
-                value={formData.current_location_id}
-                onChange={(e) => setFormData({ ...formData, current_location_id: e.target.value })}
-              >
-                {locations.map((location) => (
-                  <MenuItem key={location.id} value={location.id}>
-                    {location.location_type?.name} - {location.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <>
+              <FormControl fullWidth margin="dense">
+                <InputLabel>New Location</InputLabel>
+                <Select
+                  value={formData.current_location_id}
+                  onChange={(e) => setFormData({ ...formData, current_location_id: e.target.value })}
+                >
+                  {locations.map((location) => (
+                    <MenuItem key={location.id} value={location.id}>
+                      {location.location_type?.name} - {location.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                margin="dense"
+                label="Notes (optional)"
+                fullWidth
+                multiline
+                rows={2}
+                variant="outlined"
+                value={moveNotes}
+                onChange={(e) => setMoveNotes(e.target.value)}
+                placeholder="Add notes about this move..."
+              />
+            </>
           ) : (
             <>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -599,11 +617,22 @@ const Inventory: React.FC = () => {
                     ))}
                 </Select>
               </FormControl>
+              <TextField
+                margin="dense"
+                label="Notes (optional)"
+                fullWidth
+                multiline
+                rows={2}
+                variant="outlined"
+                value={moveNotes}
+                onChange={(e) => setMoveNotes(e.target.value)}
+                placeholder="Add notes about this move..."
+              />
             </>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setMoveDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => { setMoveDialogOpen(false); setMoveNotes(''); }}>Cancel</Button>
           <Button onClick={handleMoveItemSubmit} variant="contained">
             Move Item
           </Button>
