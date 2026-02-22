@@ -399,9 +399,7 @@ def test_invalid_item_type_id(inventory_client, auth_headers):
 
 def test_invalid_location_id(location_client, auth_headers):
     """Test invalid location ID."""
-    response = location_client.get(
-        f"/api/v1/locations/{uuid4()}", headers=auth_headers
-    )
+    response = location_client.get(f"/api/v1/locations/{uuid4()}", headers=auth_headers)
     assert response.status_code in [404, 401, 403]
 
 
