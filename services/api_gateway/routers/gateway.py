@@ -263,11 +263,15 @@ async def locations_routes(
     return await route_request(request, "location", route_path, client)
 
 
-@router.api_route("/location-types/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@router.api_route(
+    "/location-types/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE"]
+)
 async def location_types_routes(
     request: Request,
     path: str,
     client: httpx.AsyncClient = Depends(get_service_client),
+):
 ):
     """Route location type management requests to location service."""
     # Handle empty path (e.g., /api/v1/location-types -> /location-types)
