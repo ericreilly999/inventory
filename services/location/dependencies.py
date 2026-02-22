@@ -172,6 +172,10 @@ async def get_parent_item_by_id(
 
 def validate_location_deletion(location: Location, db: Session) -> None:
     """Validate that a location can be deleted (no items assigned)."""
+    from shared.logging.config import get_logger
+
+    logger = get_logger(__name__)
+
     # Check if any parent items are currently at this location
     items_count = (
         db.query(ParentItem)
@@ -179,7 +183,25 @@ def validate_location_deletion(location: Location, db: Session) -> None:
         .count()
     )
 
+    logger.info(
+        f"Location deletion validation for '{location.name}' (ID: {location.id}): "
+        f"found {items_count} items"
+    )
+
     if items_count > 0:
+        # Get sample items for debugging
+        sample_items = (
+            db.query(ParentItem)
+            .filter(ParentItem.current_location_id == location.id)
+            .limit(5)
+            .all()
+        )
+        sample_skus = [item.sku for item in sample_items]
+        logger.warning(
+            f"Cannot delete location '{location.name}': {items_count} items found. "
+            f"Sample SKUs: {sample_skus}"
+        )
+
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=(
