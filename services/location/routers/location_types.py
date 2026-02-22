@@ -161,7 +161,12 @@ async def delete_location_type(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_location_admin),
 ):
-    """Delete a location type."""
+    """
+    Delete a location type.
+    
+    This will check that no locations are currently using this location type.
+    If locations exist, they must be deleted or reassigned first.
+    """
     # Validate that location type can be deleted
     validate_location_type_deletion(location_type, db)
 

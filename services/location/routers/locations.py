@@ -198,18 +198,54 @@ async def delete_location(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_location_admin),
 ):
-    """Delete a location."""
+    """
+    Delete a location and its associated move history.
+    
+    This will:
+    1. Check that no items are currently at this location
+    2. Delete all move history records associated with this location
+    3. Delete the location
+    
+    Warning: This will permanently delete move history for this location.
+    """
     # Validate that location can be deleted
     validate_location_deletion(location, db)
 
     try:
+        from shared.models.move_history import MoveHistory
+        
         location_name = location.name
+        location_id = location.id
+        
+        # Delete move history records where this location was involved
+        move_history_count = (
+            db.query(MoveHistory)
+            .filter(
+                (MoveHistory.from_location_id == location_id) |
+                (MoveHistory.to_location_id == location_id)
+            )
+            .count()
+        )
+        
+        if move_history_count > 0:
+            logger.info(
+                f"Deleting {move_history_count} move history records for location '{location_name}'"
+            )
+            db.query(MoveHistory).filter(
+                (MoveHistory.from_location_id == location_id) |
+                (MoveHistory.to_location_id == location_id)
+            ).delete(synchronize_session=False)
+        
+        # Delete the location
         db.delete(location)
         db.commit()
 
-        return MessageResponse(
-            message=f"Location '{location_name}' deleted successfully"
-        )
+        message = f"Location '{location_name}' deleted successfully"
+        if move_history_count > 0:
+            message += f" (including {move_history_count} move history records)"
+        
+        logger.info(message)
+        return MessageResponse(message=message)
 
     except IntegrityError as e:
         db.rollback()

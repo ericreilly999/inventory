@@ -38,7 +38,7 @@ class LocationReorganizer:
         
         try:
             response = self.session.post(
-                f"{self.api_url}/api/auth/login",
+                f"{self.api_url}/api/v1/auth/login",
                 json={"username": self.username, "password": self.password}
             )
             
@@ -59,19 +59,20 @@ class LocationReorganizer:
 
     def get_location_types(self) -> List[Dict]:
         """Get all location types."""
-        response = self.session.get(f"{self.api_url}/api/location-types")
+        response = self.session.get(f"{self.api_url}/api/v1/location-types")
         response.raise_for_status()
         return response.json()
 
     def get_locations(self) -> List[Dict]:
         """Get all locations with item counts."""
-        response = self.session.get(f"{self.api_url}/api/locations/with-items?limit=1000")
+        response = self.session.get(f"{self.api_url}/api/v1/locations/with-items?limit=1000")
         response.raise_for_status()
         return response.json()
 
     def get_location_items(self, location_id: str) -> List[Dict]:
         """Get all items at a location."""
-        response = self.session.get(f"{self.api_url}/api/locations/{location_id}/items")
+        # Use the parent items endpoint with location filter
+        response = self.session.get(f"{self.api_url}/api/v1/items/parent?location_id={location_id}&limit=1000")
         response.raise_for_status()
         return response.json()
 
@@ -79,7 +80,7 @@ class LocationReorganizer:
         """Move an item to a new location."""
         try:
             response = self.session.post(
-                f"{self.api_url}/api/movements/move",
+                f"{self.api_url}/api/v1/movements/move",
                 json={
                     "item_id": item_id,
                     "to_location_id": to_location_id,
@@ -95,7 +96,7 @@ class LocationReorganizer:
     def delete_location(self, location_id: str) -> bool:
         """Delete a location."""
         try:
-            response = self.session.delete(f"{self.api_url}/api/locations/{location_id}")
+            response = self.session.delete(f"{self.api_url}/api/v1/locations/{location_id}")
             response.raise_for_status()
             return True
         except Exception as e:
@@ -105,7 +106,7 @@ class LocationReorganizer:
     def delete_location_type(self, location_type_id: str) -> bool:
         """Delete a location type."""
         try:
-            response = self.session.delete(f"{self.api_url}/api/location-types/{location_type_id}")
+            response = self.session.delete(f"{self.api_url}/api/v1/location-types/{location_type_id}")
             response.raise_for_status()
             return True
         except Exception as e:
@@ -116,7 +117,7 @@ class LocationReorganizer:
         """Create a default JDM warehouse."""
         try:
             response = self.session.post(
-                f"{self.api_url}/api/locations",
+                f"{self.api_url}/api/v1/locations",
                 json={
                     "name": "JDM Main Warehouse",
                     "description": "Default warehouse for relocated inventory",
@@ -278,27 +279,30 @@ class LocationReorganizer:
         print(f"  Locations to delete: {len(locations_to_delete)}")
 
         # Find or create JDM warehouse
-        print("\nStep 3: Preparing relocation target...")
-        jdm_warehouse = None
-        for loc in locations_to_keep:
-            if loc["location_type"]["name"] == "Warehouse" and "JDM" in loc["name"].upper():
-                jdm_warehouse = loc
-                break
+        print("\nStep 3: Preparing relocation targets...")
+        jdm_warehouses = [
+            loc for loc in locations_to_keep
+            if loc["location_type"]["name"] == "Warehouse" and "JDM" in loc["name"].upper()
+        ]
 
-        if jdm_warehouse:
-            print(f"  Using existing JDM warehouse: {jdm_warehouse['name']}")
-        else:
+        if not jdm_warehouses:
             print("  Creating JDM Main Warehouse...")
             jdm_warehouse = self.create_jdm_warehouse(warehouse_type["id"])
             if not jdm_warehouse:
                 print("✗ ERROR: Failed to create JDM warehouse!")
                 return False
+            jdm_warehouses = [jdm_warehouse]
             print(f"  ✓ Created: {jdm_warehouse['name']}")
+        else:
+            print(f"  Found {len(jdm_warehouses)} JDM warehouses for distribution:")
+            for wh in jdm_warehouses:
+                print(f"    - {wh['name']}")
 
         # Move items from locations to be deleted
         print("\nStep 4: Relocating items...")
         total_moved = 0
         total_failed = 0
+        warehouse_index = 0  # For round-robin distribution
 
         for location in locations_to_delete:
             item_count = location.get("item_count", 0)
@@ -311,13 +315,17 @@ class LocationReorganizer:
             items = self.get_location_items(location["id"])
             
             for item in items:
+                # Round-robin across JDM warehouses
+                target_warehouse = jdm_warehouses[warehouse_index % len(jdm_warehouses)]
+                warehouse_index += 1
+                
                 if self.move_item(
                     item["id"],
-                    jdm_warehouse["id"],
+                    target_warehouse["id"],
                     f"Relocated during location reorganization from {location['name']}"
                 ):
                     total_moved += 1
-                    print(f"    ✓ Moved item {item.get('name', item['id'])}")
+                    print(f"    ✓ Moved item to {target_warehouse['name']}")
                 else:
                     total_failed += 1
 
