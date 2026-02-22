@@ -259,7 +259,7 @@ async def locations_routes(
     else:
         # Handle empty path (e.g., /api/v1/locations -> /locations)
         route_path = f"/locations/{path}" if path else "/locations"
-    
+
     return await route_request(request, "location", route_path, client)
 
 
