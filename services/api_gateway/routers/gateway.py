@@ -247,7 +247,21 @@ async def locations_routes(
     client: httpx.AsyncClient = Depends(get_service_client),
 ):
     """Route location management requests to location service."""
-    return await route_request(request, "location", f"/locations/{path}", client)
+    # Handle empty path (e.g., /api/v1/locations -> /locations)
+    route_path = f"/locations/{path}" if path else "/locations"
+    return await route_request(request, "location", route_path, client)
+
+
+@router.api_route("/location-types/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def location_types_routes(
+    request: Request,
+    path: str,
+    client: httpx.AsyncClient = Depends(get_service_client),
+):
+    """Route location type management requests to location service."""
+    # Handle empty path (e.g., /api/v1/location-types -> /location-types)
+    route_path = f"/location-types/{path}" if path else "/location-types"
+    return await route_request(request, "location", route_path, client)
 
 
 @router.api_route("/movements/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
@@ -257,7 +271,8 @@ async def movements_routes(
     client: httpx.AsyncClient = Depends(get_service_client),
 ):
     """Route movement requests to location service."""
-    return await route_request(request, "location", f"/movements/{path}", client)
+    route_path = f"/movements/{path}" if path else "/movements"
+    return await route_request(request, "location", route_path, client)
 
 
 # Reporting routes
