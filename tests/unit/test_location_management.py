@@ -37,9 +37,8 @@ class TestLocationValidation:
 
         # Mock query to return 1 item (indicating items are assigned)
         mock_db.query.return_value.filter.return_value.count.return_value = 1
-        mock_db.query.return_value.filter.return_value.limit.return_value.all.return_value = [
-            mock_item
-        ]
+        mock_query = mock_db.query.return_value.filter.return_value
+        mock_query.limit.return_value.all.return_value = [mock_item]
 
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
@@ -335,9 +334,8 @@ class TestLocationDeletionScenarios:
 
         # Mock query to return 5 items
         mock_db.query.return_value.filter.return_value.count.return_value = 5
-        mock_db.query.return_value.filter.return_value.limit.return_value.all.return_value = (
-            mock_items[:5]
-        )
+        mock_query = mock_db.query.return_value.filter.return_value
+        mock_query.limit.return_value.all.return_value = mock_items[:5]
 
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
