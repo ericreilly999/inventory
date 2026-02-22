@@ -272,7 +272,6 @@ async def location_types_routes(
     path: str,
     client: httpx.AsyncClient = Depends(get_service_client),
 ):
-):
     """Route location type management requests to location service."""
     # Handle empty path (e.g., /api/v1/location-types -> /location-types)
     route_path = f"/location-types/{path}" if path else "/location-types"
