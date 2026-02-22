@@ -34,7 +34,8 @@ COPY pyproject.toml poetry.lock* README.md ./
 
 # Install dependencies globally
 RUN poetry config virtualenvs.create false && \
-    poetry install --only=main --no-root && \
+    poetry install --only=main --no-root --no-cache && \
+    pip install --force-reinstall --no-deps pycparser==2.23 && \
     rm -rf $POETRY_CACHE_DIR
 
 # Copy application code
