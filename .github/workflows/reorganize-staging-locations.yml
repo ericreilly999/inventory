@@ -1,0 +1,65 @@
+name: Reorganize Staging Locations
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_only:
+        description: 'Preview only (no changes)'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  reorganize-locations:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install sqlalchemy psycopg2-binary
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Get database credentials
+        id: get-db-creds
+        run: |
+          DB_SECRET=$(aws secretsmanager get-secret-value \
+            --secret-id staging/inventory-management/database \
+            --query SecretString \
+            --output text)
+          
+          DB_URL=$(echo $DB_SECRET | python3 -c "import sys, json; print(json.load(sys.stdin)['url'])")
+          echo "::add-mask::$DB_URL"
+          echo "DATABASE_URL=$DB_URL" >> $GITHUB_ENV
+
+      - name: Preview location reorganization
+        if: ${{ inputs.preview_only }}
+        run: |
+          python scripts/preview_location_reorganization.py
+
+      - name: Execute location reorganization
+        if: ${{ !inputs.preview_only }}
+        run: |
+          python scripts/reorganize_inventory_locations.py
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reorganization-logs
+          path: |
+            *.log
+          retention-days: 30
