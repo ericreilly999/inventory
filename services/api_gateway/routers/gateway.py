@@ -247,8 +247,19 @@ async def locations_routes(
     client: httpx.AsyncClient = Depends(get_service_client),
 ):
     """Route location management requests to location service."""
-    # Handle empty path (e.g., /api/v1/locations -> /locations)
-    route_path = f"/locations/{path}" if path else "/locations"
+    # Handle backward compatibility for old paths
+    if path.startswith("types"):
+        # /api/v1/locations/types/* -> /api/v1/location-types/*
+        new_path = path.replace("types", "", 1)  # Remove "types"
+        route_path = f"/location-types{new_path}" if new_path else "/location-types"
+    elif path.startswith("locations"):
+        # /api/v1/locations/locations/* -> /api/v1/locations/*
+        new_path = path.replace("locations", "", 1)  # Remove first "locations"
+        route_path = f"/locations{new_path}" if new_path else "/locations"
+    else:
+        # Handle empty path (e.g., /api/v1/locations -> /locations)
+        route_path = f"/locations/{path}" if path else "/locations"
+    
     return await route_request(request, "location", route_path, client)
 
 
