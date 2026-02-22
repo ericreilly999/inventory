@@ -90,9 +90,7 @@ async def log_requests(request: Request, call_next: Callable) -> Response:
 
 
 # Include routers
-app.include_router(
-    locations.router, prefix="/api/v1/locations", tags=["locations"]
-)
+app.include_router(locations.router, prefix="/api/v1/locations", tags=["locations"])
 app.include_router(
     location_types.router,
     prefix="/api/v1/location-types",
