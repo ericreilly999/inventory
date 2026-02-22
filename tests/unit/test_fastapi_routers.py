@@ -273,7 +273,7 @@ def test_create_child_item_endpoint(inventory_client, setup_test_data, auth_head
 # Test Location Types
 def test_list_location_types_endpoint(location_client, setup_test_data, auth_headers):
     """Test listing location types via API."""
-    response = location_client.get("/api/v1/locations/types", headers=auth_headers)
+    response = location_client.get("/api/v1/location-types", headers=auth_headers)
     assert response.status_code in [200, 401, 403]
 
 
@@ -281,7 +281,7 @@ def test_create_location_type_endpoint(location_client, auth_headers):
     """Test creating location type via API."""
     data = {"name": "Office", "description": "Office space"}
     response = location_client.post(
-        "/api/v1/locations/types", json=data, headers=auth_headers
+        "/api/v1/location-types", json=data, headers=auth_headers
     )
     assert response.status_code in [200, 201, 401, 403, 422]
 
@@ -289,7 +289,7 @@ def test_create_location_type_endpoint(location_client, auth_headers):
 # Test Locations
 def test_list_locations_endpoint(location_client, setup_test_data, auth_headers):
     """Test listing locations via API."""
-    response = location_client.get("/api/v1/locations/locations", headers=auth_headers)
+    response = location_client.get("/api/v1/locations", headers=auth_headers)
     assert response.status_code in [200, 401, 403]
 
 
@@ -301,7 +301,7 @@ def test_create_location_endpoint(location_client, setup_test_data, auth_headers
         "location_metadata": {},
     }
     response = location_client.post(
-        "/api/v1/locations/locations", json=data, headers=auth_headers
+        "/api/v1/locations", json=data, headers=auth_headers
     )
     assert response.status_code in [200, 201, 401, 403, 422]
 
@@ -400,7 +400,7 @@ def test_invalid_item_type_id(inventory_client, auth_headers):
 def test_invalid_location_id(location_client, auth_headers):
     """Test invalid location ID."""
     response = location_client.get(
-        f"/api/v1/locations/locations/{uuid4()}", headers=auth_headers
+        f"/api/v1/locations/{uuid4()}", headers=auth_headers
     )
     assert response.status_code in [404, 401, 403]
 
@@ -423,7 +423,7 @@ def test_item_types_pagination(inventory_client, setup_test_data, auth_headers):
 def test_locations_pagination(location_client, setup_test_data, auth_headers):
     """Test locations pagination."""
     response = location_client.get(
-        "/api/v1/locations/locations?skip=0&limit=10", headers=auth_headers
+        "/api/v1/locations?skip=0&limit=10", headers=auth_headers
     )
     assert response.status_code in [200, 401, 403]
 
@@ -450,7 +450,7 @@ def test_update_location(location_client, setup_test_data, auth_headers):
     location_id = setup_test_data["location"].id
     data = {"description": "Updated location"}
     response = location_client.patch(
-        f"/api/v1/locations/locations/{location_id}", json=data, headers=auth_headers
+        f"/api/v1/locations/{location_id}", json=data, headers=auth_headers
     )
     assert response.status_code in [200, 401, 403, 404, 405]
 
@@ -477,7 +477,7 @@ def test_delete_item_type(inventory_client, auth_headers):
 def test_delete_location(location_client, auth_headers):
     """Test deleting location."""
     response = location_client.delete(
-        f"/api/v1/locations/locations/{uuid4()}", headers=auth_headers
+        f"/api/v1/locations/{uuid4()}", headers=auth_headers
     )
     assert response.status_code in [200, 204, 401, 403, 404]
 
@@ -578,7 +578,7 @@ def test_unauthorized_access_inventory(inventory_client):
 
 def test_unauthorized_access_location(location_client):
     """Test unauthorized access to location."""
-    response = location_client.get("/api/v1/locations/locations")
+    response = location_client.get("/api/v1/locations")
     assert response.status_code in [401, 403]
 
 

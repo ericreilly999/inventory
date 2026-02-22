@@ -273,7 +273,7 @@ def test_location_list_location_types(
 ):
     """Test listing location types."""
     headers = {"Authorization": f"Bearer {admin_user_with_token['token']}"}
-    response = location_client.get("/api/v1/locations/types", headers=headers)
+    response = location_client.get("/api/v1/location-types", headers=headers)
     assert response.status_code in [200, 401, 403]
 
 
@@ -282,7 +282,7 @@ def test_location_get_location_type(location_client, test_data, admin_user_with_
     headers = {"Authorization": f"Bearer {admin_user_with_token['token']}"}
     loc_type_id = test_data["location_type"].id
     response = location_client.get(
-        f"/api/v1/locations/types/{loc_type_id}", headers=headers
+        f"/api/v1/location-types/{loc_type_id}", headers=headers
     )
     assert response.status_code in [200, 401, 403, 404]
 
@@ -292,7 +292,7 @@ def test_location_create_location_type(location_client, admin_user_with_token):
     headers = {"Authorization": f"Bearer {admin_user_with_token['token']}"}
     data = {"name": "Office", "description": "Office space"}
     response = location_client.post(
-        "/api/v1/locations/types", json=data, headers=headers
+        "/api/v1/location-types", json=data, headers=headers
     )
     assert response.status_code in [200, 201, 401, 403, 422]
 
@@ -300,7 +300,7 @@ def test_location_create_location_type(location_client, admin_user_with_token):
 def test_location_list_locations(location_client, test_data, admin_user_with_token):
     """Test listing locations."""
     headers = {"Authorization": f"Bearer {admin_user_with_token['token']}"}
-    response = location_client.get("/api/v1/locations/locations", headers=headers)
+    response = location_client.get("/api/v1/locations", headers=headers)
     assert response.status_code in [200, 401, 403]
 
 
@@ -309,7 +309,7 @@ def test_location_get_location(location_client, test_data, admin_user_with_token
     headers = {"Authorization": f"Bearer {admin_user_with_token['token']}"}
     location_id = test_data["location"].id
     response = location_client.get(
-        f"/api/v1/locations/locations/{location_id}", headers=headers
+        f"/api/v1/locations/{location_id}", headers=headers
     )
     assert response.status_code in [200, 401, 403, 404]
 
@@ -323,7 +323,7 @@ def test_location_create_location(location_client, test_data, admin_user_with_to
         "location_metadata": {"capacity": 500},
     }
     response = location_client.post(
-        "/api/v1/locations/locations", json=data, headers=headers
+        "/api/v1/locations", json=data, headers=headers
     )
     assert response.status_code in [200, 201, 401, 403, 422]
 
@@ -334,7 +334,7 @@ def test_location_update_location(location_client, test_data, admin_user_with_to
     location_id = test_data["location"].id
     data = {"description": "Updated warehouse"}
     response = location_client.patch(
-        f"/api/v1/locations/locations/{location_id}", json=data, headers=headers
+        f"/api/v1/locations/{location_id}", json=data, headers=headers
     )
     assert response.status_code in [200, 401, 403, 404, 405, 422]
 
@@ -448,7 +448,7 @@ def test_location_pagination(location_client, test_data, admin_user_with_token):
     """Test location pagination."""
     headers = {"Authorization": f"Bearer {admin_user_with_token['token']}"}
     response = location_client.get(
-        "/api/v1/locations/locations?skip=0&limit=10", headers=headers
+        "/api/v1/locations?skip=0&limit=10", headers=headers
     )
     assert response.status_code in [200, 401, 403]
 
@@ -465,7 +465,7 @@ def test_location_invalid_id(location_client, admin_user_with_token):
     """Test invalid location ID."""
     headers = {"Authorization": f"Bearer {admin_user_with_token['token']}"}
     response = location_client.get(
-        f"/api/v1/locations/locations/{uuid4()}", headers=headers
+        f"/api/v1/locations/{uuid4()}", headers=headers
     )
     assert response.status_code in [404, 401, 403]
 
@@ -486,7 +486,7 @@ def test_inventory_unauthorized(inventory_client):
 
 def test_location_unauthorized(location_client):
     """Test unauthorized access to location."""
-    response = location_client.get("/api/v1/locations/locations")
+    response = location_client.get("/api/v1/locations")
     assert response.status_code in [401, 403]
 
 
