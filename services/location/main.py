@@ -89,13 +89,13 @@ async def log_requests(request: Request, call_next: Callable) -> Response:
     return response
 
 
-# Include routers - structured like inventory service to avoid route conflicts
+# Include routers
 app.include_router(
-    locations.router, prefix="/api/v1/locations/locations", tags=["locations"]
+    locations.router, prefix="/api/v1/locations", tags=["locations"]
 )
 app.include_router(
     location_types.router,
-    prefix="/api/v1/locations/types",
+    prefix="/api/v1/location-types",
     tags=["location-types"],
 )
 app.include_router(movements.router, prefix="/api/v1/movements", tags=["movements"])
