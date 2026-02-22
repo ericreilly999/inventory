@@ -213,6 +213,12 @@ async def delete_location(
         db.rollback()
         # This should not happen if validation passed, but handle it anyway
         error_msg = str(e).lower()
+        
+        # Log the full error for debugging
+        from shared.logging.config import get_logger
+        logger = get_logger(__name__)
+        logger.error(f"IntegrityError deleting location {location.id}: {e}")
+        
         if "parent_items" in error_msg or "current_location" in error_msg:
             detail = (
                 f"Cannot delete location '{location.name}' - items are still "
@@ -221,7 +227,7 @@ async def delete_location(
         else:
             detail = (
                 f"Cannot delete location '{location.name}' - it may be referenced by "
-                "existing items"
+                f"existing items. Error: {str(e)[:200]}"
             )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
