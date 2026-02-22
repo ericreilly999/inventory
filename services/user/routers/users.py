@@ -60,7 +60,7 @@ async def create_user(
     )
 
     if existing_user:
-        if func.lower(existing_user.username) == username_lower:
+        if existing_user.username.lower() == username_lower:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Username already exists",
