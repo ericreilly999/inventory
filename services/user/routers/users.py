@@ -42,12 +42,17 @@ async def create_user(
 ):
     """Create a new user."""
 
-    # Check if username or email already exists
+    # Normalize username to lowercase for case-insensitive storage
+    username_lower = user_data.username.lower()
+
+    # Check if username or email already exists (case-insensitive for username)
+    from sqlalchemy import func
+    
     existing_user = (
         db.query(User)
         .filter(
             or_(
-                User.username == user_data.username,
+                func.lower(User.username) == username_lower,
                 User.email == user_data.email,
             )
         )
@@ -55,7 +60,7 @@ async def create_user(
     )
 
     if existing_user:
-        if existing_user.username == user_data.username:
+        if func.lower(existing_user.username) == username_lower:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Username already exists",
@@ -73,9 +78,9 @@ async def create_user(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Role not found"
         )
 
-    # Create new user
+    # Create new user with normalized username
     user = User(
-        username=user_data.username,
+        username=username_lower,  # Store username in lowercase
         email=user_data.email,
         password_hash=hash_password(user_data.password),
         role_id=user_data.role_id,
@@ -167,9 +172,13 @@ async def update_user(
 
     # Check for username/email conflicts
     if user_data.username and user_data.username != user.username:
+        # Normalize username to lowercase
+        username_lower = user_data.username.lower()
+        from sqlalchemy import func
+        
         existing = (
             db.query(User)
-            .filter(and_(User.username == user_data.username, User.id != user_id))
+            .filter(and_(func.lower(User.username) == username_lower, User.id != user_id))
             .first()
         )
         if existing:
@@ -177,7 +186,7 @@ async def update_user(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Username already exists",
             )
-        user.username = user_data.username
+        user.username = username_lower  # Store in lowercase
 
     if user_data.email and user_data.email != user.email:
         existing = (
