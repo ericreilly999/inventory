@@ -1,0 +1,261 @@
+name: Run Location Reorganization (ECS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - check
+          - preview
+          - execute
+        default: preview
+
+jobs:
+  run-via-ecs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install AWS CLI
+        run: |
+          pip install awscli
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Build Docker image with scripts
+        run: |
+          # Create Dockerfile for script execution
+          cat > Dockerfile.scripts <<'DOCKERFILE'
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir sqlalchemy==2.0.23 psycopg2-binary==2.9.9
+
+# Copy application code
+COPY shared/ /app/shared/
+COPY scripts/check_current_locations.py /app/
+COPY scripts/preview_location_reorganization.py /app/
+COPY scripts/reorganize_inventory_locations.py /app/
+
+# Set Python path
+ENV PYTHONPATH=/app
+
+# Default command
+CMD ["python", "check_current_locations.py"]
+DOCKERFILE
+
+          # Build image
+          docker build -f Dockerfile.scripts -t location-reorganization:latest .
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        run: |
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Create ECR repository if needed
+        run: |
+          aws ecr describe-repositories --repository-names staging-scripts 2>/dev/null || \
+            aws ecr create-repository --repository-name staging-scripts --region us-east-1
+
+      - name: Push image to ECR
+        id: push-image
+        run: |
+          IMAGE_TAG=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/staging-scripts:location-reorganization-${{ github.sha }}
+          docker tag location-reorganization:latest $IMAGE_TAG
+          docker push $IMAGE_TAG
+          echo "image_uri=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Get ECS cluster and network configuration
+        id: ecs-config
+        run: |
+          # Find staging cluster
+          CLUSTER=$(aws ecs list-clusters --query 'clusterArns[?contains(@, `staging`)]' --output text | head -1)
+          CLUSTER_NAME=$(echo $CLUSTER | awk -F'/' '{print $NF}')
+          echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+          
+          # Get VPC configuration from existing service
+          SERVICE_ARN=$(aws ecs list-services --cluster $CLUSTER_NAME --query 'serviceArns[0]' --output text)
+          SERVICE_DETAILS=$(aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_ARN)
+          
+          # Extract network configuration
+          SUBNETS=$(echo "$SERVICE_DETAILS" | jq -r '.services[0].networkConfiguration.awsvpcConfiguration.subnets | join(",")')
+          SECURITY_GROUPS=$(echo "$SERVICE_DETAILS" | jq -r '.services[0].networkConfiguration.awsvpcConfiguration.securityGroups | join(",")')
+          
+          echo "subnets=$SUBNETS" >> $GITHUB_OUTPUT
+          echo "security_groups=$SECURITY_GROUPS" >> $GITHUB_OUTPUT
+
+      - name: Get database secret ARN
+        id: db-secret
+        run: |
+          SECRET_ARN=$(aws secretsmanager list-secrets \
+            --query "SecretList[?contains(Name, 'staging') && contains(Name, 'database')].ARN" \
+            --output text | head -1)
+          echo "secret_arn=$SECRET_ARN" >> $GITHUB_OUTPUT
+
+      - name: Determine script to run
+        id: script
+        run: |
+          if [ "${{ inputs.action }}" == "check" ]; then
+            echo "script_name=check_current_locations.py" >> $GITHUB_OUTPUT
+          elif [ "${{ inputs.action }}" == "preview" ]; then
+            echo "script_name=preview_location_reorganization.py" >> $GITHUB_OUTPUT
+          else
+            echo "script_name=reorganize_inventory_locations.py" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create CloudWatch log group
+        run: |
+          aws logs create-log-group --log-group-name /ecs/staging/location-reorganization 2>/dev/null || true
+
+      - name: Register ECS task definition
+        id: task-def
+        run: |
+          TASK_DEF_JSON=$(cat <<EOF
+{
+  "family": "staging-location-reorganization",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/staging-migration-task-execution-role",
+  "taskRoleArn": "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/staging-migration-task-role",
+  "containerDefinitions": [
+    {
+      "name": "reorganization",
+      "image": "${{ steps.push-image.outputs.image_uri }}",
+      "command": ["python", "${{ steps.script.outputs.script_name }}"],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "${{ steps.db-secret.outputs.secret_arn }}:url::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/staging/location-reorganization",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "reorganization"
+        }
+      }
+    }
+  ]
+}
+EOF
+)
+          
+          TASK_DEF_ARN=$(echo "$TASK_DEF_JSON" | aws ecs register-task-definition --cli-input-json file:///dev/stdin --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "task_definition_arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
+          echo "Registered task definition: $TASK_DEF_ARN"
+
+      - name: Run ECS task
+        id: run-task
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ steps.ecs-config.outputs.cluster_name }} \
+            --task-definition ${{ steps.task-def.outputs.task_definition_arn }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ steps.ecs-config.outputs.subnets }}],securityGroups=[${{ steps.ecs-config.outputs.security_groups }}],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+          
+          echo "task_arn=$TASK_ARN" >> $GITHUB_OUTPUT
+          TASK_ID=$(echo $TASK_ARN | awk -F'/' '{print $NF}')
+          echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT
+          echo "Started ECS task: $TASK_ARN"
+
+      - name: Wait for task to complete
+        run: |
+          echo "Waiting for task to complete (this may take a few minutes)..."
+          aws ecs wait tasks-stopped \
+            --cluster ${{ steps.ecs-config.outputs.cluster_name }} \
+            --tasks ${{ steps.run-task.outputs.task_arn }}
+          
+          echo "Task completed"
+
+      - name: Check task exit code
+        id: check-exit
+        run: |
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster ${{ steps.ecs-config.outputs.cluster_name }} \
+            --tasks ${{ steps.run-task.outputs.task_arn }} \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+          
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          echo "Task exit code: $EXIT_CODE"
+          
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "::error::Task failed with exit code $EXIT_CODE"
+          fi
+
+      - name: Fetch logs from CloudWatch
+        if: always()
+        run: |
+          echo "Fetching logs from CloudWatch..."
+          sleep 5  # Give logs time to be written
+          
+          LOG_STREAM="reorganization/reorganization/${{ steps.run-task.outputs.task_id }}"
+          
+          aws logs get-log-events \
+            --log-group-name /ecs/staging/location-reorganization \
+            --log-stream-name "$LOG_STREAM" \
+            --query 'events[].message' \
+            --output text > task_output.log || echo "Could not fetch logs (stream may not exist yet)"
+          
+          if [ -f task_output.log ] && [ -s task_output.log ]; then
+            echo "=== Task Output ==="
+            cat task_output.log
+          else
+            echo "No logs available yet. Check CloudWatch Logs directly:"
+            echo "Log Group: /ecs/staging/location-reorganization"
+            echo "Log Stream: $LOG_STREAM"
+          fi
+
+      - name: Upload logs as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reorganization-logs-${{ inputs.action }}-${{ github.run_number }}
+          path: task_output.log
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "=== Summary ==="
+          echo "Action: ${{ inputs.action }}"
+          echo "Exit Code: ${{ steps.check-exit.outputs.exit_code }}"
+          
+          if [ "${{ steps.check-exit.outputs.exit_code }}" == "0" ]; then
+            if [ "${{ inputs.action }}" == "check" ]; then
+              echo "✓ Status check completed successfully"
+            elif [ "${{ inputs.action }}" == "preview" ]; then
+              echo "✓ Preview completed successfully"
+              echo ""
+              echo "To execute the reorganization, run this workflow again with action=execute"
+            else
+              echo "✓ Location reorganization executed successfully"
+            fi
+          else
+            echo "✗ Task failed. Check logs above for details."
+            exit 1
+          fi
