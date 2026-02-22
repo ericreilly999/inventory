@@ -31,8 +31,15 @@ class TestLocationValidation:
         mock_location.id = uuid.uuid4()
         mock_location.name = "Test Location"
 
+        # Mock a sample item
+        mock_item = Mock()
+        mock_item.sku = "TEST-SKU-001"
+
         # Mock query to return 1 item (indicating items are assigned)
         mock_db.query.return_value.filter.return_value.count.return_value = 1
+        mock_db.query.return_value.filter.return_value.limit.return_value.all.return_value = [
+            mock_item
+        ]
 
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
@@ -319,8 +326,18 @@ class TestLocationDeletionScenarios:
         mock_location.id = uuid.uuid4()
         mock_location.name = "Busy Location"
 
+        # Mock sample items
+        mock_items = []
+        for i in range(5):
+            mock_item = Mock()
+            mock_item.sku = f"TEST-SKU-{i:03d}"
+            mock_items.append(mock_item)
+
         # Mock query to return 5 items
         mock_db.query.return_value.filter.return_value.count.return_value = 5
+        mock_db.query.return_value.filter.return_value.limit.return_value.all.return_value = (
+            mock_items[:5]
+        )
 
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
