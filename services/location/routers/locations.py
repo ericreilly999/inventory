@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from shared.database.config import get_db
+from shared.logging.config import get_logger
 from shared.models.item import ParentItem
 from shared.models.location import Location
 from shared.models.user import User
@@ -28,6 +29,7 @@ from ..schemas import (
     MessageResponse,
 )
 
+logger = get_logger(__name__)
 router = APIRouter()
 
 
@@ -215,8 +217,6 @@ async def delete_location(
         error_msg = str(e).lower()
 
         # Log the full error for debugging
-        from shared.logging.config import get_logger
-        logger = get_logger(__name__)
         logger.error(f"IntegrityError deleting location {location.id}: {e}")
 
         if "parent_items" in error_msg or "current_location" in error_msg:
