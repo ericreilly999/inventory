@@ -331,3 +331,75 @@ async def reassign_child_item(
     )
 
     return ChildItemWithParentResponse.from_orm(child_item)
+
+
+@router.post(
+    "/{item_id}/move",
+    response_model=MessageResponse,
+    dependencies=[Depends(require_inventory_write)],
+)
+async def move_child_item(
+    item_id: UUID,
+    new_parent_id: UUID = Query(..., description="ID of the new parent item"),
+    notes: Optional[str] = Query(None, description="Optional notes about the move"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    child_item: ChildItem = Depends(get_child_item_or_404),
+):
+    """
+    Move a child item to a different parent item.
+    
+    This effectively moves the child item to a new location since child items
+    inherit their location from their parent item.
+    """
+
+    # Validate new parent item exists
+    new_parent = await get_parent_item_or_404(new_parent_id, db)
+
+    # Check if already assigned to this parent
+    if child_item.parent_item_id == new_parent_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Child item is already assigned to this parent item",
+        )
+
+    old_parent_id = child_item.parent_item_id
+    old_parent = await get_parent_item_or_404(old_parent_id, db)
+    
+    # Update parent assignment
+    child_item.parent_item_id = new_parent_id
+
+    # Create assignment history record
+    assignment_history = AssignmentHistory(
+        child_item_id=child_item.id,
+        from_parent_item_id=old_parent_id,
+        to_parent_item_id=new_parent_id,
+        assigned_at=datetime.utcnow(),
+        assigned_by=current_user.id,
+        notes=notes or "Moved via UI",
+    )
+
+    db.add(assignment_history)
+    db.commit()
+    db.refresh(child_item)
+
+    logger.info(
+        "Child item moved",
+        child_item_id=str(child_item.id),
+        child_sku=child_item.sku,
+        old_parent_id=str(old_parent_id),
+        old_parent_sku=old_parent.sku,
+        old_location=old_parent.current_location.name,
+        new_parent_id=str(new_parent_id),
+        new_parent_sku=new_parent.sku,
+        new_location=new_parent.current_location.name,
+        moved_by=str(current_user.id),
+    )
+
+    return MessageResponse(
+        message=(
+            f"Child item '{child_item.sku}' moved from parent '{old_parent.sku}' "
+            f"at {old_parent.current_location.name} to parent '{new_parent.sku}' "
+            f"at {new_parent.current_location.name}"
+        )
+    )

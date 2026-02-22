@@ -66,6 +66,7 @@ const Inventory: React.FC = () => {
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [movingItem, setMovingItem] = useState<any>(null);
+  const [movingChildItem, setMovingChildItem] = useState<any>(null);
   const { errorState, setError, clearError } = useApiError();
   const [formData, setFormData] = useState({
     sku: '',
@@ -133,6 +134,15 @@ const Inventory: React.FC = () => {
 
   const handleMoveItem = (item: ParentItem) => {
     setMovingItem(item);
+    setMovingChildItem(null);
+    setFormData({ ...formData, current_location_id: '', parent_item_id: '' });
+    setMoveDialogOpen(true);
+  };
+
+  const handleMoveChildItem = (item: ChildItem) => {
+    setMovingChildItem(item);
+    setMovingItem(null);
+    setFormData({ ...formData, current_location_id: '', parent_item_id: '' });
     setMoveDialogOpen(true);
   };
 
@@ -171,22 +181,33 @@ const Inventory: React.FC = () => {
   };
 
   const handleMoveItemSubmit = async () => {
-    const payload = {
-      item_id: movingItem.id,
-      to_location_id: formData.current_location_id,
-      notes: 'Moved via UI',
-    };
-    
     try {
-      await apiService.post(`/api/v1/movements/move`, payload);
+      if (movingItem) {
+        // Moving a parent item to a new location
+        const payload = {
+          item_id: movingItem.id,
+          to_location_id: formData.current_location_id,
+          notes: 'Moved via UI',
+        };
+        await apiService.post(`/api/v1/movements/move`, payload);
+      } else if (movingChildItem) {
+        // Moving a child item to a new parent (which changes its location)
+        await apiService.post(
+          `/api/v1/items/child/${movingChildItem.id}/move?new_parent_id=${formData.parent_item_id}&notes=Moved via UI`
+        );
+      }
 
       setMoveDialogOpen(false);
       fetchData();
     } catch (error: any) {
       setError(error, {
         method: 'POST',
-        endpoint: '/api/v1/movements/move',
-        requestPayload: payload,
+        endpoint: movingItem ? '/api/v1/movements/move' : `/api/v1/items/child/${movingChildItem?.id}/move`,
+        requestPayload: movingItem ? {
+          item_id: movingItem.id,
+          to_location_id: formData.current_location_id,
+          notes: 'Moved via UI',
+        } : { new_parent_id: formData.parent_item_id },
       });
     }
   };
@@ -289,12 +310,17 @@ const Inventory: React.FC = () => {
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
-      width: 120,
+      width: 150,
       getActions: (params) => [
         <GridActionsCellItem
           icon={<EditIcon />}
           label="Edit"
           onClick={() => handleEditItem(params.row)}
+        />,
+        <GridActionsCellItem
+          icon={<MoveIcon />}
+          label="Move"
+          onClick={() => handleMoveChildItem(params.row)}
         />,
         <GridActionsCellItem
           icon={<DeleteIcon />}
@@ -425,21 +451,46 @@ const Inventory: React.FC = () => {
 
       {/* Move Dialog */}
       <Dialog open={moveDialogOpen} onClose={() => setMoveDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Move Item: {movingItem?.sku}</DialogTitle>
+        <DialogTitle>
+          {movingItem ? `Move Parent Item: ${movingItem?.sku}` : `Move Child Item: ${movingChildItem?.sku}`}
+        </DialogTitle>
         <DialogContent>
-          <FormControl fullWidth margin="dense">
-            <InputLabel>New Location</InputLabel>
-            <Select
-              value={formData.current_location_id}
-              onChange={(e) => setFormData({ ...formData, current_location_id: e.target.value })}
-            >
-              {locations.map((location) => (
-                <MenuItem key={location.id} value={location.id}>
-                  {location.location_type?.name} - {location.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {movingItem ? (
+            <FormControl fullWidth margin="dense">
+              <InputLabel>New Location</InputLabel>
+              <Select
+                value={formData.current_location_id}
+                onChange={(e) => setFormData({ ...formData, current_location_id: e.target.value })}
+              >
+                {locations.map((location) => (
+                  <MenuItem key={location.id} value={location.id}>
+                    {location.location_type?.name} - {location.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          ) : (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Moving a child item will reassign it to a different parent item, which changes its location.
+              </Typography>
+              <FormControl fullWidth margin="dense">
+                <InputLabel>New Parent Item</InputLabel>
+                <Select
+                  value={formData.parent_item_id}
+                  onChange={(e) => setFormData({ ...formData, parent_item_id: e.target.value })}
+                >
+                  {parentItems
+                    .filter(item => item.id !== movingChildItem?.parent_item?.id)
+                    .map((item) => (
+                      <MenuItem key={item.id} value={item.id}>
+                        {item.item_type.name} - {item.sku} (at {item.current_location.name})
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            </>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setMoveDialogOpen(false)}>Cancel</Button>
