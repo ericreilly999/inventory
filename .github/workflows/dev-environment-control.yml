@@ -54,12 +54,12 @@ jobs:
           
           # Check ECS services
           SERVICES=(
-            "dev-inventory-api-gateway"
-            "dev-inventory-inventory"
-            "dev-inventory-location"
-            "dev-inventory-reporting"
-            "dev-inventory-user"
-            "dev-inventory-ui"
+            "dev-api-gateway"
+            "dev-inventory-service"
+            "dev-location-service"
+            "dev-reporting-service"
+            "dev-user-service"
+            "dev-ui-service"
           )
           
           ALL_SERVICES_RUNNING=true
@@ -106,12 +106,12 @@ jobs:
           
           # Stop ECS services first
           SERVICES=(
-            "dev-inventory-api-gateway"
-            "dev-inventory-inventory"
-            "dev-inventory-location"
-            "dev-inventory-reporting"
-            "dev-inventory-user"
-            "dev-inventory-ui"
+            "dev-api-gateway"
+            "dev-inventory-service"
+            "dev-location-service"
+            "dev-reporting-service"
+            "dev-user-service"
+            "dev-ui-service"
           )
           
           echo "📦 Stopping ECS services..."
@@ -197,14 +197,14 @@ jobs:
           echo "📦 Starting ECS services..."
           
           BACKEND_SERVICES=(
-            "dev-inventory-user"
-            "dev-inventory-location"
-            "dev-inventory-inventory"
-            "dev-inventory-reporting"
-            "dev-inventory-api-gateway"
+            "dev-user-service"
+            "dev-location-service"
+            "dev-inventory-service"
+            "dev-reporting-service"
+            "dev-api-gateway"
           )
           
-          UI_SERVICE="dev-inventory-ui"
+          UI_SERVICE="dev-ui-service"
           
           # Start backend services
           for SERVICE in "${BACKEND_SERVICES[@]}"; do
@@ -246,12 +246,12 @@ jobs:
           # ECS Services Status
           echo "ECS Services:"
           SERVICES=(
-            "dev-inventory-api-gateway"
-            "dev-inventory-inventory"
-            "dev-inventory-location"
-            "dev-inventory-reporting"
-            "dev-inventory-user"
-            "dev-inventory-ui"
+            "dev-api-gateway"
+            "dev-inventory-service"
+            "dev-location-service"
+            "dev-reporting-service"
+            "dev-user-service"
+            "dev-ui-service"
           )
           
           for SERVICE in "${SERVICES[@]}"; do

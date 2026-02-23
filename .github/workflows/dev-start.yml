@@ -46,12 +46,12 @@ jobs:
           echo ""
           echo "📦 Starting ECS services..."
           SERVICES=(
-            "dev-inventory-user"
-            "dev-inventory-location"
-            "dev-inventory-inventory"
-            "dev-inventory-reporting"
-            "dev-inventory-api-gateway"
-            "dev-inventory-ui"
+            "dev-user-service"
+            "dev-location-service"
+            "dev-inventory-service"
+            "dev-reporting-service"
+            "dev-api-gateway"
+            "dev-ui-service"
           )
           
           for SERVICE in "${SERVICES[@]}"; do
