@@ -1,0 +1,345 @@
+name: Dev Environment Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - start
+          - stop
+          - status
+      
+  schedule:
+    # Auto-stop dev environment at 8 PM EST (1 AM UTC) on weekdays
+    - cron: '0 1 * * 1-5'
+    # Auto-stop dev environment at 6 PM EST (11 PM UTC) on weekends
+    - cron: '0 23 * * 0,6'
+
+jobs:
+  control-dev-environment:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - name: Determine action
+        id: determine-action
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "action=stop" >> $GITHUB_OUTPUT
+            echo "reason=Scheduled auto-stop" >> $GITHUB_OUTPUT
+          else
+            echo "action=${{ github.event.inputs.action }}" >> $GITHUB_OUTPUT
+            echo "reason=Manual trigger" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get current status
+        id: get-status
+        run: |
+          echo "Getting current status of dev environment..."
+          
+          CLUSTER="dev-inventory-cluster"
+          DB_IDENTIFIER="dev-inventory-db"
+          
+          # Check ECS services
+          SERVICES=(
+            "dev-inventory-api-gateway"
+            "dev-inventory-inventory"
+            "dev-inventory-location"
+            "dev-inventory-reporting"
+            "dev-inventory-user"
+            "dev-inventory-ui"
+          )
+          
+          ALL_SERVICES_RUNNING=true
+          ALL_SERVICES_STOPPED=true
+          
+          for SERVICE in "${SERVICES[@]}"; do
+            DESIRED=$(aws ecs describe-services \
+              --cluster $CLUSTER \
+              --services $SERVICE \
+              --query 'services[0].desiredCount' \
+              --output text)
+            
+            if [ "$DESIRED" -eq 0 ]; then
+              ALL_SERVICES_RUNNING=false
+            else
+              ALL_SERVICES_STOPPED=false
+            fi
+          done
+          
+          # Check RDS status
+          DB_STATUS=$(aws rds describe-db-instances \
+            --db-instance-identifier $DB_IDENTIFIER \
+            --query 'DBInstances[0].DBInstanceStatus' \
+            --output text 2>/dev/null || echo "not-found")
+          
+          echo "db_status=$DB_STATUS" >> $GITHUB_OUTPUT
+          
+          if [ "$ALL_SERVICES_RUNNING" = true ] && [ "$DB_STATUS" = "available" ]; then
+            echo "status=running" >> $GITHUB_OUTPUT
+          elif [ "$ALL_SERVICES_STOPPED" = true ] && [ "$DB_STATUS" = "stopped" ]; then
+            echo "status=stopped" >> $GITHUB_OUTPUT
+          else
+            echo "status=partial" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop dev environment
+        if: steps.determine-action.outputs.action == 'stop'
+        run: |
+          echo "🛑 Stopping dev environment..."
+          echo "Reason: ${{ steps.determine-action.outputs.reason }}"
+          
+          CLUSTER="dev-inventory-cluster"
+          DB_IDENTIFIER="dev-inventory-db"
+          
+          # Stop ECS services first
+          SERVICES=(
+            "dev-inventory-api-gateway"
+            "dev-inventory-inventory"
+            "dev-inventory-location"
+            "dev-inventory-reporting"
+            "dev-inventory-user"
+            "dev-inventory-ui"
+          )
+          
+          echo "📦 Stopping ECS services..."
+          for SERVICE in "${SERVICES[@]}"; do
+            echo "  Scaling $SERVICE to 0..."
+            aws ecs update-service \
+              --cluster $CLUSTER \
+              --service $SERVICE \
+              --desired-count 0 \
+              --no-cli-pager > /dev/null
+          done
+          
+          # Wait for services to stop
+          echo "⏳ Waiting 30 seconds for services to stop..."
+          sleep 30
+          
+          # Stop RDS database
+          echo "🗄️  Stopping RDS database..."
+          DB_STATUS=$(aws rds describe-db-instances \
+            --db-instance-identifier $DB_IDENTIFIER \
+            --query 'DBInstances[0].DBInstanceStatus' \
+            --output text)
+          
+          if [ "$DB_STATUS" = "available" ]; then
+            aws rds stop-db-instance \
+              --db-instance-identifier $DB_IDENTIFIER \
+              --no-cli-pager > /dev/null
+            echo "  Database stop initiated (will take ~2-3 minutes)"
+          else
+            echo "  Database already in state: $DB_STATUS"
+          fi
+          
+          echo ""
+          echo "✅ Dev environment stopped successfully"
+          echo ""
+          echo "💰 Cost Savings Breakdown:"
+          echo "  - ECS Tasks: ~\$30-40/month"
+          echo "  - RDS Database: ~\$25-35/month"
+          echo "  - NAT Gateway Data: ~\$10-20/month (reduced traffic)"
+          echo "  - Total: ~\$65-95/month when stopped"
+          echo ""
+          echo "⚠️  Note: NAT Gateway hourly charges (~\$32/month) still apply"
+          echo "   Consider removing NAT Gateway for additional savings"
+
+      - name: Start dev environment
+        if: steps.determine-action.outputs.action == 'start'
+        run: |
+          echo "🚀 Starting dev environment..."
+          echo "Reason: ${{ steps.determine-action.outputs.reason }}"
+          
+          CLUSTER="dev-inventory-cluster"
+          DB_IDENTIFIER="dev-inventory-db"
+          
+          # Start RDS database first
+          echo "🗄️  Starting RDS database..."
+          DB_STATUS=$(aws rds describe-db-instances \
+            --db-instance-identifier $DB_IDENTIFIER \
+            --query 'DBInstances[0].DBInstanceStatus' \
+            --output text)
+          
+          if [ "$DB_STATUS" = "stopped" ]; then
+            aws rds start-db-instance \
+              --db-instance-identifier $DB_IDENTIFIER \
+              --no-cli-pager > /dev/null
+            echo "  Database start initiated"
+            
+            # Wait for database to be available
+            echo "⏳ Waiting for database to be available (this may take 3-5 minutes)..."
+            aws rds wait db-instance-available \
+              --db-instance-identifier $DB_IDENTIFIER
+            echo "  ✅ Database is now available"
+          else
+            echo "  Database already in state: $DB_STATUS"
+            if [ "$DB_STATUS" != "available" ]; then
+              echo "  Waiting for database to be available..."
+              aws rds wait db-instance-available \
+                --db-instance-identifier $DB_IDENTIFIER
+            fi
+          fi
+          
+          # Start ECS services
+          echo ""
+          echo "📦 Starting ECS services..."
+          
+          BACKEND_SERVICES=(
+            "dev-inventory-user"
+            "dev-inventory-location"
+            "dev-inventory-inventory"
+            "dev-inventory-reporting"
+            "dev-inventory-api-gateway"
+          )
+          
+          UI_SERVICE="dev-inventory-ui"
+          
+          # Start backend services
+          for SERVICE in "${BACKEND_SERVICES[@]}"; do
+            echo "  Starting $SERVICE..."
+            aws ecs update-service \
+              --cluster $CLUSTER \
+              --service $SERVICE \
+              --desired-count 1 \
+              --no-cli-pager > /dev/null
+          done
+          
+          # Wait for backend services to be healthy
+          echo "⏳ Waiting 60 seconds for backend services to start..."
+          sleep 60
+          
+          # Start UI service
+          echo "  Starting $UI_SERVICE..."
+          aws ecs update-service \
+            --cluster $CLUSTER \
+            --service $UI_SERVICE \
+            --desired-count 1 \
+            --no-cli-pager > /dev/null
+          
+          echo ""
+          echo "✅ Dev environment started successfully"
+          echo "⏰ Environment will be fully available in ~2-3 minutes"
+          echo "🌐 URL: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com"
+
+      - name: Show status
+        if: steps.determine-action.outputs.action == 'status' || always()
+        run: |
+          echo "📊 Dev Environment Status"
+          echo "========================"
+          echo ""
+          
+          CLUSTER="dev-inventory-cluster"
+          DB_IDENTIFIER="dev-inventory-db"
+          
+          # ECS Services Status
+          echo "ECS Services:"
+          SERVICES=(
+            "dev-inventory-api-gateway"
+            "dev-inventory-inventory"
+            "dev-inventory-location"
+            "dev-inventory-reporting"
+            "dev-inventory-user"
+            "dev-inventory-ui"
+          )
+          
+          for SERVICE in "${SERVICES[@]}"; do
+            DESIRED=$(aws ecs describe-services \
+              --cluster $CLUSTER \
+              --services $SERVICE \
+              --query 'services[0].desiredCount' \
+              --output text)
+            
+            RUNNING=$(aws ecs describe-services \
+              --cluster $CLUSTER \
+              --services $SERVICE \
+              --query 'services[0].runningCount' \
+              --output text)
+            
+            if [ "$DESIRED" -eq 0 ]; then
+              STATUS="🔴 STOPPED"
+            elif [ "$RUNNING" -eq "$DESIRED" ]; then
+              STATUS="🟢 RUNNING"
+            else
+              STATUS="🟡 STARTING"
+            fi
+            
+            echo "  $STATUS $SERVICE (desired: $DESIRED, running: $RUNNING)"
+          done
+          
+          # RDS Status
+          echo ""
+          echo "RDS Database:"
+          DB_STATUS=$(aws rds describe-db-instances \
+            --db-instance-identifier $DB_IDENTIFIER \
+            --query 'DBInstances[0].DBInstanceStatus' \
+            --output text 2>/dev/null || echo "not-found")
+          
+          case "$DB_STATUS" in
+            "available")
+              echo "  🟢 RUNNING $DB_IDENTIFIER"
+              ;;
+            "stopped")
+              echo "  🔴 STOPPED $DB_IDENTIFIER"
+              ;;
+            "starting"|"stopping")
+              echo "  🟡 TRANSITIONING $DB_IDENTIFIER ($DB_STATUS)"
+              ;;
+            *)
+              echo "  ⚪ UNKNOWN $DB_IDENTIFIER ($DB_STATUS)"
+              ;;
+          esac
+          
+          echo ""
+          echo "💡 Control Commands:"
+          echo "   - Start: Run this workflow with action='start'"
+          echo "   - Stop: Run this workflow with action='stop'"
+          echo "   - Status: Run this workflow with action='status'"
+          echo ""
+          echo "💰 Cost Optimization Tips:"
+          echo "   - Environment auto-stops at 8 PM EST weekdays, 6 PM EST weekends"
+          echo "   - Stopped environment saves ~\$65-95/month"
+          echo "   - NAT Gateway costs ~\$32/month even when stopped"
+          echo "   - Consider VPC endpoints to eliminate NAT Gateway"
+
+      - name: Create summary
+        if: always()
+        run: |
+          echo "## Dev Environment Control" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Action**: ${{ steps.determine-action.outputs.action }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Reason**: ${{ steps.determine-action.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ steps.get-status.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Database**: ${{ steps.get-status.outputs.db_status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.determine-action.outputs.action }}" = "start" ]; then
+            echo "✅ Dev environment is starting up" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🌐 **URL**: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⏰ Environment will be ready in ~5-8 minutes (database + services)" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.determine-action.outputs.action }}" = "stop" ]; then
+            echo "🛑 Dev environment has been stopped" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "💰 **Cost Savings**: ~\$65-95/month" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- ECS Tasks: ~\$30-40/month" >> $GITHUB_STEP_SUMMARY
+            echo "- RDS Database: ~\$25-35/month" >> $GITHUB_STEP_SUMMARY
+            echo "- NAT Gateway Data: ~\$10-20/month" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Note**: NAT Gateway hourly charges (~\$32/month) still apply" >> $GITHUB_STEP_SUMMARY
+          fi

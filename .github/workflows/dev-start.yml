@@ -1,0 +1,81 @@
+name: Start Dev Environment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  start-dev:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - name: Start dev environment
+        run: |
+          echo "🚀 Starting dev environment..."
+          
+          CLUSTER="dev-inventory-cluster"
+          DB_IDENTIFIER="dev-inventory-db"
+          
+          # Start RDS database first
+          echo "🗄️  Starting RDS database..."
+          DB_STATUS=$(aws rds describe-db-instances \
+            --db-instance-identifier $DB_IDENTIFIER \
+            --query 'DBInstances[0].DBInstanceStatus' \
+            --output text)
+          
+          if [ "$DB_STATUS" = "stopped" ]; then
+            aws rds start-db-instance \
+              --db-instance-identifier $DB_IDENTIFIER \
+              --no-cli-pager > /dev/null
+            echo "  Database start initiated"
+            echo "⏳ Waiting for database (3-5 minutes)..."
+            aws rds wait db-instance-available \
+              --db-instance-identifier $DB_IDENTIFIER
+            echo "  ✅ Database ready"
+          else
+            echo "  Database status: $DB_STATUS"
+          fi
+          
+          # Start ECS services
+          echo ""
+          echo "📦 Starting ECS services..."
+          SERVICES=(
+            "dev-inventory-user"
+            "dev-inventory-location"
+            "dev-inventory-inventory"
+            "dev-inventory-reporting"
+            "dev-inventory-api-gateway"
+            "dev-inventory-ui"
+          )
+          
+          for SERVICE in "${SERVICES[@]}"; do
+            echo "  Starting $SERVICE..."
+            aws ecs update-service \
+              --cluster $CLUSTER \
+              --service $SERVICE \
+              --desired-count 1 \
+              --no-cli-pager > /dev/null
+          done
+          
+          echo ""
+          echo "✅ Dev environment started!"
+          echo "⏰ Services will be ready in ~2-3 minutes"
+          echo "🌐 URL: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com"
+
+      - name: Summary
+        run: |
+          echo "## ✅ Dev Environment Started" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **URL**: http://dev-inventory-alb-62171694.us-west-2.elb.amazonaws.com" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏰ Services will be ready in ~2-3 minutes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💡 To stop the environment, run the 'Dev Environment Control' workflow with action='stop'" >> $GITHUB_STEP_SUMMARY
